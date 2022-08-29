@@ -14,7 +14,7 @@ theme_set(theme_classic())
 ```
 
 # Climate 
-## The model 
+## The mode
 
 First we specify and visualise a conceptual model. 
 
