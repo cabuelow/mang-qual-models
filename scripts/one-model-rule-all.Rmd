@@ -1,0 +1,262 @@
+---
+title: "one-model-rule-them-all"
+output: html_document
+date: '2022-08-29'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(igraph)
+library(QPress)
+library(dplyr)
+library(ggplot2)
+theme_set(theme_classic())
+```
+
+# Climate 
+## The model 
+
+First we specify and visualise a conceptual model. 
+
+
+```{r}
+base_model <- c("Seaward*->SedVol", #accomodation space increases sed vol
+                "SedVol*->Shoreward", #more space to accumulate sed
+                "Mang->SedVol", #sediment retention
+                "Shoreward-*Mang", #Migration
+                "Seaward-*Mang", #migration/growth
+                "Shoreward->Seaward", #cannabilism
+                #Self limitations
+                "SedVol-*SedVol", #autocompaction
+                "Mang-*Mang", #self-limitation  (e.g. competition)
+                "Seaward-*Seaward", 
+                "Shoreward-*Shoreward")
+                
+drivers <- c("Subsid","rSLR","Exposure", "Armour","SedRet")
+modelA <- parse.digraph(base_model)
+wA <- adjacency.matrix(modelA, labels=TRUE)
+stable.community(wA) #stable model?
+```
+
+
+```{r dpi=300, fig.width=7, fig.height=7}
+plotmodel <- function(modelA){
+w <- adjacency.matrix(modelA, labels=TRUE)
+gdat <- graph_from_adjacency_matrix(t(w),
+                                    mode = "directed",
+                                    weighted = "b")
+E(gdat)$color <- ifelse(E(gdat)$b <0, "red", "black")
+V(gdat)$color <- ifelse(names(V(gdat)) %in% drivers, "grey", "white")
+plot(gdat, 
+     vertex.size = 50,
+     vertex.label.cex = 1,
+     vertex.label.color = "black",
+     edge.arrow.size = 0.5,
+     edge.label = letters[1:length(E(gdat))],
+     edge.label.cex = 0.9,
+     edge.label.color = "black",
+     edge.label.pos = 1)
+}
+plotmodel(modelA)
+```
+
+Our model has four variables. 
+
+Shoreward: Areas that could become mangrove lateral accommodation space towards the shoreline (but currently too shallow) (Rogers 2021)
+Seaward: Areas that could become mangrove vertical accommodation space towards
+the sea (but currently too deep) (Rogers 2021)
+Mang: Mangrove forest cover
+SedVol: Sediment volume
+
+The edges (arrows) represent direct causal effects (ie ecological or geomorphic processes). Red arrows are negative effects, black arrows positive effects. Double headed arrows are feedbacks that can be of the same of different signs. Loop arrows from a variable back to itself are self regulation.
+
+
+Edges are labeled:
+a: Mangrove self-limitation (e.g. competition)
+b: Mangroves trap sediment
+c: Seaward erosion causes loss of mangroves
+d: Self limitation of seaward space (ie slows its own rate of increase, perhaps
+through becoming too deep for further influence by waves and erosion?)
+e: Sediment fills up seaward space
+f: Erosion of sediment
+g: SedVol self limitation, autocompaction of sediment
+h: Shoreward space reduces sediment capture
+i: Shoreward space too shallow for mangroves
+j: Cannabilism (shoreward space captures sediment increasing seaward space)
+k: Sediment volume increases shoreward space
+l: Shoreward space is self limiting (slows its own accumulation)
+
+Self regulation is important to achieve a stable model. 
+
+**Coauthors** any feedback on above links or uncertainties? We can: 
+Specify alternate models for different assumptions. 
+Specify that some links are 'uncertain'. 
+Specify alternate models for different geographies or mangrove typologies.
+
+**I'm particularly interested in geographic variation in model structure**, as it will enable us to map different structural assumptions to different locations. Therefore, we can look to see what regions have the most ambiguity (uncertainty) in responses to SLR. 
+
+Another interesting thing we can do with the mapping is compare the sign of the predicted response to the sign of the observed response in the GMW data (but probably only for non-SLR drivers, given timescale of GMW). 
+
+## Visualize drivers 
+
+Below we visualize three (assumed indpendent) drivers:
+
+1. Relative sea level rise (to encapsulate subsidence and SLR, which I gather have the same net effect, ie they don't affect different states in the model above?)
+
+2. Coastal armouring
+
+3. Sediment retention in dams 
+
+```{r}
+#inundation drivers
+modelinnun <- parse.digraph(c(base_model,
+                          # "Subsid->VertAccom",
+                          # "Subsid->LatAccom",
+                          # "Subsid-*Mang",
+                          # "Subsid->Exposure",
+                          "rSLR->Seaward",
+                          "rSLR-*Shoreward",
+                          "rSLR-*Mang",
+                          "rSLR->Exposure",
+                          "Exposure-*Mang", #exposure
+                          "Exposure->SedVol",
+                          "Exposure->Seaward"
+                          ))
+modelarmour <- parse.digraph(c(base_model,
+                          "Armour->Shoreward"
+                          ))
+modelsedret <- parse.digraph(c(base_model,
+                          "SedRet-*SedVol"
+                          ))
+```
+```{r dpi=300, fig.width=7, fig.height=7}
+plotmodel(modelinnun)
+plotmodel(modelarmour)
+plotmodel(modelsedret)
+```
+
+## Simple perturbation simulations
+
+Below simulations just count the net number of positive and negative feedback loops to each variable, when a set of variables are perturbed. 
+
+First, here is an SLR only scenario. We will assume SLR: increases Accom, increases LatACC, but has direct negative affect on mangroves: 
+
+```{r}
+impactSLR <- press.impact(modelA, perturb = c(Seaward=1, 
+                                              SedVol=1,
+                                            Shoreward=-1,
+                                            Mang = -1))
+round(impactSLR(wA),2)
+```
+So the net feedback is for mangrove decrease.  
+
+SLR + reduction in sediment supply. Implemented as above, but with additional negative perturbation to SedVol:
+
+```{r}
+impactSLR_SV <- press.impact(modelA, perturb = c(Seaward=1, 
+                                              SedVol=-1,
+                                            Shoreward=-1,
+                                            Mang = -1))
+impactSLR_SV(wA)
+```
+
+No net change 
+
+SLR + coastal armouring. Implemented as above, but with a positive perturbation to Shoreward:
+
+```{r}
+impactSLR_CA <- press.impact(modelA, perturb = c(Seaward=1, 
+                                              SedVol=1,
+                                            Shoreward=1,
+                                            Mang = -1))
+impactSLR_CA(wA)
+```
+
+Large loss of mangroves
+
+Finally, SLR + sediment retention + coastal armouring: 
+
+```{r}
+impactSLR_SV_CA <- press.impact(modelA, perturb = c(Seaward=1, 
+                                              SedVol=-1,
+                                            Shoreward=1,
+                                            Mang = -1))
+impactSLR_SV_CA(wA)
+```
+
+
+
+## Simulation
+
+The above assumed that the weights of all processes are equal.
+We can additionally do simulations where we randomly vary the weights.
+Not implemented here, but we should also consider adding constraints where we say weight of one path is greater than an alternate path. Will need your help deciding on those constraints though. 
+
+```{r}
+#Simulate scenarios for modelB. 
+# note that model and impact scenarios are hard coded
+#maybe slow if there are a lot of non-stable communities generated
+simulate_scenarios <- function(i){
+  
+  simB <- community.sampler(modelA)
+  
+  wA <- adjacency.matrix(modelA, labels=TRUE)
+  varnames <- names(impactSLR(wA))
+  
+  stable_comm <- FALSE
+  
+  while(!stable_comm){
+    w <- simB$community()
+    stable_comm <- stable.community(w)
+  }
+  
+  modout <- data.frame(vars = rep(varnames, 4), 
+                       isim = i,
+                       scnr = rep(c("SLR", "SLR+armour", 
+                                    "SLR+retention",
+                                    "SLR+armour+retention"), 
+                                  each = 4),
+                       outcomes = c(impactSLR(w),
+                                    impactSLR_CA(w),
+                                    impactSLR_SV(w),
+                                    impactSLR_SV_CA(w))
+  )
+  return(modout)
+}
+modout <- lapply(1:1000, simulate_scenarios)
+modout <- do.call("rbind", modout)
+```
+
+Below graph shows proportion of positive change predicted across 1000 models with randomized weights. 
+
+```{r}
+#summarize results
+modsum <- modout %>% group_by(vars, scnr) %>%
+  summarize(net_change = sum(outcomes>0)/n())
+ggplot(modsum) +
+  aes(x = scnr, y = net_change) + 
+  geom_bar(stat = 'identity') + 
+  facet_wrap(~vars) +
+  theme(axis.text.x = element_text(angle = 45,
+                                   hjust = 1)) +
+  ylab("Proportion positive change") +
+  xlab("Scenario") +
+  geom_hline(yintercept = 0.5)
+```
+
+So mangroves are predicted to decrease with SLR, though possible be stable with and SLR + retention of sediment. Most likely to decrease when SLR is combined with coastal armouring or armouring and sediment retention. 
+
+We can also view the outcomes as densities. Below shows for each variable the probability density of different net outcomes for mangroves under different scenarios.  
+
+```{r}
+mang_dens <- modout %>% filter(vars == "Mang")
+ggplot(mang_dens) +
+   aes(x = outcomes) + 
+  geom_density(color = "red", fill = "pink") +
+  facet_wrap(~scnr, scales= "free") + 
+  xlim(-10, 10) + 
+  xlab("Net outcome") +
+  geom_vline(xintercept = 0)
+```
+
+
