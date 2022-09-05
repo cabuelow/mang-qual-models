@@ -2,6 +2,8 @@
 output: html_document
 ---
 
+TODO: Create many scenarios to try and test. Figure out whats next. Any uncertain linkages?
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(igraph)
@@ -14,7 +16,7 @@ theme_set(theme_classic())
 # How to build a model 
 ### Mangrove response to climate change and other anthropogenic threats
 
-Taking a 'one model to rule them all approach' vs. multiple, individual models for different scenarios.
+Taking a 'one model to rule them all approach' vs. multiple, individual models for different scenarios. We agree there should be only one model structure. If we think the model structure isn't right though, we can test and compare other variations.
 
 Aim is to build one model that performs as expected under different scenarios.
 
@@ -32,44 +34,62 @@ Steps are to:
 
 Variables are in white and drivers are in grey. Red arrows indicate negative effect, black arrows indicate positive effect.
 
-**TODO: change 'front and back' mangroves to 'seaward and landward' mangroves.
-
 ```{r}
-base_model <- c('BackLatAccom->BackPropag',
-                'BackPropag->BackMang',
-                #'BackMang-*BackMang',
-                #'BackMang->SubVol',
-                'FrontLatAccom->FrontPropag',
-                'FrontPropag->FrontMang',
-                #'FrontMang-*FrontMang',
-                #'FrontMang->SubVol',
-                'Cyclones-*BackMang',
-                'Cyclones-*FrontMang',
-                'Restore->BackPropag',
-                'Restore->FrontPropag',
-                'CoastDevel-*BackLatAccom',
-                'SeaLevel->BackLatAccom',
-                'SeaLevel-*FrontMang',
-                'SeaLevel-*FrontLatAccom',
-                'SubVol->FrontLatAccom',
-                #'SubVol-*SubVol',
-                'TidalAmp->BackLatAccom',
-                'TidalAmp->FrontLatAccom',
-                #'TidalAmp-*SubVol',
-                'Autocompaction-*SubVol',
-                'SedSupply->SubVol',
-                'Dams-*SedSupply',
-                #'HydrodynEnergy-*FrontPropag',
-                'HydrodynEnergy-*FrontLatAccom'
-                #'OM->SubVol',
-                #'BackMang->OM',
-                #'FrontMang->OM'
+base_model <- c('LandwardLatAccom->LandwardPropag',
+                'LandwardPropag->LandwardMang',
+                #'LandwardMang-->OM',
+                'LandwardMang->OM',
+                'LandwardMang-*LandwardMang',
+                'LandwardPropag-*LandwardPropag',
+                'SeawardLatAccom->SeawardPropag',
+                'SeawardPropag->SeawardMang',
+                'SeawardMang->OM',
+                'SeawardMang-*SeawardMang',
+                'SeawardPropag-*SeawardPropag',
+                'LandwardLatAccom-*SeawardLatAccom',
+                'SeawardLatAccom-*LandwardLatAccom',
+                #'SeaLevelFall-*LandwardLatAccom',
+                #'SeaLevelFall--*LandwardMang',
+                #'SeaLevelFall->SeawardLatAccom',
+                #'SeaLevelRise->LandwardLatAccom',
+                #'SeaLevelRise--*SeawardMang',
+                #'SeaLevelRise->SeawardLatAccom',
+                #'Cyclones--*LandwardMang',
+                #'Cyclones->SeawardMang',
+                #'Restoration->LandwardPropag',
+                #'Restoration->SeawardPropag',
+                #'TidalAmp->LandwardLatAccom',
+                #'TidalAmp->SeawardLatAccom',
+                #'BasementUp-*LandwardLatAccom',
+                #'BasementUp--*LandwardMang',
+                #'BasementUp->SeawardLatAccom',
+                #'Subsidence->LandwardLatAccom',
+                #'Subsidence--*SeawardMang',
+                #'Subsidence-*SeawardLatAccom',
+                #'CoastalDev-*LandwardLatAccom',
+                #'CoastalDev--*LandwardMang',
+                #'CoastalDev--*SeawardMang',
+                #'Protection-*CoastalDev',
+                #'Erosion-*SeawardMang',
+                #'PermeableDam-*Erosion',
+                #'HydroEnergy->Erosion',
+                'OM->SubVol',
+                #'TidalFreq-*SeawardPropag',
+                #'TidalFreq-*SubVol',
+                'SubVol->SeawardLatAccom'
+                #'Autocompaction-*SubVol',
+                #'SedSupply-*SubVol',
+                #'Dams-*SedSupply',
+                #'HydroEnergy-*SeawardLatAccom',
+                #'HydroEnergy-*SeawardPropag'
                 )
                 
-drivers <- c("Cyclones","SeaLevFall","Restore","CoastDevel",
-             "SeaLevel","TidalAmp","Autocompaction", "SedSupply", "Dams")
+drivers <- c("Cyclones","SeaLevFall","Restoration","CoastalDev",
+             "SeaLevelRise","TidalAmp", "TidalFreq", "Autocompaction", "SedSupply", 
+             "Dams", "Protection", "PermeableDam", "Erosion", "HydroEnergy",
+             "Subsidence", "BasementUp")
 modelA <- parse.digraph(base_model)
-modelA <- enforce.limitation(modelA)
+#modelA <- enforce.limitation(modelA)
 wA <- adjacency.matrix(modelA, labels=TRUE)
 stable.community(wA) #stable model?
 det(wA) # is matrix singular?
@@ -85,42 +105,42 @@ gdat <- graph_from_adjacency_matrix(t(w),
 E(gdat)$color <- ifelse(E(gdat)$b <0, "red", "black")
 V(gdat)$color <- ifelse(names(V(gdat)) %in% drivers, "grey", "white")
 plot(gdat, 
-     vertex.size = 20,
-     vertex.label.cex = 0.6,
+     vertex.size = 10,
+     vertex.label.cex = 0.5,
      vertex.label.color = "black",
-     edge.arrow.size = 0.5,
+     edge.arrow.size = 0.3,
      #edge.label = letters[1:length(E(gdat))],
-     edge.label.cex = 0.9,
+     edge.label.cex = 0.6,
      edge.label.color = "black",
      edge.label.pos = 1)
 }
 plotmodel(modelA)
 ```
-**TODO: Would like to have an 'organic matter' variable that can have a positive effect on substrate volume (SubVol), and is positively influenced by front and back mangroves. Substrate volume should also perhaps be influenced by hydroperiod? High frequency of tidal inundation means sediment and organic matter less able to settle to the bottom?
+**TODO: Would like to have an 'organic matter' variable that can have a positive effect on substrate volume (SubVol), and is positively influenced by Seaward and Landward mangroves, but model is singular. Substrate volume should also perhaps be influenced by hydroperiod? High frequency of tidal inundation means sediment and organic matter less able to settle to the bottom?
 
 *Note, only way to get a stable model was to enforce self-limitation on all variables.
 
 ### 2) Perturb drivers to examine expected responses of mangroves under different scenarios
 
 #### Scenario 1: High sediment supply
-Expect front of mangroves to increase
+Expect Seaward of mangroves to increase
 
 ```{r}
 impactSedSupply <- press.impact(modelA, perturb = c(SedSupply=1))
 round(impactSedSupply(wA),2)
 ```
-So the net feedback is for mangrove increase.
+So the net feedLandward is for mangrove increase.
 
 #### Scenario 2: High sediment supply and sea-level fall (e.g., during drought)
 
-Expect front mangroves to increase (progradation) and mangrove dieback in the back.
+Expect Seaward mangroves to increase (progradation) and mangrove dieLandward in the Landward.
 
 ```{r}
 impactSedSupply_SLF <- press.impact(modelA, perturb = c(SedSupply=1,
                                                         SeaLevel=-1))
 impactSedSupply_SLF(wA)
 ```
-Front mangroves increase and back die.
+Seaward mangroves increase and Landward die.
 
 #### Scenario 3: High sediment supply and sea-level rise
 
@@ -129,7 +149,7 @@ impactSedSupply_SLR <- press.impact(modelA, perturb = c(SedSupply=1,
                                                         SeaLevel=1))
 impactSedSupply_SLR(wA)
 ```
-Back mangroves increase, but front decrease. Not what we would expect
+Landward mangroves increase, but Seaward decrease. Not what we would expect
 
 #### Scenario 4: Sea-level rise
 Expect landward mangroves to increase
@@ -138,7 +158,7 @@ Expect landward mangroves to increase
 impactSLR <- press.impact(modelA, perturb = c(SeaLevel=1))
 impactSLR(wA)
 ```
-Landward mangroves increase as expected. Front mangroves decrease, as expected.
+Landward mangroves increase as expected. Seaward mangroves decrease, as expected.
 
 ### Simulate scenarios and compare outcomes
 
@@ -200,7 +220,7 @@ ggplot(modsum) +
 
 
 ```{r}
-mang_dens <- modout %>% filter(vars == "BackMang")
+mang_dens <- modout %>% filter(vars == "LandwardMang")
 ggplot(mang_dens) +
    aes(x = outcomes) + 
   geom_density(color = "red", fill = "pink") +
@@ -212,7 +232,7 @@ ggplot(mang_dens) +
 
 
 ```{r}
-mang_dens <- modout %>% filter(vars == "FrontMang")
+mang_dens <- modout %>% filter(vars == "SeawardMang")
 ggplot(mang_dens) +
    aes(x = outcomes) + 
   geom_density(color = "red", fill = "pink") +
