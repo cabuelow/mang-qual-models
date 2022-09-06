@@ -25,7 +25,7 @@ Then we can map likelihood of increase or decrease in mangrove extent, given dif
 Steps are to:
 
 1) Build and visualise the conceptual model
-2) Perturb drivers to examine expected responses of mangroves under different scenarios
+2) Perturb drivers and simulate to examine expected responses of mangroves under different scenarios
 3) If responses are not expected, re-work the conceptual model and do step 2
 4) Map likelihood of mangroves increasing or decreasing given different geomorphologies and drivers
 5) Validate with GMW data (if possible)
@@ -34,65 +34,69 @@ Steps are to:
 
 Variables are in white and drivers are in grey. Red arrows indicate negative effect, black arrows indicate positive effect.
 
+***NOTE currently running model assuming back-front are stable. Should try alternate model structure and compare.
+
 ```{r}
 base_model <- c('LandwardLatAccom->LandwardPropag',
                 'LandwardPropag->LandwardMang',
-                #'LandwardMang-->OM',
-                'LandwardMang->OM',
-                'LandwardMang-*LandwardMang',
-                'LandwardPropag-*LandwardPropag',
+                'LandwardMang-->OM',
+                #'LandwardMang->OM',
+                #'LandwardMang-*LandwardMang',
+                #'LandwardPropag-*LandwardPropag',
                 'SeawardLatAccom->SeawardPropag',
                 'SeawardPropag->SeawardMang',
                 'SeawardMang->OM',
-                'SeawardMang-*SeawardMang',
-                'SeawardPropag-*SeawardPropag',
-                'LandwardLatAccom-*SeawardLatAccom',
-                'SeawardLatAccom-*LandwardLatAccom',
-                #'SeaLevelFall-*LandwardLatAccom',
-                #'SeaLevelFall--*LandwardMang',
-                #'SeaLevelFall->SeawardLatAccom',
-                #'SeaLevelRise->LandwardLatAccom',
-                #'SeaLevelRise--*SeawardMang',
-                #'SeaLevelRise->SeawardLatAccom',
-                #'Cyclones--*LandwardMang',
-                #'Cyclones->SeawardMang',
-                #'Restoration->LandwardPropag',
-                #'Restoration->SeawardPropag',
-                #'TidalAmp->LandwardLatAccom',
-                #'TidalAmp->SeawardLatAccom',
-                #'BasementUp-*LandwardLatAccom',
-                #'BasementUp--*LandwardMang',
-                #'BasementUp->SeawardLatAccom',
-                #'Subsidence->LandwardLatAccom',
-                #'Subsidence--*SeawardMang',
-                #'Subsidence-*SeawardLatAccom',
-                #'CoastalDev-*LandwardLatAccom',
-                #'CoastalDev--*LandwardMang',
-                #'CoastalDev--*SeawardMang',
-                #'Protection-*CoastalDev',
-                #'Erosion-*SeawardMang',
-                #'PermeableDam-*Erosion',
-                #'HydroEnergy->Erosion',
+                #'SeawardMang-*SeawardMang',
+                #'SeawardPropag-*SeawardPropag',
+                #'LandwardLatAccom-*SeawardLatAccom',
+                #'SeawardLatAccom-*LandwardLatAccom',
+                #'LandwardPropag-*SeawardPropag',
+                #'SeawardPropag-*LandwardPropag',
+                #'LandwardMang-*SeawardMang',
+                #'SeawardMang-*LandwardMang',
+                'SeaLevelFall-*LandwardLatAccom',
+                'SeaLevelFall--*LandwardMang',
+                'SeaLevelFall->SeawardLatAccom',
+                'SeaLevelRise->LandwardLatAccom',
+                'SeaLevelRise--*SeawardMang',
+                'SeaLevelRise->SeawardLatAccom',
+                'Cyclones--*LandwardMang',
+                'Cyclones->SeawardMang',
+                'Restoration->LandwardPropag',
+                'Restoration->SeawardPropag',
+                'TidalAmp->LandwardLatAccom',
+                'TidalAmp->SeawardLatAccom',
+                'BasementUp-*LandwardLatAccom',
+                'BasementUp--*LandwardMang',
+                'BasementUp->SeawardLatAccom',
+                'Subsidence->LandwardLatAccom',
+                'Subsidence--*SeawardMang',
+                'Subsidence-*SeawardLatAccom',
+                'CoastalDev-*LandwardLatAccom',
+                'CoastalDev--*LandwardMang',
+                'CoastalDev--*SeawardMang',
+                'Protection-*CoastalDev',
+                'Erosion-*SeawardMang',
+                'PermeableDam-*Erosion',
+                'HydroEnergy->Erosion',
                 'OM->SubVol',
-                #'TidalFreq-*SeawardPropag',
-                #'TidalFreq-*SubVol',
-                'SubVol->SeawardLatAccom'
-                #'Autocompaction-*SubVol',
-                #'SedSupply-*SubVol',
-                #'Dams-*SedSupply',
-                #'HydroEnergy-*SeawardLatAccom',
-                #'HydroEnergy-*SeawardPropag'
+                'TidalFreq-*SeawardPropag',
+                'TidalFreq-*SubVol',
+                'SubVol->SeawardLatAccom',
+                #'SubVol-*SubVol'
+                'Autocompaction-*SubVol',
+                'SedSupply-*SubVol',
+                'Dams-*SedSupply',
+                'HydroEnergy-*SeawardLatAccom',
+                'HydroEnergy-*SeawardPropag'
                 )
                 
-drivers <- c("Cyclones","SeaLevFall","Restoration","CoastalDev",
+drivers <- c("Cyclones","SeaLevelFall","Restoration","CoastalDev",
              "SeaLevelRise","TidalAmp", "TidalFreq", "Autocompaction", "SedSupply", 
              "Dams", "Protection", "PermeableDam", "Erosion", "HydroEnergy",
              "Subsidence", "BasementUp")
 modelA <- parse.digraph(base_model)
-#modelA <- enforce.limitation(modelA)
-wA <- adjacency.matrix(modelA, labels=TRUE)
-stable.community(wA) #stable model?
-det(wA) # is matrix singular?
+modelA <- enforce.limitation(modelA)
 ```
 
 
@@ -116,66 +120,91 @@ plot(gdat,
 }
 plotmodel(modelA)
 ```
-**TODO: Would like to have an 'organic matter' variable that can have a positive effect on substrate volume (SubVol), and is positively influenced by Seaward and Landward mangroves, but model is singular. Substrate volume should also perhaps be influenced by hydroperiod? High frequency of tidal inundation means sediment and organic matter less able to settle to the bottom?
 
-*Note, only way to get a stable model was to enforce self-limitation on all variables.
-
-### 2) Perturb drivers to examine expected responses of mangroves under different scenarios
+### 2) Set-up scenarios
 
 #### Scenario 1: High sediment supply
-Expect Seaward of mangroves to increase
+
+Expect seaward mangroves to increase
 
 ```{r}
+#sample community
+s <- community.sampler(modelA) # constructs functions to generate random community matrices, provides a list of functions
+s$select(0.5) # randomly select which uncertain pairs will be retained with a probability of 0.5
+W <- s$community() # generate a random community matrix
+
+# this is monitoring just a single community matrix
+# perturb sediment supply, monitor all
 impactSedSupply <- press.impact(modelA, perturb = c(SedSupply=1))
-round(impactSedSupply(wA),2)
+results <- round(impactSedSupply(W),2)
+names(results) <- colnames(adjacency.matrix(modelA, labels = T))
+results
+
+# perturb sediment supply, and see if seaward mangroves increase
+valSedSupply <- press.validate(modelA, perturb=c(SedSupply=1), monitor=c(SeawardMang=1))
+valSedSupply(W)
 ```
-So the net feedLandward is for mangrove increase.
 
 #### Scenario 2: High sediment supply and sea-level fall (e.g., during drought)
 
-Expect Seaward mangroves to increase (progradation) and mangrove dieLandward in the Landward.
+Expect Seaward mangroves to increase (progradation) and landward mangroves dieback
 
 ```{r}
-impactSedSupply_SLF <- press.impact(modelA, perturb = c(SedSupply=1,
-                                                        SeaLevel=-1))
-impactSedSupply_SLF(wA)
+impactSedSupply_SLF <- press.impact(modelA, perturb = c(SedSupply=1, 
+                                                        SeaLevelFall=1))
+results <- round(impactSedSupply_SLF(W),2)
+names(results) <- colnames(adjacency.matrix(modelA, labels = T))
+results
+
+# perturb sediment supply, and see if seaward mangroves increase
+valSedSupply_SLF <- press.validate(modelA, perturb=c(SedSupply=1,
+                                                     SeaLevelFall=1), 
+                                   monitor=c(SeawardMang=1, LandwardMang=-1))
+valSedSupply_SLF(W)
 ```
-Seaward mangroves increase and Landward die.
 
 #### Scenario 3: High sediment supply and sea-level rise
 
+Expect seaward mangroves to prograde, landward mangroves to migrate landward
+
 ```{r}
-impactSedSupply_SLR <- press.impact(modelA, perturb = c(SedSupply=1,
-                                                        SeaLevel=1))
-impactSedSupply_SLR(wA)
+impactSedSupply_SLR <- press.impact(modelA, perturb = c(SedSupply=1, 
+                                                        SeaLevelRise=1))
+results <- round(impactSedSupply_SLR(W),2)
+names(results) <- colnames(adjacency.matrix(modelA, labels = T))
+results
+
+# perturb sediment supply, and see if seaward mangroves increase
+valSedSupply_SLR <- press.validate(modelA, perturb=c(SedSupply=1,
+                                                     SeaLevelRise=1), 
+                                   monitor=c(SeawardMang=1, LandwardMang=1))
+valSedSupply_SLR(W)
 ```
-Landward mangroves increase, but Seaward decrease. Not what we would expect
 
 #### Scenario 4: Sea-level rise
-Expect landward mangroves to increase
+
+Expect landward mangroves to increase, seaward mangroves to decrease
 
 ```{r}
-impactSLR <- press.impact(modelA, perturb = c(SeaLevel=1))
-impactSLR(wA)
+impact_SLR <- press.impact(modelA, perturb = c(SeaLevelRise=1))
+results <- round(impactSedSupply_SLR(W),2)
+names(results) <- colnames(adjacency.matrix(modelA, labels = T))
+results
+
+# perturb sediment supply, and see if seaward mangroves increase
+val_SLR <- press.validate(modelA, perturb=c(SeaLevelRise=1), 
+                                   monitor=c(SeawardMang=-1, LandwardMang=1))
+val_SLR(W)
 ```
-Landward mangroves increase as expected. Seaward mangroves decrease, as expected.
 
-### Simulate scenarios and compare outcomes
-
-The above assumed that the weights of all processes are equal.
-We can additionally do simulations where we randomly vary the weights.
-Not implemented here, but we should also consider adding constraints where we say weight of one path is greater than an alternate path. Will need your help deciding on those constraints though. 
+### 3) Simulate scenarios and compare outcomes
 
 ```{r}
-#Simulate scenarios for modelB. 
-# note that model and impact scenarios are hard coded
-#maybe slow if there are a lot of non-stable communities generated
 simulate_scenarios <- function(i){
   
   simB <- community.sampler(modelA)
-  
-  wA <- adjacency.matrix(modelA, labels=TRUE)
-  varnames <- names(impactSLR(wA))
+  simB$select(0.5) # randomly select which uncertain pairs will be retained with a probability of 0.5
+  varnames <- colnames(adjacency.matrix(modelA, labels = T))
   
   stable_comm <- FALSE
   
@@ -184,16 +213,14 @@ simulate_scenarios <- function(i){
     stable_comm <- stable.community(w)
   }
   
-  modout <- data.frame(vars = rep(varnames, 4), 
-                       isim = i,
-                       scnr = rep(c("Sediment supply", "SLR", 
-                                    "Sediment supply & SLF",
-                                    "Sediment supply & SLR"), 
-                                  each = 4),
-                       outcomes = c(impactSedSupply(w),
-                                    impactSLR(w),
-                                    impactSedSupply_SLF(w),
-                                    impactSedSupply_SLR(w))
+  modout <- data.frame(isim = i,
+                       scnr = c("Sediment supply", "Sea-level rise", 
+                                    "Sediment supply & Sea-level fall",
+                                    "Sediment supply & Sea-level rise"),
+                       outcomes = c(valSedSupply(w),
+                                    val_SLR(w),
+                                    valSedSupply_SLF(w),
+                                    valSedSupply_SLR(w))
   )
   return(modout)
 }
@@ -201,19 +228,19 @@ modout <- lapply(1:1000, simulate_scenarios)
 modout <- do.call("rbind", modout)
 ```
 
-Below graph shows proportion of positive change predicted across 1000 models with randomized weights. 
+Below graph shows proportion of simulations where model is valid across 1000 simulations with randomised weights, with or without uncertain linkages (latter is TODO)
 
 ```{r}
-#summarize results
-modsum <- modout %>% group_by(vars, scnr) %>%
-  summarize(net_change = sum(outcomes>0)/n())
+#summarise results
+modsum <- modout %>% group_by(scnr) %>%
+  summarize(prop_valid = sum(outcomes==TRUE)/n())
 ggplot(modsum) +
-  aes(x = scnr, y = net_change) + 
-  geom_bar(stat = 'identity') + 
-  facet_wrap(~vars) +
-  theme(axis.text.x = element_text(angle = 45,
+  aes(x = scnr, y = prop_valid) + 
+  geom_bar(stat = 'identity') +
+  ylim(c(0,1)) +
+  theme(axis.text.x = element_text(angle = 20,
                                    hjust = 1)) +
-  ylab("Proportion positive change") +
+  ylab("Proportion valid") +
   xlab("Scenario") +
   geom_hline(yintercept = 0.5)
 ```
