@@ -11,6 +11,7 @@ library(QPress)
 library(dplyr)
 library(ggplot2)
 theme_set(theme_classic())
+source('models.R')
 ```
 
 # How to build a model 
@@ -34,80 +35,14 @@ Steps are to:
 
 Variables are in white and drivers are in grey. Red arrows indicate negative effect, black arrows indicate positive effect.
 
-***NOTE currently running model assuming back-front are stable. Should try alternate model structure and compare.
-
-```{r}
-base_model <- c('LandwardLatAccom->LandwardPropag',
-                'LandwardPropag->LandwardMang',
-                'LandwardMang-->OM',
-                #'LandwardMang->OM',
-                #'LandwardMang-*LandwardMang',
-                #'LandwardPropag-*LandwardPropag',
-                'SeawardLatAccom->SeawardPropag',
-                'SeawardPropag->SeawardMang',
-                'SeawardMang->OM',
-                #'SeawardMang-*SeawardMang',
-                #'SeawardPropag-*SeawardPropag',
-                #'LandwardLatAccom-*SeawardLatAccom',
-                #'SeawardLatAccom-*LandwardLatAccom',
-                #'LandwardPropag-*SeawardPropag',
-                #'SeawardPropag-*LandwardPropag',
-                #'LandwardMang-*SeawardMang',
-                #'SeawardMang-*LandwardMang',
-                'SeaLevelFall-*LandwardLatAccom',
-                'SeaLevelFall--*LandwardMang',
-                'SeaLevelFall->SeawardLatAccom',
-                'SeaLevelRise->LandwardLatAccom',
-                'SeaLevelRise--*SeawardMang',
-                'SeaLevelRise->SeawardLatAccom',
-                'Cyclones--*LandwardMang',
-                'Cyclones->SeawardMang',
-                'Restoration->LandwardPropag',
-                'Restoration->SeawardPropag',
-                'TidalAmp->LandwardLatAccom',
-                'TidalAmp->SeawardLatAccom',
-                'BasementUp-*LandwardLatAccom',
-                'BasementUp--*LandwardMang',
-                'BasementUp->SeawardLatAccom',
-                'Subsidence->LandwardLatAccom',
-                'Subsidence--*SeawardMang',
-                'Subsidence-*SeawardLatAccom',
-                'CoastalDev-*LandwardLatAccom',
-                'CoastalDev--*LandwardMang',
-                'CoastalDev--*SeawardMang',
-                'Protection-*CoastalDev',
-                'Erosion-*SeawardMang',
-                'PermeableDam-*Erosion',
-                'HydroEnergy->Erosion',
-                'OM->SubVol',
-                'TidalFreq-*SeawardPropag',
-                'TidalFreq-*SubVol',
-                'SubVol->SeawardLatAccom',
-                #'SubVol-*SubVol'
-                'Autocompaction-*SubVol',
-                'SedSupply-*SubVol',
-                'Dams-*SedSupply',
-                'HydroEnergy-*SeawardLatAccom',
-                'HydroEnergy-*SeawardPropag'
-                )
-                
-drivers <- c("Cyclones","SeaLevelFall","Restoration","CoastalDev",
-             "SeaLevelRise","TidalAmp", "TidalFreq", "Autocompaction", "SedSupply", 
-             "Dams", "Protection", "PermeableDam", "Erosion", "HydroEnergy",
-             "Subsidence", "BasementUp")
-modelA <- parse.digraph(base_model)
-modelA <- enforce.limitation(modelA)
-```
-
-
 ```{r dpi=300, fig.width=7, fig.height=7}
-plotmodel <- function(modelA){
-w <- adjacency.matrix(modelA, labels=TRUE)
+plotmodel <- function(model){
+w <- adjacency.matrix(model, labels=TRUE)
 gdat <- graph_from_adjacency_matrix(t(w),
                                     mode = "directed",
                                     weighted = "b")
 E(gdat)$color <- ifelse(E(gdat)$b <0, "red", "black")
-V(gdat)$color <- ifelse(names(V(gdat)) %in% drivers, "grey", "white")
+#V(gdat)$color <- ifelse(names(V(gdat)) %in% drivers, "grey", "white")
 plot(gdat, 
      vertex.size = 10,
      vertex.label.cex = 0.5,
@@ -121,7 +56,7 @@ plot(gdat,
 plotmodel(modelA)
 ```
 
-### 2) Set-up scenarios
+### 2) Set-up perturbation-validation scenarios
 
 #### Scenario 1: High sediment supply
 
@@ -130,7 +65,6 @@ Expect seaward mangroves to increase
 ```{r}
 #sample community
 s <- community.sampler(modelA) # constructs functions to generate random community matrices, provides a list of functions
-s$select(0.5) # randomly select which uncertain pairs will be retained with a probability of 0.5
 W <- s$community() # generate a random community matrix
 
 # this is monitoring just a single community matrix
@@ -228,7 +162,13 @@ modout <- lapply(1:1000, simulate_scenarios)
 modout <- do.call("rbind", modout)
 ```
 
-Below graph shows proportion of simulations where model is valid across 1000 simulations with randomised weights, with or without uncertain linkages (latter is TODO)
+Below graph shows proportion of simulations where model is valid across 1000 simulations with randomised weights (i.e., the marginal likelihood of the model, under different scenarios), with or without uncertain linkages (latter is TODO)
+
+We can compare marginal likelihoods (p(y|M)) of different models under each scenario to see which is the most likely model, i.e., best representation of the system. We can compute Bayes Factors as ratios of these probabilities for different models.
+
+If we have a prior belief about which model is best, we can use those to calculate the posterior probability of each model. 
+
+`posterior <- prior * marg_likelihood / sum(prior*marg_likelihood)`
 
 ```{r}
 #summarise results
@@ -245,28 +185,28 @@ ggplot(modsum) +
   geom_hline(yintercept = 0.5)
 ```
 
+Try simulations with Wotherspoon function
 
 ```{r}
-mang_dens <- modout %>% filter(vars == "LandwardMang")
-ggplot(mang_dens) +
-   aes(x = outcomes) + 
-  geom_density(color = "red", fill = "pink") +
-  facet_wrap(~scnr, scales= "free") + 
-  xlim(-10, 10) + 
-  xlab("Net outcome") +
-  geom_vline(xintercept = 0)
+simA <- system.simulate(1000, modelA,
+                            validators = list(
+                              #press.validate(modelA,
+                               #              perturb=c(SedSupply=1,
+                                #                     SeaLevelFall=1), 
+                                 #             monitor=c(SeawardMang=1, 
+                                  #                      LandwardMang=-1))))
+                              #press.validate(modelA,
+                               #              perturb=c(SedSupply=1), 
+                                #             monitor=c(SeawardMang=1))))
+                              #press.validate(modelA, 
+                               #              perturb=c(SeaLevelRise=1), 
+                                #            monitor=c(SeawardMang=-1, 
+                                 #                     LandwardMang=1))))
+                              press.validate(modelA, 
+                                             perturb=c(SedSupply=1,
+                                                     SeaLevelRise=1), 
+                                            monitor=c(SeawardMang=1, 
+                                                      LandwardMang=1))))
+marg_likelihood <- simA$accepted/simA$total
+marg_likelihood
 ```
-
-
-```{r}
-mang_dens <- modout %>% filter(vars == "SeawardMang")
-ggplot(mang_dens) +
-   aes(x = outcomes) + 
-  geom_density(color = "red", fill = "pink") +
-  facet_wrap(~scnr, scales= "free") + 
-  xlim(-10, 10) + 
-  xlab("Net outcome") +
-  geom_vline(xintercept = 0)
-```
-
-

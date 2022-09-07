@@ -1,0 +1,255 @@
+---
+output: html_document
+---
+
+TODO: Create many scenarios to try and test. Figure out whats next. Any uncertain linkages?
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(igraph)
+library(QPress)
+library(dplyr)
+library(ggplot2)
+theme_set(theme_classic())
+source('models.R')
+```
+
+# How to build a model 
+### Mangrove response to climate change and other anthropogenic threats
+
+Taking a 'one model to rule them all approach' vs. multiple, individual models for different scenarios. We agree there should be only one model structure. If we think the model structure isn't right though, we can test and compare other variations.
+
+Aim is to build one model that performs as expected under different scenarios.
+
+Then we can map likelihood of increase or decrease in mangrove extent, given different drivers
+
+Steps are to:
+
+1) Build and visualise the conceptual model
+2) Perturb drivers and simulate to examine expected responses of mangroves under different scenarios
+3) If responses are not expected, re-work the conceptual model and do step 2
+4) Map likelihood of mangroves increasing or decreasing given different geomorphologies and drivers
+5) Validate with GMW data (if possible)
+
+### 1. Build and visualise conceptual model
+
+Variables are in white and drivers are in grey. Red arrows indicate negative effect, black arrows indicate positive effect.
+
+```{r dpi=300, fig.width=7, fig.height=7}
+plotmodel <- function(model, name){
+w <- adjacency.matrix(model, labels=TRUE)
+gdat <- graph_from_adjacency_matrix(t(w),
+                                    mode = "directed",
+                                    weighted = "b")
+E(gdat)$color <- ifelse(E(gdat)$b <0, "red", "black")
+#V(gdat)$color <- ifelse(names(V(gdat)) %in% drivers, "grey", "white")
+plot(gdat, 
+     vertex.size = 10,
+     vertex.label.cex = 0.5,
+     vertex.label.color = "black",
+     edge.arrow.size = 0.3,
+     #edge.label = letters[1:length(E(gdat))],
+     edge.label.cex = 0.6,
+     edge.label.color = "black",
+     edge.label.pos = 1,
+     main = name)
+}
+plotmodel(modelA, 'modelA')
+```
+```{r}
+plotmodel(modelAsimp, 'modelA simplified')
+```
+
+### 2) Marginal likelihood of the model under all sceanrios (probability of data, given the model)
+
+```{r}
+
+likelihoods <- c()
+simA_SLR <- system.simulate(1000, modelA,
+                            validators = list(
+                              press.validate(modelA, perturb=c(LandwardLatAccom=1,
+                                                               SeawardLatAccom=-1,
+                                                               SeawardMang=-1), 
+                                             monitor=c(SeawardMang=-1, LandwardMang=1))
+                            ))
+marg_likelihood_SLR <- simA_SLR$accepted/simA_SLR$total
+marg_likelihood_SLR
+likelihoods[1] <- marg_likelihood_SLR
+
+simAsimp_SLR <- system.simulate(1000, modelAsimp,
+                            validators = list(
+                              press.validate(modelAsimp, perturb=c(LandwardLatAccom=1,
+                                                               SeawardLatAccom=-1,
+                                                               SeawardMang=-1), 
+                                             monitor=c(SeawardMang=-1, LandwardMang=1))
+                            ))
+marg_likelihoodsimp_SLR <- simAsimp_SLR$accepted/simAsimp_SLR$total
+marg_likelihoodsimp_SLR
+likelihoods[5] <- marg_likelihoodsimp_SLR
+
+simA_SedSupp <- system.simulate(1000, modelA,
+                            validators = list(
+                              press.validate(modelA, perturb=c(SubVol=1), 
+                                   monitor=c(SeawardMang=1))
+                            ))
+marg_likelihood_SedSupp <- simA_SedSupp$accepted/simA_SedSupp$total
+marg_likelihood_SedSupp
+likelihoods[2] <- marg_likelihood_SedSupp
+
+simAsimp_SedSupp <- system.simulate(1000, modelAsimp,
+                            validators = list(
+                              press.validate(modelAsimp, perturb=c(SubVol=1), 
+                                   monitor=c(SeawardMang=1))
+                            ))
+marg_likelihoodsimp_SedSupp <- simAsimp_SedSupp$accepted/simAsimp_SedSupp$total
+marg_likelihoodsimp_SedSupp
+likelihoods[6] <- marg_likelihoodsimp_SedSupp
+
+simA_SLR_SedSupp <- system.simulate(1000, modelA,
+                            validators = list(
+                              press.validate(modelA, perturb=c(LandwardLatAccom=1,
+                                                               SeawardLatAccom=-1,
+                                                               SeawardPropag=-1,
+                                                               SeawardMang=-1,
+                                                               SubVol=1), 
+                                             monitor=c(SeawardMang=1, LandwardMang=1))
+                            ))
+marg_likelihood_SLR_SedSupp <- simA_SLR_SedSupp$accepted/simA_SLR_SedSupp$total
+marg_likelihood_SLR_SedSupp
+likelihoods[3] <- marg_likelihood_SLR_SedSupp
+
+simAsimp_SLR_SedSupp <- system.simulate(1000, modelAsimp,
+                            validators = list(
+                              press.validate(modelAsimp, perturb=c(LandwardLatAccom=1,
+                                                               SeawardLatAccom=-1,
+                                                               #SeawardPropag=-1,
+                                                               SeawardMang=-1,
+                                                               SubVol=1), 
+                                             monitor=c(SeawardMang=1, LandwardMang=1))
+                            ))
+marg_likelihoodsimp_SLR_SedSupp <- simAsimp_SLR_SedSupp$accepted/simAsimp_SLR_SedSupp$total
+marg_likelihoodsimp_SLR_SedSupp
+likelihoods[7] <- marg_likelihoodsimp_SLR_SedSupp
+
+simA_SLF_SedSupp <- system.simulate(1000, modelA,
+                            validators = list(
+                              press.validate(modelA, perturb=c(LandwardLatAccom=-1,
+                                                               SeawardLatAccom=1,
+                                                               LandwardPropag=-1,
+                                                               LandwardMang=-1,
+                                                               SubVol=1), 
+                                             monitor=c(SeawardMang=1, LandwardMang=-1))
+                            ))
+marg_likelihood_SLF_SedSupp <- simA_SLF_SedSupp$accepted/simA_SLF_SedSupp$total
+marg_likelihood_SLF_SedSupp
+likelihoods[4] <- marg_likelihood_SLF_SedSupp
+
+simAsimp_SLF_SedSupp <- system.simulate(1000, modelAsimp,
+                            validators = list(
+                              press.validate(modelAsimp, perturb=c(LandwardLatAccom=-1,
+                                                               SeawardLatAccom=1,
+                                                               #LandwardPropag=-1,
+                                                               LandwardMang=-1,
+                                                               SubVol=1), 
+                                             monitor=c(SeawardMang=1, LandwardMang=-1))
+                            ))
+marg_likelihoodsimp_SLF_SedSupp <- simAsimp_SLF_SedSupp$accepted/simAsimp_SLF_SedSupp$total
+marg_likelihoodsimp_SLF_SedSupp
+likelihoods[8] <- marg_likelihoodsimp_SLF_SedSupp
+
+datplot <- data.frame(scenario = rep(c('SLR', 'Sediment supply', 'SLR & Sediment supply', 'SLF & Sediment supply'),2),
+                      model = c(rep('Complex', 4), rep('Simple', 4)),
+                      likelihood = likelihoods)
+
+ggplot(datplot) +
+  aes(x = scenario, y = likelihoods) +
+  geom_bar(stat = 'identity') +
+  facet_wrap(~model) +
+  ylim(c(0,1)) +
+  theme(axis.text.x = element_text(angle = 20,
+                                   hjust = 1)) +
+  ylab("Marginal Likelihood of Model") +
+  xlab("Scenario") +
+  geom_hline(yintercept = 0.5)
+```
+
+
+### 3) Probability of mangrove response (increase, decrease or neutral) under all scenarios
+
+sum
+### 4) 
+
+Most likely model under all scenarios (based on marginal likelihoods obtained through simulation)
+
+#### Scenario 1: High sediment supply
+Expect seaward mangroves to increase
+
+#### Scenario 2: High sediment supply and sea-level fall (e.g., during drought)
+Expect Seaward mangroves to increase (progradation) and landward mangroves dieback
+
+#### Scenario 3: High sediment supply and sea-level rise
+Expect seaward mangroves to prograde, landward mangroves to migrate landward
+
+#### Scenario 4: Sea-level rise
+Expect landward mangroves to increase, seaward mangroves to decrease
+
+Below graph shows proportion of simulations where model is valid across 1000 simulations with randomised weights (i.e., the marginal likelihood of the model, under different scenarios)
+
+We can compare marginal likelihoods (p(y|M)) of different models under each scenario to see which is the most likely model, i.e., best representation of the system. We can compute Bayes Factors as ratios of these probabilities for different models.
+
+If we have a prior belief about which model is best, we can use those to calculate the posterior probability of each model. 
+
+`posterior <- prior * marg_likelihood / sum(prior*marg_likelihood)`
+
+TODO, simulate outcomes under different scenarios, and calculate probabilities of positive, negative or neutral outcome. use CB's simulate_scenarios function
+
+
+
+
+###########################
+########################
+### 3) Simulate scenarios and compare outcomes
+
+```{r}
+simulate_scenarios <- function(i){
+  
+  simB <- community.sampler(modelA)
+  varnames <- colnames(adjacency.matrix(modelA, labels = T))
+  
+  stable_comm <- FALSE
+  
+  while(!stable_comm){
+    w <- simB$community()
+    stable_comm <- stable.community(w)
+  }
+  
+  modout <- data.frame(isim = i,
+                       scnr = c("Sediment supply", "Sea-level rise", 
+                                    "Sediment supply & Sea-level fall",
+                                    "Sediment supply & Sea-level rise"),
+                       outcomes = c(valSedSupply(w),
+                                    val_SLR(w),
+                                    valSedSupply_SLF(w),
+                                    valSedSupply_SLR(w))
+  )
+  return(modout)
+}
+modout <- lapply(1:1000, simulate_scenarios)
+modout <- do.call("rbind", modout)
+```
+
+
+```{r}
+#summarise results
+modsum <- modout %>% group_by(scnr) %>%
+  summarize(prop_valid = sum(outcomes==TRUE)/n())
+ggplot(modsum) +
+  aes(x = scnr, y = prop_valid) + 
+  geom_bar(stat = 'identity') +
+  ylim(c(0,1)) +
+  theme(axis.text.x = element_text(angle = 20,
+                                   hjust = 1)) +
+  ylab("Proportion valid") +
+  xlab("Scenario") +
+  geom_hline(yintercept = 0.5)
+```
