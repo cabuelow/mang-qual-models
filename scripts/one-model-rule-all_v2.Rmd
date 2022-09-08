@@ -77,8 +77,9 @@ Expect landward mangroves to increase, seaward mangroves to decrease
 
 ```{r}
 
+numsims <- 10000
 likelihoods <- c()
-simA_SLR <- system.simulate(1000, modelA,
+simA_SLR <- system.simulate(numsims, modelA,
                             validators = list(
                               press.validate(modelA, perturb=c(LandwardLatAccom=1,
                                                                SeawardLatAccom=-1,
@@ -90,7 +91,7 @@ marg_likelihood_SLR <- simA_SLR$accepted/simA_SLR$total
 marg_likelihood_SLR
 likelihoods[1] <- marg_likelihood_SLR
 
-simAsimp_SLR <- system.simulate(1000, modelAsimp,
+simAsimp_SLR <- system.simulate(numsims, modelAsimp,
                             validators = list(
                               press.validate(modelAsimp, perturb=c(LandwardLatAccom=1,
                                                                SeawardLatAccom=-1,
@@ -101,7 +102,7 @@ marg_likelihoodsimp_SLR <- simAsimp_SLR$accepted/simAsimp_SLR$total
 marg_likelihoodsimp_SLR
 likelihoods[6] <- marg_likelihoodsimp_SLR
 
-simA_SedSupp <- system.simulate(1000, modelA,
+simA_SedSupp <- system.simulate(numsims, modelA,
                             validators = list(
                               press.validate(modelA, perturb=c(SubVol=1), 
                                    monitor=c(SeawardMang=1))
@@ -110,7 +111,7 @@ marg_likelihood_SedSupp <- simA_SedSupp$accepted/simA_SedSupp$total
 marg_likelihood_SedSupp
 likelihoods[2] <- marg_likelihood_SedSupp
 
-simAsimp_SedSupp <- system.simulate(1000, modelAsimp,
+simAsimp_SedSupp <- system.simulate(numsims, modelAsimp,
                             validators = list(
                               press.validate(modelAsimp, perturb=c(SubVol=1), 
                                    monitor=c(SeawardMang=1))
@@ -119,7 +120,7 @@ marg_likelihoodsimp_SedSupp <- simAsimp_SedSupp$accepted/simAsimp_SedSupp$total
 marg_likelihoodsimp_SedSupp
 likelihoods[7] <- marg_likelihoodsimp_SedSupp
 
-simA_SLR_SedSupp <- system.simulate(1000, modelA,
+simA_SLR_SedSupp <- system.simulate(numsims, modelA,
                             validators = list(
                               press.validate(modelA, perturb=c(LandwardLatAccom=1,
                                                                SeawardLatAccom=-1,
@@ -132,7 +133,7 @@ marg_likelihood_SLR_SedSupp <- simA_SLR_SedSupp$accepted/simA_SLR_SedSupp$total
 marg_likelihood_SLR_SedSupp
 likelihoods[3] <- marg_likelihood_SLR_SedSupp
 
-simAsimp_SLR_SedSupp <- system.simulate(1000, modelAsimp,
+simAsimp_SLR_SedSupp <- system.simulate(numsims, modelAsimp,
                             validators = list(
                               press.validate(modelAsimp, perturb=c(LandwardLatAccom=1,
                                                                SeawardLatAccom=-1,
@@ -145,7 +146,7 @@ marg_likelihoodsimp_SLR_SedSupp <- simAsimp_SLR_SedSupp$accepted/simAsimp_SLR_Se
 marg_likelihoodsimp_SLR_SedSupp
 likelihoods[8] <- marg_likelihoodsimp_SLR_SedSupp
 
-simA_SLF_SedSupp <- system.simulate(1000, modelA,
+simA_SLF_SedSupp <- system.simulate(numsims, modelA,
                             validators = list(
                               press.validate(modelA, perturb=c(LandwardLatAccom=-1,
                                                                SeawardLatAccom=1,
@@ -158,7 +159,7 @@ marg_likelihood_SLF_SedSupp <- simA_SLF_SedSupp$accepted/simA_SLF_SedSupp$total
 marg_likelihood_SLF_SedSupp
 likelihoods[4] <- marg_likelihood_SLF_SedSupp
 
-simAsimp_SLF_SedSupp <- system.simulate(1000, modelAsimp,
+simAsimp_SLF_SedSupp <- system.simulate(numsims, modelAsimp,
                             validators = list(
                               press.validate(modelAsimp, perturb=c(LandwardLatAccom=-1,
                                                                SeawardLatAccom=1,
@@ -171,7 +172,7 @@ marg_likelihoodsimp_SLF_SedSupp <- simAsimp_SLF_SedSupp$accepted/simAsimp_SLF_Se
 marg_likelihoodsimp_SLF_SedSupp
 likelihoods[9] <- marg_likelihoodsimp_SLF_SedSupp
 
-simA_all <- system.simulate(1000, modelA,
+simA_all <- system.simulate(numsims, modelA,
                             validators = list(
                               press.validate(modelA, perturb=c(LandwardLatAccom=-1,
                                                                SeawardLatAccom=1,
@@ -197,7 +198,7 @@ marg_likelihood_all <- simA_all$accepted/simA_all$total
 marg_likelihood_all
 likelihoods[5] <- marg_likelihood_all
 
-simAsimp_all <- system.simulate(1000, modelAsimp,
+simAsimp_all <- system.simulate(numsims, modelAsimp,
                             validators = list(
                               press.validate(modelAsimp, perturb=c(LandwardLatAccom=-1,
                                                                SeawardLatAccom=1,
@@ -250,7 +251,7 @@ Blue is the probability of mangrove landward migration under each scenario.
 Red is the probability of mangrove seaward migration (i.e., progradation) under each scenario.
 
 ```{r}
-modout <- lapply(1:1000, simulate_scenarios)
+modout <- lapply(1:10000, simulate_scenarios)
 modout <- do.call("rbind", modout)
 
 # calculate probability of progradation or landward migration under each scenario
@@ -310,7 +311,7 @@ Use the system.simulate function. Here all the 'accepted' matrices/models are a)
 
 params <- data.frame(rbind(simA_SLR$w, simA_SedSupp$w, simA_SLR_SedSupp$w, simA_SLF_SedSupp$w, simA_all$w))
 
-params$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF", 'All'), each = 1000)
+params$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF", 'All'), each = numsims)
 
 params <- params %>% pivot_longer(LandwardLatAccom....LandwardPropag:SubVol....SubVol, 
                          names_to = "link", values_to = 'weight')
@@ -320,19 +321,27 @@ params$to_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 5)
 
 ggplot() +
   geom_density(data = filter(params, scnr == 'SLR'), 
-               aes(x = weight), colour = 'blue', fill = 'blue', alpha = 0.5) +
+               aes(x = weight), colour = 'blue', fill = 'blue', alpha = 0.2) +
    geom_density(data = filter(params, scnr == 'Sediment supply'), 
-               aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.5) +
+               aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.2) +
    geom_density(data = filter(params, scnr == 'Sediment supply & SLR'), 
-               aes(x = weight), colour = 'green', fill = 'green', alpha = 0.5) +
+               aes(x = weight), colour = 'green', fill = 'green', alpha = 0.2) +
    geom_density(data = filter(params, scnr == 'Sediment supply & SLF'), 
-               aes(x = weight), colour = 'red', fill = 'red', alpha = 0.5) +
+               aes(x = weight), colour = 'red', fill = 'red', alpha = 0.2) +
    geom_density(data = filter(params, scnr == 'All'), 
-               aes(x = weight), colour = 'purple', fill = 'purple', alpha = 0.5) +
-  facet_wrap(~link, scales = 'free')
+               aes(x = weight), colour = 'purple', fill = 'purple', alpha = 0.2) +
+  facet_wrap(~link, scales = 'free') +
+  theme(strip.text.x = element_text(size = 5))
 
 ```
-So they are all pretty uncertain. Probably can't do anything with this?
+Almost uniform distribution for most scenarios and parameters. Except some interesting ones:
+- Sediment supply and SLF (green) - here parameters are only from where landward mangroves decrease, and seaward mangroves increase - its the landward selflimiting variables, small rather than high negative weight is more likely.
+  - 
+
+TODO: Try to put tighter constraints on parameter values with more scenario validation
+Make this into a function and put in an app, so that you can easily select for very complicated press perturbation scenarios for all drivers, and see outcome.
+
+
 
 
 
