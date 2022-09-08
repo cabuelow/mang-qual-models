@@ -306,7 +306,33 @@ Quantify and compare uncertainty in parameters. Where are valid parameters most 
 
 Use the system.simulate function. Here all the 'accepted' matrices/models are a) stable, and b) meet the scenario validation criteria.
 
+```{r}
 
+params <- data.frame(rbind(simA_SLR$w, simA_SedSupp$w, simA_SLR_SedSupp$w, simA_SLF_SedSupp$w, simA_all$w))
+
+params$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF", 'All'), each = 1000)
+
+params <- params %>% pivot_longer(LandwardLatAccom....LandwardPropag:SubVol....SubVol, 
+                         names_to = "link", values_to = 'weight')
+
+params$from_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 1)
+params$to_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 5)
+
+ggplot() +
+  geom_density(data = filter(params, scnr == 'SLR'), 
+               aes(x = weight), colour = 'blue', fill = 'blue', alpha = 0.5) +
+   geom_density(data = filter(params, scnr == 'Sediment supply'), 
+               aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.5) +
+   geom_density(data = filter(params, scnr == 'Sediment supply & SLR'), 
+               aes(x = weight), colour = 'green', fill = 'green', alpha = 0.5) +
+   geom_density(data = filter(params, scnr == 'Sediment supply & SLF'), 
+               aes(x = weight), colour = 'red', fill = 'red', alpha = 0.5) +
+   geom_density(data = filter(params, scnr == 'All'), 
+               aes(x = weight), colour = 'purple', fill = 'purple', alpha = 0.5) +
+  facet_wrap(~link, scales = 'free')
+
+```
+So they are all pretty uncertain. Probably can't do anything with this?
 
 
 

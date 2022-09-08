@@ -40,24 +40,3 @@ simulate_scenarios <- function(i){
   
   return(modout)
 }
-
-sim_valid_scenarios <- function(i){
-  
-  simB <- community.sampler(modelA)
-  varnames <- colnames(adjacency.matrix(modelA, labels = T))
-  
-  stable_comm <- FALSE
-  
-  while(!stable_comm){
-    w <- simB$community()
-    stable_comm <- stable.community(w)
-  }
-
-ws <- simB$weights(w)
-names(ws) <- simB$weight.labels
-
-params <- data.frame(isim = i,
-                     links = simB$weight.labels, 
-                     weight = simB$weights(w))
-
-}
