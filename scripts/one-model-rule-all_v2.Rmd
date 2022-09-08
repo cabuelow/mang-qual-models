@@ -334,9 +334,8 @@ ggplot() +
   theme(strip.text.x = element_text(size = 5))
 
 ```
-Almost uniform distribution for most scenarios and parameters. Except some interesting ones:
-- Sediment supply and SLF (green) - here parameters are only from where landward mangroves decrease, and seaward mangroves increase - its the landward selflimiting variables, small rather than high negative weight is more likely.
-  - 
+The scenarios are valid under a generally very ambiguous set of parameter weights. 
+That probably means our predictions are very uncertain too.
 
 TODO: Try to put tighter constraints on parameter values with more scenario validation
 Make this into a function and put in an app, so that you can easily select for very complicated press perturbation scenarios for all drivers, and see outcome.
