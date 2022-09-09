@@ -1,42 +1,49 @@
-SedSupply_SLF <- press.impact(modelA, perturb=c(LandwardLatAccom=-1,
-                                 SeawardLatAccom=1,
-                                 LandwardPropag=-1,
-                                 LandwardMang=-1,
-                                 SubVol=1))
-SLR <- press.impact(modelA, perturb=c(LandwardLatAccom=1,
-                                 SeawardLatAccom=-1,
-                                 SeawardMang=-1))
-SedSupply <- press.impact(modelA, perturb=c(SubVol=1))
-SedSupply_SLR <- press.impact(modelA, perturb=c(LandwardLatAccom=1,
-                                 SeawardLatAccom=-1,
-                                 SeawardPropag=-1,
-                                 SeawardMang=-1,
-                                 SubVol=1))
+# this function can only do one press scenario at a time
+# unlike original 'system.simulate' which can accept models that are valid under
+# multiple scenarios
 
-simulate_scenarios <- function(i){
-  
-  simB <- community.sampler(modelA)
-  varnames <- colnames(adjacency.matrix(modelA, labels = T))
-  
-  stable_comm <- FALSE
-  
-  while(!stable_comm){
-    w <- simB$community()
-    stable_comm <- stable.community(w)
+system.sim_press_val <- function (n.sims, edges, required.groups = c(0), 
+          sampler = community.sampler(edges, required.groups),  
+          perturb, monitor, epsilon = 1e-05) {
+  allout <- list()
+  valout <- matrix(0, n.sims, length(node.labels(edges)))
+  ws <- matrix(0, n.sims, nrow(edges))
+  total <- 0
+  stable <- 0
+  accepted <- 0
+  while (accepted < n.sims) {
+    total <- total + 1
+    z <- sampler$select(runif(1))
+    W <- sampler$community()
+    if (!stable.community(W)) 
+      next
+    stable <- stable + 1
+    #### here need to get outcome of stable matrixces and store
+    allout[[total]] <- tryCatch(solve(W, S.press), error = function(e) NULL)
+    labels <- node.labels(edges)
+    index <- function(name) {
+      k <- match(name, labels)
+      if (any(is.na(k))) 
+        warning("Unknown nodes:", paste(name[is.na(k)], collapse = " "))
+      k
+    }
+    k.perturb <- index(names(perturb))
+    k.monitor <- index(names(monitor))
+    S.press <- double(length(labels))
+    S.press[k.perturb] <- -perturb
+    monitor <- sign(monitor)
+      s <- tryCatch(solve(W, S.press), error = function(e) NULL)
+      val <- !is.null(s) && all(signum(s[k.monitor], epsilon) == monitor)
+    if(val == FALSE)
+      next
+    accepted <- accepted + 1
+    valout[accepted, ] <- s
+    ws[accepted, ] <- sampler$weights(W)
   }
-  
-  modout <- data.frame(vars = rep(varnames, 4),
-                       isim = i,
-                       scnr = rep(c("Sediment supply", 
-                                "SLR", 
-                                "Sediment supply & SLF",
-                                "Sediment supply & SLR"),
-                                each = length(varnames)),
-                       outcomes = c(SedSupply(w),
-                                    SLR(w),
-                                    SedSupply_SLF(w),
-                                    SedSupply_SLR(w))
-  )
-  
-  return(modout)
+  allout <- do.call(rbind, allout)
+  colnames(allout) <- node.labels(edges)
+  colnames(valout) <- node.labels(edges)
+  colnames(ws) <- sampler$weight.labels
+  list(edges = edges, allout = allout, valout = valout, valweights = ws, total = total, stable = stable, 
+       accepted = accepted)
 }
