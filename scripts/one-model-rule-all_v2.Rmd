@@ -53,10 +53,10 @@ plot(gdat,
      edge.label.pos = 1,
      main = name)
 }
-plotmodel(modelA, 'modelA')
+plotmodel(modelA_driv, 'modelA with drivers')
 ```
 ```{r}
-plotmodel(modelAsimp, 'modelA simplified')
+plotmodel(modelA_driv2, 'modelA with drivers, but no propagules')
 ```
 
 ### 2) Marginal likelihood of the model under different scenarios (probability of generating a expected observations given the model, i.e. model evidence)
@@ -77,128 +77,61 @@ Expect landward mangroves to increase, seaward mangroves to decrease
 
 numsims <- 10000
 likelihoods <- c()
-simA_SLR <- system.sim_press_val(numsims, modelA, perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               SeawardPropag=-1,
-                                                               SeawardMang=-1), 
+
+simA_SLR <- system.sim_press_val(numsims, modelA_driv, perturb=c(SeaLevelRise=1), 
                                              monitor=c(SeawardMang=-1, LandwardMang=1))
 marg_likelihood_SLR <- simA_SLR$accepted/simA_SLR$total
 marg_likelihood_SLR
 likelihoods[1] <- marg_likelihood_SLR
 
-simAsimp_SLR <- system.sim_press_val(numsims, modelAsimp,perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               SeawardMang=-1), 
+simA_SLRa <- system.sim_press_val(numsims, modelA_driv2, perturb=c(SeaLevelRise=1), 
                                              monitor=c(SeawardMang=-1, LandwardMang=1))
-marg_likelihoodsimp_SLR <- simAsimp_SLR$accepted/simAsimp_SLR$total
-marg_likelihoodsimp_SLR
-likelihoods[6] <- marg_likelihoodsimp_SLR
+marg_likelihood_SLRa <- simA_SLRa$accepted/simA_SLRa$total
+marg_likelihood_SLRa
+likelihoods[5] <- marg_likelihood_SLRa
 
-simA_SedSupp <- system.sim_press_val(numsims, modelA,perturb=c(SubVol=1), 
-                                   monitor=c(SeawardMang=1))
-marg_likelihood_SedSupp <- simA_SedSupp$accepted/simA_SedSupp$total
-marg_likelihood_SedSupp
-likelihoods[2] <- marg_likelihood_SedSupp
-
-simAsimp_SedSupp <- system.sim_press_val(numsims, modelAsimp,perturb=c(SubVol=1), 
-                                   monitor=c(SeawardMang=1))
-marg_likelihoodsimp_SedSupp <- simAsimp_SedSupp$accepted/simAsimp_SedSupp$total
-marg_likelihoodsimp_SedSupp
-likelihoods[7] <- marg_likelihoodsimp_SedSupp
-
-simA_SLR_SedSupp <- system.sim_press_val(numsims, modelA,perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               SeawardPropag=-1,
-                                                               SeawardMang=-1,
-                                                               SubVol=1), 
+simA_SLR_SedSupp <- system.sim_press_val(numsims, modelA_driv,perturb=c(SeaLevelRise=1,
+                                                                        SedSupply=1), 
                                              monitor=c(SeawardMang=1, LandwardMang=1))
 marg_likelihood_SLR_SedSupp <- simA_SLR_SedSupp$accepted/simA_SLR_SedSupp$total
 marg_likelihood_SLR_SedSupp
-likelihoods[3] <- marg_likelihood_SLR_SedSupp
+likelihoods[2] <- marg_likelihood_SLR_SedSupp
 
-simAsimp_SLR_SedSupp <- system.sim_press_val(numsims, modelAsimp, perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               #SeawardPropag=-1,
-                                                               SeawardMang=-1,
-                                                               SubVol=1), 
+simA_SLR_SedSuppa <- system.sim_press_val(numsims, modelA_driv2,perturb=c(SeaLevelRise=1,
+                                                                        SedSupply=1), 
                                              monitor=c(SeawardMang=1, LandwardMang=1))
-marg_likelihoodsimp_SLR_SedSupp <- simAsimp_SLR_SedSupp$accepted/simAsimp_SLR_SedSupp$total
-marg_likelihoodsimp_SLR_SedSupp
-likelihoods[8] <- marg_likelihoodsimp_SLR_SedSupp
+marg_likelihood_SLR_SedSuppa <- simA_SLR_SedSuppa$accepted/simA_SLR_SedSuppa$total
+marg_likelihood_SLR_SedSuppa
+likelihoods[6] <- marg_likelihood_SLR_SedSuppa
 
-simA_SLF_SedSupp <- system.sim_press_val(numsims, modelA,perturb=c(LandwardLatAccom=-1,
-                                                               SeawardLatAccom=1,
-                                                               LandwardPropag=-1,
-                                                               LandwardMang=-1,
-                                                               SubVol=1), 
+simA_SLF_SedSupp <- system.sim_press_val(numsims, modelA_driv,perturb=c(SeaLevelFall=1,
+                                                                        SedSupply=1), 
                                              monitor=c(SeawardMang=1, LandwardMang=-1))
 marg_likelihood_SLF_SedSupp <- simA_SLF_SedSupp$accepted/simA_SLF_SedSupp$total
 marg_likelihood_SLF_SedSupp
-likelihoods[4] <- marg_likelihood_SLF_SedSupp
+likelihoods[3] <- marg_likelihood_SLF_SedSupp
 
-simAsimp_SLF_SedSupp <- system.sim_press_val(numsims, modelAsimp, perturb=c(LandwardLatAccom=-1,
-                                                               SeawardLatAccom=1,
-                                                               #LandwardPropag=-1,
-                                                               LandwardMang=-1,
-                                                               SubVol=1), 
+simA_SLF_SedSuppa <- system.sim_press_val(numsims, modelA_driv2,perturb=c(SeaLevelFall=1,
+                                                                        SedSupply=1), 
                                              monitor=c(SeawardMang=1, LandwardMang=-1))
-marg_likelihoodsimp_SLF_SedSupp <- simAsimp_SLF_SedSupp$accepted/simAsimp_SLF_SedSupp$total
-marg_likelihoodsimp_SLF_SedSupp
-likelihoods[9] <- marg_likelihoodsimp_SLF_SedSupp
+marg_likelihood_SLF_SedSuppa <- simA_SLF_SedSuppa$accepted/simA_SLF_SedSuppa$total
+marg_likelihood_SLF_SedSuppa
+likelihoods[7] <- marg_likelihood_SLF_SedSuppa
 
-simA_all <- system.simulate(numsims, modelA,
-                            validators = list(
-                              press.validate(modelA, perturb=c(LandwardLatAccom=-1,
-                                                               SeawardLatAccom=1,
-                                                               LandwardPropag=-1,
-                                                               LandwardMang=-1,
-                                                               SubVol=1), 
-                                             monitor=c(SeawardMang=1, LandwardMang=-1)),
-                               press.validate(modelA, perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               SeawardPropag=-1,
-                                                               SeawardMang=-1), 
-                                             monitor=c(SeawardMang=-1, LandwardMang=1)),
-                              press.validate(modelA, perturb=c(SubVol=1), 
-                                   monitor=c(SeawardMang=1)),
-                               press.validate(modelA, perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               SeawardPropag=-1,
-                                                               SeawardMang=-1,
-                                                               SubVol=1), 
-                                             monitor=c(SeawardMang=1, LandwardMang=1))
-                            ))
-marg_likelihood_all <- simA_all$accepted/simA_all$total
-marg_likelihood_all
-likelihoods[5] <- marg_likelihood_all
+simA_SedSupp <- system.sim_press_val(numsims, modelA_driv,perturb=c(SedSupply=1), 
+                                             monitor=c(SeawardMang=1))
+marg_likelihood_SedSupp <- simA_SedSupp$accepted/simA_SedSupp$total
+marg_likelihood_SedSupp
+likelihoods[4] <- marg_likelihood_SedSupp
 
-simAsimp_all <- system.simulate(numsims, modelAsimp,
-                            validators = list(
-                              press.validate(modelAsimp, perturb=c(LandwardLatAccom=-1,
-                                                               SeawardLatAccom=1,
-                                                               #LandwardPropag=-1,
-                                                               LandwardMang=-1,
-                                                               SubVol=1), 
-                                             monitor=c(SeawardMang=1, LandwardMang=-1)),
-                               press.validate(modelAsimp, perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               SeawardMang=-1), 
-                                             monitor=c(SeawardMang=-1, LandwardMang=1)),
-                               press.validate(modelAsimp, perturb=c(SubVol=1), 
-                                   monitor=c(SeawardMang=1)),
-                              press.validate(modelAsimp, perturb=c(LandwardLatAccom=1,
-                                                               SeawardLatAccom=-1,
-                                                               #SeawardPropag=-1,
-                                                               SeawardMang=-1,
-                                                               SubVol=1), 
-                                             monitor=c(SeawardMang=1, LandwardMang=1))
-                            ))
-marg_likelihoodsimp_all <- simAsimp_all$accepted/simAsimp_all$total
-marg_likelihoodsimp_all
-likelihoods[10] <- marg_likelihoodsimp_all
+simA_SedSuppa <- system.sim_press_val(numsims, modelA_driv2,perturb=c(SedSupply=1), 
+                                             monitor=c(SeawardMang=1))
+marg_likelihood_SedSuppa <- simA_SedSuppa$accepted/simA_SedSuppa$total
+marg_likelihood_SedSuppa
+likelihoods[8] <- marg_likelihood_SedSuppa
 
-datplot <- data.frame(scenario = rep(c('SLR', 'Sediment supply', 'SLR & Sediment supply', 'SLF & Sediment supply', 'All'),2),
-                      model = c(rep('Complex', 5), rep('Simple', 5)),
+datplot <- data.frame(scenario = rep(c('SLR', 'SLR & Sediment supply', 'SLF & Sediment supply', 'Sediment supply'),2),
+                      model = c(rep('Driver model', 4), rep('Driver model simplified', 4)),
                       likelihood = likelihoods)
 
 ggplot(datplot) +
@@ -212,11 +145,11 @@ ggplot(datplot) +
   xlab("Scenario") +
   geom_hline(yintercept = 0.5)
 ```
-Model evidence is generally low, and similar for both the simple and complex models in each scenario. There are very few models that are stable and valid under all scenarios.
+Model evidence is generally low for both models. Note that simpler models without driver variables have been tested, and tend to have higher model evidence, but don't allow us to examine the responses of mangroves to multiple, interacting pressures, i.e., we cannot consider the effect of multiple drivers on a single variable of interest, i.e., mangrove increase/decrease. So we are using the more complex, driver based models.
 
-We will use complex model for further investigation.
+We will use the simplified driver model for further investigation. Only if we want to examine tidal amplitude/tidal frequency scenarios should we use the more complex driver model with propagules.
 
-### 3) Predicted response of mangroves under different scenarios
+### 3) Predicted response of mangroves under Kerrylee's 'validation' scenarios
 
 Here we only consider models that are stable to estimate the probability of different mangrove responses (evaluation of model evidence above includes all models that are simulated (stable + unstable))
 
@@ -225,9 +158,9 @@ Red is the probability of mangrove seaward migration (i.e., progradation) under 
 
 ```{r}
 
-outcomes <- data.frame(rbind(simA_SLR$allout, simA_SedSupp$allout, simA_SLR_SedSupp$allout, simA_SLF_SedSupp$allout))
+outcomes <- data.frame(rbind(simA_SLRa$allout, simA_SedSuppa$allout, simA_SLR_SedSuppa$allout, simA_SLF_SedSuppa$allout))
 
-outcomes$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF"), times = c(simA_SLR$stable-1, simA_SedSupp$stable-1, simA_SLR_SedSupp$stable-1, simA_SLF_SedSupp$stable-1))
+outcomes$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF"), times = c(simA_SLRa$stable, simA_SedSuppa$stable, simA_SLR_SedSuppa$stable, simA_SLF_SedSuppa$stable))
 
 outcomes <- outcomes %>% pivot_longer(LandwardLatAccom:SubVol, 
                          names_to = "variable", values_to = 'outcome')
@@ -273,13 +206,11 @@ b <- ggplot(landward) +
 
 a+b
 ```
-Mangroves will prograde under scenarios of high sediment supply and sea level fall.
-Mangroves will migrate landward under scenarios of sea level rise and sediment supply. Decrease under sediment supply and sea-level fall.
+Landward mangroves always do what we expect under each scenario, except for scenario of sediment supply - under which we have no expectation of how landward mangroves will respond (we only expect progradation of mangroves). 
 
-Under these limited scenarios, suggests that whether landward mangroves will increase or decrease is more certain than for seaward mangroves under most scenarios.
-TODO: more scenarios, including restoration etc...
+The response of seaward mangroves is more uncertain, except for scenario of sea-level rise where we see progradation as expected. For the others, seaward mangroves do what we expect most of the time.
 
-We can also map these as qualitative predictions.
+Eventually we can map these as qualitative predictions about the likely response of mangroves given different drivers.
 
 ### 4) For each scenario, get models that are valid, construct probability distribiution of likely parameter values
 
@@ -289,27 +220,29 @@ Parameters are taken from simulated models that meet the following criteria: a) 
 
 ```{r}
 
-params <- data.frame(rbind(simA_SLR$valweights, simA_SedSupp$valweights, simA_SLR_SedSupp$valweights, simA_SLF_SedSupp$valweights, simA_all$w))
+params <- data.frame(rbind(simA_SLRa$valweights, simA_SedSuppa$valweights, simA_SLR_SedSuppa$valweights, simA_SLF_SedSuppa$valweights))
 
-params$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF", 'All'), each = numsims)
+params$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF"), each = numsims)
 
-params <- params %>% pivot_longer(LandwardLatAccom....LandwardPropag:SubVol....SubVol, 
+params <- params %>% pivot_longer(LandwardLatAccom....LandwardMang:TidalFreq....TidalFreq, 
                          names_to = "link", values_to = 'weight')
 
 params$from_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 1)
 params$to_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 5)
 
+paramsvis <- subset(params, from_var != to_var)
+
 ggplot() +
-  geom_density(data = filter(params, scnr == 'SLR'), 
+  geom_density(data = filter(paramsvis, scnr == 'SLR'), 
                aes(x = weight), colour = 'blue', fill = 'blue', alpha = 0.2) +
-   geom_density(data = filter(params, scnr == 'Sediment supply'), 
+   geom_density(data = filter(paramsvis, scnr == 'Sediment supply'), 
                aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.2) +
-   geom_density(data = filter(params, scnr == 'Sediment supply & SLR'), 
+   geom_density(data = filter(paramsvis, scnr == 'Sediment supply & SLR'), 
                aes(x = weight), colour = 'green', fill = 'green', alpha = 0.2) +
-   geom_density(data = filter(params, scnr == 'Sediment supply & SLF'), 
+   geom_density(data = filter(paramsvis, scnr == 'Sediment supply & SLF'), 
                aes(x = weight), colour = 'red', fill = 'red', alpha = 0.2) +
-   geom_density(data = filter(params, scnr == 'All'), 
-               aes(x = weight), colour = 'purple', fill = 'purple', alpha = 0.2) +
+  # geom_density(data = filter(params, scnr == 'All'), 
+   #            aes(x = weight), colour = 'purple', fill = 'purple', alpha = 0.2) +
   facet_wrap(~link, scales = 'free') +
   theme(strip.text.x = element_text(size = 5))
 
@@ -324,10 +257,132 @@ Make this into a function and put in an app, so that you can easily select for v
 2) Determine the relative importance of those drivers to the outcome (+ve, -ve, neutral). How to do this when drivers aren't in the model, i.e., can't just see how parameter weights relate to the predicted outcome. 
 - perhaps frame as the relative importance of drivers to the uncertainty in linkage weights, and therefore model predictions? If do this way, can evaluate by running a model with categorical predi
 
+### 5) SLR scenarios with other climate and anthropogenic impacts, and conservation/restoration actions
+
+#### Scenario 1: SLR and cyclones
+Expect mangroves to migrate landwards and seaward mangroves to decrease
+
+#### Scenario 2: SLR and cyclones and dams
+
+#### Scenario 3: SLR and cyclones and Dams and coastal development
+
+#### Scenario 4: SLR and cyclones and Dams and coastal development and erosion
+
+#### Scenario 5: SLR and cyclones and Dams and coastal development and active transplantation
+
+#### Scenario 6: SLR and cyclones and Dams and coastal development and active transplantation and permeable dams
+
+```{r}
+
+simA_SLR_cyc <- system.sim_press_val(numsims, modelA_driv2, perturb=c(SeaLevelRise=1,
+                                                               Cyclones=1), 
+                                             monitor=c(SeawardMang=-1))
+
+simA_SLR_cyc_dams <- system.sim_press_val(numsims, modelA_driv2, perturb=c(SeaLevelRise=1,
+                                                               Cyclones=1,
+                                                               Dams=1), 
+                                             monitor=c(SeawardMang=-1))
+
+simA_SLR_cyc_dams_cd <- system.sim_press_val(numsims, modelA_driv2, perturb=c(SeaLevelRise=1,
+                                                               Cyclones=1,
+                                                               Dams=1,
+                                                               CoastalDev=1), 
+                                             monitor=c(SeawardMang=-1))
+
+simA_SLR_cyc_dams_cd_rest <- system.sim_press_val(numsims, modelA_driv2, perturb=c(SeaLevelRise=1,
+                                                               Cyclones=1,
+                                                               Dams=1,
+                                                               CoastalDev=1, 
+                                                               Restoration=1), 
+                                             monitor=c(SeawardMang=-1))
+
+simA_all <- system.sim_press_val(numsims, modelA_driv2, perturb=c(SeaLevelRise=1,
+                                                               Cyclones=1,
+                                                               Dams=1,
+                                                               CoastalDev=1, 
+                                                               LandwardMang=1,
+                                                               SeawardMang=1), 
+                                             monitor=c(SeawardMang=-1))
 
 
+outcomes <- data.frame(rbind(simA_SLR_cyc$allout, simA_SLR_cyc_dams$allout, simA_SLR_cyc_dams_cd$allout, simA_SLR_cyc_dams_cd_rest$allout))
 
+outcomes$scnr <- rep(c("SLR & cyclones", "SLR & cyclones & dams", "SLR & cyclones & dams & coastal dev", "SLR & cyclones & dams & coastal dev & restoration"), times = c(simA_SLR_cyc$stable-1, simA_SLR_cyc_dams$stable-1, simA_SLR_cyc_dams_cd$stable-1, simA_SLR_cyc_dams_cd_rest$stable-1))
 
+outcomes <- outcomes %>% pivot_longer(colnames(outcomes[1]):colnames(outcomes[ncol(outcomes)-1]), 
+                         names_to = "variable", values_to = 'outcome')
+
+# calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
+
+seaward <- outcomes %>% 
+  filter(variable == 'SeawardMang') %>% 
+  group_by(scnr) %>% 
+  summarise(Increase = sum(outcome>0)/n(),
+            Neutral = sum(outcome==0)/n(),
+            Decrease = sum(outcome<0)/n()) %>% 
+  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
+  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')))
+
+landward <- outcomes %>% 
+  filter(variable == 'LandwardMang') %>% 
+  group_by(scnr) %>% 
+    summarise(Increase = sum(outcome>0)/n(),
+            Neutral = sum(outcome==0)/n(),
+            Decrease = sum(outcome<0)/n()) %>% 
+  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
+  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')))
+
+# Note, as potential TODO could boostrap resample here to get estimate of uncertainty around that probability
+
+a <- ggplot(seaward) +
+  geom_bar(aes(y = scnr, x = prop, fill = outcome),
+           position = 'stack', stat = 'identity') +
+  xlab('Proportion of outcomes') +
+  ylab('') +
+  theme(legend.position = 'none') +
+  ggtitle('Seaward mangroves')
+
+b <- ggplot(landward) +
+  geom_bar(aes(y = scnr, x = prop, fill = outcome),
+           position = 'stack', stat = 'identity') +
+  xlab('Proportion of outcomes') +
+  ylab('') +
+  ggtitle('Landward mangroves') +
+  theme(legend.title = element_blank(),
+        axis.text.y =  element_blank())
+
+a+b
+```
+
+```{r}
+
+params <- data.frame(rbind(simA_SLR_cyc$valweights, simA_SLR_cyc_dams$valweights, simA_SLR_cyc_dams_cd$valweights, simA_SLR_cyc_dams_cd_rest$valweights))
+
+params$scnr <- rep(c("SLR & cyclones", "SLR & cyclones & dams", "SLR & cyclones & dams & coastal dev", "SLR & cyclones & dams & coastal dev & restoration"), each = numsims)
+
+params <- params %>% pivot_longer(colnames(params[1]):colnames(params[ncol(params)-1]),
+                         names_to = "link", values_to = 'weight')
+
+params$from_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 1)
+params$to_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 5)
+
+paramsvis <- subset(params, from_var != to_var)
+
+ggplot() +
+  geom_density(data = filter(paramsvis, scnr == 'SLR'), 
+               aes(x = weight), colour = 'blue', fill = 'blue', alpha = 0.2) +
+   geom_density(data = filter(paramsvis, scnr == 'SLR & cyclones'), 
+               aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.2) +
+   geom_density(data = filter(paramsvis, scnr == 'SLR & cyclones & dams'), 
+               aes(x = weight), colour = 'green', fill = 'green', alpha = 0.2) +
+   geom_density(data = filter(paramsvis, scnr == 'SLR & cyclones & dams & coastal dev'), 
+               aes(x = weight), colour = 'red', fill = 'red', alpha = 0.2) +
+   geom_density(data = filter(paramsvis, scnr == "SLR & cyclones & dams & coastal dev & restoration"), 
+               aes(x = weight), colour = 'purple', fill = 'purple', alpha = 0.2) +
+  facet_wrap(~link, scales = 'free') +
+  theme(strip.text.x = element_text(size = 5))
+
+```
 
 
 

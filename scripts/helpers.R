@@ -5,12 +5,28 @@
 system.sim_press_val <- function (n.sims, edges, required.groups = c(0), 
           sampler = community.sampler(edges, required.groups),  
           perturb, monitor, epsilon = 1e-05) {
+  
   allout <- list()
   valout <- matrix(0, n.sims, length(node.labels(edges)))
   ws <- matrix(0, n.sims, nrow(edges))
   total <- 0
   stable <- 0
   accepted <- 0
+  
+  labels <- node.labels(edges)
+  index <- function(name) {
+    k <- match(name, labels)
+    if (any(is.na(k))) 
+      warning("Unknown nodes:", paste(name[is.na(k)], collapse = " "))
+    k
+  }
+  
+  k.perturb <- index(names(perturb))
+  k.monitor <- index(names(monitor))
+  S.press <- double(length(labels))
+  S.press[k.perturb] <- -perturb
+  monitor <- sign(monitor)
+  
   while (accepted < n.sims) {
     total <- total + 1
     z <- sampler$select(runif(1))
@@ -18,20 +34,7 @@ system.sim_press_val <- function (n.sims, edges, required.groups = c(0),
     if (!stable.community(W)) 
       next
     stable <- stable + 1
-    #### here need to get outcome of stable matrixces and store
     allout[[total]] <- tryCatch(solve(W, S.press), error = function(e) NULL)
-    labels <- node.labels(edges)
-    index <- function(name) {
-      k <- match(name, labels)
-      if (any(is.na(k))) 
-        warning("Unknown nodes:", paste(name[is.na(k)], collapse = " "))
-      k
-    }
-    k.perturb <- index(names(perturb))
-    k.monitor <- index(names(monitor))
-    S.press <- double(length(labels))
-    S.press[k.perturb] <- -perturb
-    monitor <- sign(monitor)
       s <- tryCatch(solve(W, S.press), error = function(e) NULL)
       val <- !is.null(s) && all(signum(s[k.monitor], epsilon) == monitor)
     if(val == FALSE)
@@ -46,4 +49,43 @@ system.sim_press_val <- function (n.sims, edges, required.groups = c(0),
   colnames(ws) <- sampler$weight.labels
   list(edges = edges, allout = allout, valout = valout, valweights = ws, total = total, stable = stable, 
        accepted = accepted)
+}
+
+# this function doesn't monitor press perturbations to validate. 
+# Instead just simulate and get stable matrices, 
+# record outcome (+ve, -ve, neutral) for landward and seaward mangroves
+# get weights 
+
+system.sim_press <- function (n.sims, edges, required.groups = c(0), 
+                                  sampler = community.sampler(edges, required.groups),  
+                                  perturb) {
+  stableout <- list()
+  stablews <- list()
+  stable <- 0
+  
+  labels <- node.labels(edges)
+  index <- function(name) {
+    k <- match(name, labels)
+    if (any(is.na(k))) 
+      warning("Unknown nodes:", paste(name[is.na(k)], collapse = " "))
+    k
+  }
+  
+  k.perturb <- index(names(perturb))
+  S.press <- double(length(labels))
+  S.press[k.perturb] <- -perturb
+  
+  while (stable < n.sims) {
+    z <- sampler$select(runif(1))
+    W <- sampler$community()
+    if (!stable.community(W) & !is.null(solve(W, S.press))) 
+      next
+    stable <- stable + 1
+    stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
+    stablews[[stable]] <- data.frame(nsim = stable, param = sampler$weight.labels, weight = sampler$weights(W))
+  }
+
+  stableout <- do.call(rbind, stableout)
+  stablews <- do.call(rbind, stablews)
+  list(edges = edges, stableoutcome = stableout, stableweights = stablews)
 }
