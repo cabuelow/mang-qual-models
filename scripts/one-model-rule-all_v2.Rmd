@@ -73,6 +73,7 @@ Expect seaward mangroves to prograde, landward mangroves to migrate landward
 #### Scenario 4: Sea-level rise
 Expect landward mangroves to increase, seaward mangroves to decrease
 
+***NOTE doublecheck modelA_driv2 has all driver links that modelA_driv has
 ```{r}
 
 numsims <- 10000
@@ -158,9 +159,9 @@ Red is the probability of mangrove seaward migration (i.e., progradation) under 
 
 ```{r}
 
-outcomes <- data.frame(rbind(simA_SLRa$allout, simA_SedSuppa$allout, simA_SLR_SedSuppa$allout, simA_SLF_SedSuppa$allout))
+outcomes <- data.frame(rbind(simA_SLR$allout, simA_SedSupp$allout, simA_SLR_SedSupp$allout, simA_SLF_SedSupp$allout))
 
-outcomes$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF"), times = c(simA_SLRa$stable, simA_SedSuppa$stable, simA_SLR_SedSuppa$stable, simA_SLF_SedSuppa$stable))
+outcomes$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF"), times = c(simA_SLR$stable, simA_SedSupp$stable, simA_SLR_SedSupp$stable, simA_SLF_SedSupp$stable))
 
 outcomes <- outcomes %>% pivot_longer(LandwardLatAccom:SubVol, 
                          names_to = "variable", values_to = 'outcome')
@@ -220,11 +221,11 @@ Parameters are taken from simulated models that meet the following criteria: a) 
 
 ```{r}
 
-params <- data.frame(rbind(simA_SLRa$valweights, simA_SedSuppa$valweights, simA_SLR_SedSuppa$valweights, simA_SLF_SedSuppa$valweights))
+params <- data.frame(rbind(simA_SLR$valweights, simA_SedSupp$valweights, simA_SLR_SedSupp$valweights, simA_SLF_SedSupp$valweights))
 
 params$scnr <- rep(c("SLR", "Sediment supply", "Sediment supply & SLR", "Sediment supply & SLF"), each = numsims)
 
-params <- params %>% pivot_longer(LandwardLatAccom....LandwardMang:TidalFreq....TidalFreq, 
+params <- params %>% pivot_longer(colnames(params[1]):colnames(params[ncol(params)-1]),
                          names_to = "link", values_to = 'weight')
 
 params$from_var <- sapply(strsplit(as.character(params$link), "\\."), `[`, 1)
