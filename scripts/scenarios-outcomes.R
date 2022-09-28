@@ -12,12 +12,12 @@ source('scripts/helpers.R')
 
 # set up scenario simulations
 
-numsims <- 1000
+numsims <- 10000
 model <- modelA_driv
 
 #actions = c('None', 'Restoration', 'Protection', 'PermeableDam')
 settings =  c('TidalAmp', 'TidalFreq', 'HydroEnergy', 'SedSupply')
-drivers= c('None', 'SeaLevelRise', 'SeaLevelFall', 'Cyclones', 'Dams', 'CoastalDev', 'BasementUp', 'Subsidence')
+drivers = c('SeaLevelRise', 'SeaLevelFall', 'Cyclones', 'Dams', 'CoastalDev', 'BasementUp', 'Subsidence')
 
 all <- data.frame(#action = rep(actions, each = length(drivers)*length(settings)),
                   setting = rep(settings, times = length(drivers)),
@@ -43,12 +43,21 @@ outcomes <- do.call(rbind, out)
 outcomes$scnr <- rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(node.labels(model))))
 outcomes$setting <- rep(all$setting, each = c(numsims*length(node.labels(model))))
 outcomes$driver <- rep(all$driver, each = c(numsims*length(node.labels(model))))
-
+outcomes$setting_label <- recode(outcomes$setting, 
+                                 'HydroEnergy' = 'Hydrodynamic Energy',
+                                 'SedSupply' = 'Sediment Supply',
+                                 'TidalAmp' = 'Tidal Amplitude',
+                                 'TidalFreq' = 'Tidal Frequency')
+outcomes$driver_label <- recode(outcomes$driver,
+                                'SeaLevelRise' = 'Sea-level Rise',
+                                'SeaLevelFall' = 'Sea-level Fall',
+                                'CoastalDev' = 'Coastal Development',
+                                'BasementUp' = 'Basement Uplift')
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
 
 seaward <- outcomes %>% 
   filter(var == 'SeawardMang') %>% 
-  group_by(scnr, setting, driver) %>% 
+  group_by(scnr, setting_label, driver_label) %>% 
   summarise(Increase = sum(outcome>0)/n(),
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
@@ -57,7 +66,7 @@ seaward <- outcomes %>%
 
 landward <- outcomes %>% 
   filter(var == 'LandwardMang') %>% 
-  group_by(scnr, setting, driver) %>% 
+  group_by(scnr, setting_label, driver_label) %>% 
   summarise(Increase = sum(outcome>0)/n(),
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
@@ -69,21 +78,21 @@ landsea <- rbind(data.frame(seaward, mangrove = 'seaward'), data.frame(landward,
 # Note, as potential TODO could boostrap resample here to get estimate of uncertainty around that probability
 
 a <- ggplot(seaward) +
-  geom_bar(aes(y = driver, x = prop, fill = outcome),
+  geom_bar(aes(y = driver_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
   xlab('Proportion of outcomes') +
   ylab('') +
   theme(legend.position = 'none') +
-  facet_wrap(~setting) +
+  facet_wrap(~setting_label) +
   ggtitle('Seaward mangroves')
 a
 
 b <- ggplot(landward) +
-  geom_bar(aes(y = driver, x = prop, fill = outcome),
+  geom_bar(aes(y = driver_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
   xlab('Proportion of outcomes') +
   ylab('') +
-  facet_wrap(~setting) +
+  facet_wrap(~setting_label) +
   ggtitle('Landward mangroves') +
   theme(legend.title = element_blank(),
         axis.text.y =  element_blank())
