@@ -1,3 +1,42 @@
+# this function doesn't monitor press perturbations to validate. 
+# Instead just simulate and get stable matrices, 
+# record outcome (+ve, -ve, neutral) for landward and seaward mangroves
+# get weights 
+
+system.sim_press <- function (n.sims, edges, required.groups = c(0), 
+                              sampler = community.sampler(edges, required.groups),  
+                              perturb) {
+  stableout <- list()
+  stablews <- list()
+  stable <- 0
+  
+  labels <- node.labels(edges)
+  index <- function(name) {
+    k <- match(name, labels)
+    if (any(is.na(k))) 
+      warning("Unknown nodes:", paste(name[is.na(k)], collapse = " "))
+    k
+  }
+  
+  k.perturb <- index(names(perturb))
+  S.press <- double(length(labels))
+  S.press[k.perturb] <- -perturb
+  
+  while (stable < n.sims) {
+    z <- sampler$select(runif(1))
+    W <- sampler$community()
+    if (!stable.community(W) & !is.null(solve(W, S.press))) 
+      next
+    stable <- stable + 1
+    stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
+    stablews[[stable]] <- data.frame(nsim = stable, param = sampler$weight.labels, weight = sampler$weights(W))
+  }
+  
+  stableout <- do.call(rbind, stableout)
+  stablews <- do.call(rbind, stablews)
+  list(edges = edges, stableoutcome = stableout, stableweights = stablews)
+}
+
 # this function can only do one press scenario at a time
 # unlike original 'system.simulate' which can accept models that are valid under
 # multiple scenarios
@@ -51,41 +90,4 @@ system.sim_press_val <- function (n.sims, edges, required.groups = c(0),
        accepted = accepted)
 }
 
-# this function doesn't monitor press perturbations to validate. 
-# Instead just simulate and get stable matrices, 
-# record outcome (+ve, -ve, neutral) for landward and seaward mangroves
-# get weights 
 
-system.sim_press <- function (n.sims, edges, required.groups = c(0), 
-                                  sampler = community.sampler(edges, required.groups),  
-                                  perturb) {
-  stableout <- list()
-  stablews <- list()
-  stable <- 0
-  
-  labels <- node.labels(edges)
-  index <- function(name) {
-    k <- match(name, labels)
-    if (any(is.na(k))) 
-      warning("Unknown nodes:", paste(name[is.na(k)], collapse = " "))
-    k
-  }
-  
-  k.perturb <- index(names(perturb))
-  S.press <- double(length(labels))
-  S.press[k.perturb] <- -perturb
-  
-  while (stable < n.sims) {
-    z <- sampler$select(runif(1))
-    W <- sampler$community()
-    if (!stable.community(W) & !is.null(solve(W, S.press))) 
-      next
-    stable <- stable + 1
-    stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
-    stablews[[stable]] <- data.frame(nsim = stable, param = sampler$weight.labels, weight = sampler$weights(W))
-  }
-
-  stableout <- do.call(rbind, stableout)
-  stablews <- do.call(rbind, stablews)
-  list(edges = edges, stableoutcome = stableout, stableweights = stablews)
-}
