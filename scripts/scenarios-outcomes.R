@@ -4,6 +4,7 @@ library(igraph)
 library(QPress)
 library(tidyverse)
 library(patchwork)
+library(DiagrammeR)
 theme_set(theme_classic())
 source('scripts/models.R')
 source('scripts/helpers.R')
@@ -14,13 +15,22 @@ source('scripts/helpers.R')
 
 numsims <- 10000
 model <- modelA_driv
+model2 <- modelA_driv2
+
+# visual check
+
+grViz(grviz.digraph(model))
+
+# check for stability where all weights are equal (i.e., = 1)
+
+stable.community(adjacency.matrix(model))
 
 #actions = c('None', 'Restoration', 'Protection', 'PermeableDam')
 settings =  c('TidalAmp', 'TidalFreq', 'HydroEnergy', 'SedSupply')
-drivers = c('SeaLevelRise', 'SeaLevelFall', 'Cyclones', 'Dams', 'CoastalDev', 'BasementUp', 'Subsidence')
+drivers = c('SeaLevelRise', 'SeaLevelFall', 'Cyclones', 'CoastalDev', 'BasementUp', 'Subsidence')
 
 all <- data.frame(#action = rep(actions, each = length(drivers)*length(settings)),
-                  setting = rep(settings, times = length(drivers)),
+                  setting = rep(settings, each = length(drivers)),
                   driver = rep(drivers, times = length(settings)))
 
 # loop through scenarios with system.sim.press and store outcomes
@@ -37,22 +47,29 @@ for(i in 1:nrow(all)){
   out[[i]] <- sim$stableoutcome
 }
 
+# calculate proportion of simulations that are stable under each scenario
+
+
+
 # wrangle outcomes
 
-outcomes <- do.call(rbind, out)
-outcomes$scnr <- rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(node.labels(model))))
-outcomes$setting <- rep(all$setting, each = c(numsims*length(node.labels(model))))
-outcomes$driver <- rep(all$driver, each = c(numsims*length(node.labels(model))))
-outcomes$setting_label <- recode(outcomes$setting, 
+outcomes <- do.call(rbind, out) %>% 
+  mutate(scnr = rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(node.labels(model)))),
+         setting = rep(all$setting, each = c(numsims*length(node.labels(model)))),
+         driver = rep(all$driver, each = c(numsims*length(node.labels(model)))))
+
+outcomes <- outcomes %>% 
+  mutate(setting_label = recode(outcomes$setting, 
                                  'HydroEnergy' = 'Hydrodynamic Energy',
                                  'SedSupply' = 'Sediment Supply',
                                  'TidalAmp' = 'Tidal Amplitude',
-                                 'TidalFreq' = 'Tidal Frequency')
-outcomes$driver_label <- recode(outcomes$driver,
+                                 'TidalFreq' = 'Tidal Frequency'),
+         driver_label = recode(outcomes$driver,
                                 'SeaLevelRise' = 'Sea-level Rise',
                                 'SeaLevelFall' = 'Sea-level Fall',
                                 'CoastalDev' = 'Coastal Development',
-                                'BasementUp' = 'Basement Uplift')
+                                'BasementUp' = 'Basement Uplift'))
+
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
 
 seaward <- outcomes %>% 
