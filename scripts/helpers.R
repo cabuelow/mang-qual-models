@@ -90,4 +90,11 @@ system.sim_press_val <- function (n.sims, edges, required.groups = c(0),
        accepted = accepted)
 }
 
+# save DiagrammR plot
 
+save_png <- function(plot, path){
+  DiagrammeRsvg::export_svg(plot) %>%
+    charToRaw() %>%
+    rsvg::rsvg() %>%
+    png::writePNG(path)
+}

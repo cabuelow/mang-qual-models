@@ -5,11 +5,11 @@ library(QPress)
 library(tidyverse)
 library(patchwork)
 library(DiagrammeR)
+library(DiagrammeRsvg)
+library(rsvg)
 theme_set(theme_classic())
 source('scripts/models.R')
 source('scripts/helpers.R')
-
-#TODO: figure out why the 'none' scenario is messing things up
 
 # set up scenario simulations
 
@@ -17,9 +17,11 @@ numsims <- 10000
 model <- modelA_driv
 model2 <- modelA_driv2
 
-# visual check
+# visual check and save
 
 grViz(grviz.digraph(model))
+grViz(grviz.digraph(model)) %>%
+  save_png("outputs/model-signed-digraph.png")
 
 # check for stability where all weights are equal (i.e., = 1)
 
@@ -46,10 +48,6 @@ for(i in 1:nrow(all)){
   sim <- system.sim_press(numsims, model, perturb = p)
   out[[i]] <- sim$stableoutcome
 }
-
-# calculate proportion of simulations that are stable under each scenario
-
-
 
 # wrangle outcomes
 
@@ -118,3 +116,11 @@ a+b
 
 ggsave('outputs/outcomes.png', width = 10, height = 5)
 
+# calculate proportion of simulations that are stable under each scenario
+
+stable_prop <- outcomes %>% 
+  filter(var == 'LandwardMang') %>% 
+  group_by(scnr, setting_label, driver_label) %>% 
+  summarise(stable = n()) %>% 
+  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
+  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')))
