@@ -9,6 +9,7 @@ system.sim_press <- function (n.sims, edges, required.groups = c(0),
   stableout <- list()
   stablews <- list()
   stable <- 0
+  unstable <- 0
   
   labels <- node.labels(edges)
   index <- function(name) {
@@ -25,16 +26,20 @@ system.sim_press <- function (n.sims, edges, required.groups = c(0),
   while (stable < n.sims) {
     z <- sampler$select(runif(1))
     W <- sampler$community()
-    if (!stable.community(W) & !is.null(solve(W, S.press))) 
+    if (!stable.community(W) & !is.null(solve(W, S.press))){
+      unstable <- unstable + 1
       next
+    } else{
     stable <- stable + 1
     stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
     stablews[[stable]] <- data.frame(nsim = stable, param = sampler$weight.labels, weight = sampler$weights(W))
-  }
+    }
+    }
   
   stableout <- do.call(rbind, stableout)
   stablews <- do.call(rbind, stablews)
-  list(edges = edges, stableoutcome = stableout, stableweights = stablews)
+  stability <- data.frame(Num_unstable = unstable, Num_stable = stable, Pot_stability =  stable/(unstable+stable))
+  list(edges = edges, stability.df = stability, stableoutcome = stableout, stableweights = stablews)
 }
 
 # this function can only do one press scenario at a time

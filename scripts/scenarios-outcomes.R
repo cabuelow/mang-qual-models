@@ -15,7 +15,6 @@ source('scripts/helpers.R')
 
 numsims <- 10000
 model <- modelA_driv
-model2 <- modelA_driv2
 
 # visual check and save
 
@@ -38,6 +37,8 @@ all <- data.frame(#action = rep(actions, each = length(drivers)*length(settings)
 # loop through scenarios with system.sim.press and store outcomes
 
 out <- list()
+stability <- list()
+weights <- list()
 
 for(i in 1:nrow(all)){
   p <- rep(1, ncol(all))
@@ -47,7 +48,13 @@ for(i in 1:nrow(all)){
   }
   sim <- system.sim_press(numsims, model, perturb = p)
   out[[i]] <- sim$stableoutcome
+  stability[[i]] <- sim$stability.df
+  weights[[i]] <- sim$stableweights
 }
+
+# calculate potential stability in each scenario
+
+scenario_stability <- data.frame(all, potential_stability = do.call(rbind, stability))
 
 # wrangle outcomes
 
@@ -95,20 +102,24 @@ landsea <- rbind(data.frame(seaward, mangrove = 'seaward'), data.frame(landward,
 a <- ggplot(seaward) +
   geom_bar(aes(y = driver_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
+  geom_vline(xintercept = 0.4, linetype = 'dashed') +
+  geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
   ylab('') +
   theme(legend.position = 'none') +
   facet_wrap(~setting_label) +
-  ggtitle('Seaward mangroves')
+  ggtitle('A) Seaward mangroves')
 a
 
 b <- ggplot(landward) +
   geom_bar(aes(y = driver_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
+  geom_vline(xintercept = 0.4, linetype = 'dashed') +
+  geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
   ylab('') +
   facet_wrap(~setting_label) +
-  ggtitle('Landward mangroves') +
+  ggtitle('B) Landward mangroves') +
   theme(legend.title = element_blank(),
         axis.text.y =  element_blank())
 
@@ -116,11 +127,33 @@ a+b
 
 ggsave('outputs/outcomes.png', width = 10, height = 5)
 
-# calculate proportion of simulations that are stable under each scenario
+# wrangle matrix weights
 
-stable_prop <- outcomes %>% 
-  filter(var == 'LandwardMang') %>% 
-  group_by(scnr, setting_label, driver_label) %>% 
-  summarise(stable = n()) %>% 
-  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
-  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')))
+scnr_weights <- do.call(rbind, weights) %>% 
+  mutate(scnr = rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(edge.labels(model)))),
+         setting = rep(all$setting, each = c(numsims*length(edge.labels(model)))),
+         driver = rep(all$driver, each = c(numsims*length(edge.labels(model))))) %>% 
+  left_join(filter(outcomes, var == 'SeawardMang'))
+
+scnr_weights$from_var <- sapply(strsplit(as.character(scnr_weights$param), "\\ "), `[`, 1)
+scnr_weights$to_var <- sapply(strsplit(as.character(scnr_weights$param), "\\ "), `[`, 3)
+
+# extract for ambiguous scenarios
+
+ambig <- scnr_weights %>% 
+  filter(setting == 'SedSupply', driver == 'Cyclones') %>% 
+  mutate(outcome = ifelse(outcome > 0, 1, outcome)) %>% 
+  mutate(outcome = ifelse(outcome < 0, 0, outcome))
+
+paramsvis <- subset(ambig, from_var != to_var)
+
+ggplot() +
+  geom_density(data = filter(paramsvis, outcome == 1), 
+               aes(x = weight), colour = 'blue', fill = 'blue', alpha = 0.2) +
+  geom_density(data = filter(paramsvis, outcome == 0), 
+               aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.2) +
+  facet_wrap(~param, scales = 'free') +
+  theme(strip.text.x = element_text(size = 5))
+
+nrow(filter(paramsvis, outcome == 1))
+nrow(filter(paramsvis, outcome == 0))
