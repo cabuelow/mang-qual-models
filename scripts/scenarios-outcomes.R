@@ -28,7 +28,7 @@ stable.community(adjacency.matrix(model))
 
 #actions = c('None', 'Restoration', 'Protection', 'PermeableDam')
 settings =  c('TidalAmp', 'TidalFreq', 'HydroEnergy', 'SedSupply')
-drivers = c('SeaLevelRise', 'SeaLevelFall', 'Cyclones', 'CoastalDev', 'BasementUp', 'Subsidence')
+drivers = c('None', 'SeaLevelRise', 'SeaLevelFall', 'Cyclones', 'CoastalDev', 'BasementUp', 'Subsidence')
 
 all <- data.frame(#action = rep(actions, each = length(drivers)*length(settings)),
                   setting = rep(settings, each = length(drivers)),
@@ -84,7 +84,10 @@ seaward <- outcomes %>%
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
   pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
-  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')))
+  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')),
+         driver_label = factor(driver_label, levels = c('None', 'Subsidence', 'Sea-level Rise',
+                                                        'Sea-level Fall', 'Cyclones', 'Coastal Development',
+                                                        'Basement Uplift')))
 
 landward <- outcomes %>% 
   filter(var == 'LandwardMang') %>% 
@@ -92,8 +95,11 @@ landward <- outcomes %>%
   summarise(Increase = sum(outcome>0)/n(),
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
-  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
-  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')))
+  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>%  
+  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')),
+         driver_label = factor(driver_label, levels = c('None', 'Subsidence', 'Sea-level Rise',
+                                                        'Sea-level Fall', 'Cyclones', 'Coastal Development',
+                                                        'Basement Uplift')))
 
 landsea <- rbind(data.frame(seaward, mangrove = 'seaward'), data.frame(landward, mangrove = 'landward'))
 
@@ -102,6 +108,7 @@ landsea <- rbind(data.frame(seaward, mangrove = 'seaward'), data.frame(landward,
 a <- ggplot(seaward) +
   geom_bar(aes(y = driver_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
+  scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
   geom_vline(xintercept = 0.4, linetype = 'dashed') +
   geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
@@ -114,6 +121,7 @@ a
 b <- ggplot(landward) +
   geom_bar(aes(y = driver_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
+  scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
   geom_vline(xintercept = 0.4, linetype = 'dashed') +
   geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
@@ -125,7 +133,7 @@ b <- ggplot(landward) +
 
 a+b
 
-ggsave('outputs/outcomes.png', width = 10, height = 5)
+ggsave('outputs/outcomes.png', width = 10, height = 5.3)
 
 # wrangle matrix weights
 
