@@ -1,12 +1,13 @@
 library(sf)
 library(tmap)
 library(tidyverse)
+library(rmapshaper)
 
-#typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite.shp') %>% 
- # st_make_valid() %>% st_write('data/typologies/Mangrove_Typology_v3_Composite_valid.gpkg')
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid.gpkg')
 hydro <- read.csv('data/Hydro_Dat.csv')
 slr <- read.csv('data/SLR_Data.csv')
+
+# subset for Australia
 
 # join attributes to typologies
 
@@ -17,5 +18,4 @@ typ2 <- typ %>%
 # explore
 
 tmap_mode('view')
-
-qtm(typ2)
+qtm(typ2[1:20,], fill = 'ID')
