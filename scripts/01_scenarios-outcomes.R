@@ -22,13 +22,14 @@ model <- modelA
 
 stable.community(adjacency.matrix(model))
 
-#actions = c('None', 'Restoration', 'Protection', 'PermeableDam')
-settings =  c('TidalAmp', 'TidalFreq', 'HydroEnergy', 'SedSupply')
-drivers = c('None', 'SeaLevelRise', 'SeaLevelFall', 'Cyclones', 'CoastalDev', 'BasementUp', 'Subsidence')
+# set-up perturbation scenarios
 
-all <- data.frame(#action = rep(actions, each = length(drivers)*length(settings)),
-                  setting = rep(settings, each = length(drivers)),
-                  driver = rep(drivers, times = length(settings)))
+pressures <- c('SeaLevelRise', 'Cyclones', 'GroundSubsid', 'CoastalDev', 'Erosion', 'Dams')
+scenarios <- lapply(pressures, function (x) {
+ p <- rep(1, length(x))
+ names(p) <- as.character(x)
+ return(p)
+})
 
 # loop through scenarios with system.sim.press and store outcomes
 
@@ -36,73 +37,63 @@ out <- list()
 stability <- list()
 weights <- list()
 
-for(i in 1:nrow(all)){
-  p <- rep(1, ncol(all))
-  names(p) <-  as.character(all[i,])
-  if(length(which(names(p) == 'None')) != 0){
-    p <- p[-which(names(p) == 'None')]
-  }
-  sim <- system.sim_press(numsims, model, perturb = p)
+for(i in seq_along(pressures)){
+  sim <- system.sim_press(numsims, model, perturb = scenarios[[i]])
   out[[i]] <- sim$stableoutcome
   stability[[i]] <- sim$stability.df
   weights[[i]] <- sim$stableweights
 }
 
-# calculate potential stability in each scenario
+# calculate potential stability in each scenario (i.e. proportion of stable matrices out of total simulated)
 
-scenario_stability <- data.frame(all, potential_stability = do.call(rbind, stability))
+scenario_stability <- data.frame(pressures, do.call(rbind, stability))
 
 # wrangle outcomes
 
 outcomes <- do.call(rbind, out) %>% 
-  mutate(scnr = rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(node.labels(model)))),
-         setting = rep(all$setting, each = c(numsims*length(node.labels(model)))),
-         driver = rep(all$driver, each = c(numsims*length(node.labels(model)))))
+  mutate(pressure = rep(pressures, each = c(numsims*length(node.labels(model)))))
+  #mutate(scnr = rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(node.labels(model)))),
+   #      setting = rep(all$setting, each = c(numsims*length(node.labels(model)))),
+    #     driver = rep(all$driver, each = c(numsims*length(node.labels(model)))))
 
 outcomes <- outcomes %>% 
-  mutate(setting_label = recode(outcomes$setting, 
-                                 'HydroEnergy' = 'Hydrodynamic Energy',
-                                 'SedSupply' = 'Sediment Supply',
-                                 'TidalAmp' = 'Tidal Amplitude',
-                                 'TidalFreq' = 'Tidal Frequency'),
-         driver_label = recode(outcomes$driver,
+  mutate(pressure_label = recode(outcomes$pressure,
                                 'SeaLevelRise' = 'Sea-level Rise',
-                                'SeaLevelFall' = 'Sea-level Fall',
                                 'CoastalDev' = 'Coastal Development',
-                                'BasementUp' = 'Basement Uplift'))
+                                'GroundSubsid' = 'Groundwater Subsidence'))
 
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
 
 seaward <- outcomes %>% 
   filter(var == 'SeawardMang') %>% 
-  group_by(scnr, setting_label, driver_label) %>% 
+  group_by(pressure, pressure_label) %>% 
   summarise(Increase = sum(outcome>0)/n(),
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
   pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
   mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')),
-         driver_label = factor(driver_label, levels = c('None', 'Subsidence', 'Sea-level Rise',
-                                                        'Sea-level Fall', 'Cyclones', 'Coastal Development',
-                                                        'Basement Uplift')))
+         pressure_label = factor(pressure_label, levels = c('Erosion', 'Sea-level Rise',
+                                                          'Cyclones', 'Coastal Development',
+                                                        'Groundwater Subsidence', 'Dams')))
 
 landward <- outcomes %>% 
   filter(var == 'LandwardMang') %>% 
-  group_by(scnr, setting_label, driver_label) %>% 
+  group_by(pressure, pressure_label) %>% 
   summarise(Increase = sum(outcome>0)/n(),
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
   pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>%  
   mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')),
-         driver_label = factor(driver_label, levels = c('None', 'Subsidence', 'Sea-level Rise',
-                                                        'Sea-level Fall', 'Cyclones', 'Coastal Development',
-                                                        'Basement Uplift')))
+         pressure_label = factor(pressure_label, levels = c('Erosion', 'Sea-level Rise',
+                                                            'Cyclones', 'Coastal Development',
+                                                            'Groundwater Subsidence', 'Dams')))
 
 landsea <- rbind(data.frame(seaward, mangrove = 'seaward'), data.frame(landward, mangrove = 'landward'))
 
 # Note, as potential TODO could boostrap resample here to get estimate of uncertainty around that probability
 
 a <- ggplot(seaward) +
-  geom_bar(aes(y = driver_label, x = prop, fill = outcome),
+  geom_bar(aes(y = pressure_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
   scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
   geom_vline(xintercept = 0.4, linetype = 'dashed') +
@@ -110,19 +101,19 @@ a <- ggplot(seaward) +
   xlab('Proportion of outcomes') +
   ylab('') +
   theme(legend.position = 'none') +
-  facet_wrap(~setting_label) +
+  #facet_wrap(~setting_label) +
   ggtitle('A) Seaward mangroves')
 a
 
 b <- ggplot(landward) +
-  geom_bar(aes(y = driver_label, x = prop, fill = outcome),
+  geom_bar(aes(y = pressure_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
   scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
   geom_vline(xintercept = 0.4, linetype = 'dashed') +
   geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
   ylab('') +
-  facet_wrap(~setting_label) +
+  #facet_wrap(~setting_label) +
   ggtitle('B) Landward mangroves') +
   theme(legend.title = element_blank(),
         axis.text.y =  element_blank())
