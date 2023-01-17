@@ -11,21 +11,12 @@ theme_set(theme_classic())
 source('scripts/models.R')
 source('scripts/helpers.R')
 
-# modelA: mangrove system
-# modelB: mangrove system + local factors 
-# modelC: mangrove system + local factors + anthropogenic pressures
-# modelD: mangrove system + local factors + anthropogenic pressures + climate pressures
-
 # set up scenario simulations
 
 numsims <- 10000
-model <- modelA_driv
+model <- modelA
 
 # visual check and save
-
-grViz(grviz.digraph(model))
-grViz(grviz.digraph(model)) %>%
-  save_png("outputs/model-signed-digraph.png")
 
 # check for stability where all weights are equal (i.e., = 1)
 
