@@ -55,4 +55,4 @@ modelA <- parse.digraph(c('LandwardEstabSpace->LandwardPropag',
   enforce.limitation()
 
 grViz(grviz.digraph(modelA)) %>%
-export_svg %>% charToRaw %>% rsvg_png("outputs/modelA_signed-digraph.png.png")
+export_svg %>% charToRaw %>% rsvg_png("outputs/modelA_signed-digraph.png")

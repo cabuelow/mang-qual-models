@@ -13,10 +13,10 @@ source('scripts/helpers.R')
 
 # set up scenario simulations
 
+set.seed(123)
 numsims <- 10000
 model <- modelA
-
-# visual check and save
+model
 
 # check for stability where all weights are equal (i.e., = 1)
 
@@ -100,10 +100,9 @@ a <- ggplot(seaward) +
   geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
   ylab('') +
+  theme(legend.position = 'none') +
   #facet_wrap(~setting_label) +
-  ggtitle('A) Seaward mangroves') +
-  theme(legend.title = element_blank(),
-        axis.text.y =  element_blank())
+  ggtitle('A) Seaward mangroves')
 
 b <- ggplot(landward) +
   geom_bar(aes(y = pressure_label, x = prop, fill = outcome),
@@ -113,9 +112,10 @@ b <- ggplot(landward) +
   geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
   ylab('') +
-  theme(legend.position = 'none') +
   #facet_wrap(~setting_label) +
-  ggtitle('B) Landward mangroves')
+  ggtitle('B) Landward mangroves') +
+  theme(legend.title = element_blank(),
+        axis.text.y =  element_blank())
 
 a+b
 

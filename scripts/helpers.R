@@ -1,3 +1,54 @@
+# community sampler that allows weights to be constrained for certain edges
+# need to add a new argument that identifies links to be for runif paramaterisation to be constrained
+# add and if else so that if its constrained, high, med, low, then upper limit is 0.3333, 0.66666, 1 and vice versa
+
+community.sampler_con <- function (edges, required.groups = c(0)) 
+{
+  n.nodes <- length(node.labels(edges))
+  weight.labels <- edge.labels(edges)
+  n.edges <- nrow(edges)
+  W <- matrix(0, n.nodes, n.nodes)
+  lower <- ifelse(edges$Type == "U" | edges$Type == "N", -1L, 
+                  0L)
+  upper <- ifelse(edges$Type == "U" | edges$Type == "P", 1L, 
+                  0L)
+  k.edges <- as.vector(unclass(edges$To) + (unclass(edges$From) - 
+                                              1) * n.nodes)
+  uncertain <- which(!(edges$Group %in% required.groups))
+  expand <- match(edges$Pair[uncertain], unique(edges$Pair[uncertain]))
+  n.omit <- max(0, expand)
+  zs <- rep(1, n.omit)
+  community <- if (n.omit > 0) {
+    function() {
+      r <- runif(n.edges, lower, upper)
+      r[uncertain] <- r[uncertain] * zs
+      W[k.edges] <- r
+      W
+    }
+  }
+  else {
+    function() {
+      W[k.edges] <- runif(n.edges, lower, upper)
+      W
+    }
+  }
+  select <- if (n.omit > 0) {
+    function(p) {
+      zs <<- rbinom(n.omit, 1, p)[expand]
+    }
+  }
+  else {
+    function(p = 0) {
+      zs
+    }
+  }
+  weights <- function(W) {
+    W[k.edges]
+  }
+  list(community = community, select = select, weights = weights, 
+       weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
+}
+
 # this function doesn't monitor press perturbations to validate. 
 # Instead just simulate and get stable matrices, 
 # record outcome (+ve, -ve, neutral) for landward and seaward mangroves
