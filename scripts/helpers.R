@@ -1,17 +1,28 @@
 # community sampler that allows weights to be constrained for certain edges
-# need to add a new argument that identifies links to be for runif paramaterisation to be constrained
-# add and if else so that if its constrained, high, med, low, then upper limit is 0.3333, 0.66666, 1 and vice versa
 
-community.sampler_con <- function (edges, required.groups = c(0)) 
+community.sampler_con <- function (edges, required.groups = c(0), from, to, class) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
+  if (length(from) > 0){ # here add new column to edges with high medium or low classification
+  constrain <- data.frame(From = from, To = to, Class = class)
+  edges$Class <- dplyr::left_join(edges, constrain)$Class
+  }
   n.nodes <- length(node.labels(edges))
   weight.labels <- edge.labels(edges)
   n.edges <- nrow(edges)
   W <- matrix(0, n.nodes, n.nodes)
   lower <- ifelse(edges$Type == "U" | edges$Type == "N", -1L, 
                   0L)
-  upper <- ifelse(edges$Type == "U" | edges$Type == "P", 1L, 
+  upper <- ifelse(edges$Type == "U" | edges$Type == "P" , 1L, 
                   0L)
+  ## set up constraints for high, medium, low
+  lower[which(edges$Class == 'H' & edges$Type == 'P')] <- 0.66667
+  upper[which(edges$Class == 'H' & edges$Type == 'N')] <- -0.66667
+  lower[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.33334
+  upper[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.66666
+  lower[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.66666
+  upper[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.33334
+  upper[which(edges$Class == 'L' & edges$Type == 'P')] <- 0.33333
+  lower[which(edges$Class == 'L' & edges$Type == 'N')] <- -0.33333
   k.edges <- as.vector(unclass(edges$To) + (unclass(edges$From) - 
                                               1) * n.nodes)
   uncertain <- which(!(edges$Group %in% required.groups))
@@ -49,20 +60,91 @@ community.sampler_con <- function (edges, required.groups = c(0))
        weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
 }
 
+# community sampler that allows weights to be constrained for certain edges
+# **this one also allows relative strengths of edges to be constrained
+# based on 'community.ordering.sampler' function from Wotherspoon
+
+community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+{
+  edges <- constrainedigraph$edges
+  if (length(from) > 0){ # here add new column to edges with high medium or low classification
+    constrain <- data.frame(From = from, To = to, Class = class)
+    edges$Class <- dplyr::left_join(edges, constrain)$Class
+  }
+  n.nodes <- length(node.labels(edges))
+  weight.labels <- edge.labels(edges)
+  n.edges <- nrow(edges)
+  W <- matrix(0, n.nodes, n.nodes)
+  lower <- ifelse(edges$Type == "U" | edges$Type == "N", -1L, 
+                  0L)
+  upper <- ifelse(edges$Type == "U" | edges$Type == "P" , 1L, 
+                  0L)
+  ## set up constraints for high, medium, low
+  lower[which(edges$Class == 'H' & edges$Type == 'P')] <- 0.66667
+  upper[which(edges$Class == 'H' & edges$Type == 'N')] <- -0.66667
+  lower[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.33334
+  upper[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.66666
+  lower[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.66666
+  upper[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.33334
+  upper[which(edges$Class == 'L' & edges$Type == 'P')] <- 0.33333
+  lower[which(edges$Class == 'L' & edges$Type == 'N')] <- -0.33333
+  k.edges <- as.vector(unclass(edges$To) + (unclass(edges$From) - 
+                                              1) * n.nodes)
+  uncertain <- which(!(edges$Group %in% required.groups))
+  expand <- match(edges$Pair[uncertain], unique(edges$Pair[uncertain]))
+  n.omit <- max(0, expand)
+  bounds <- bound.sets(constrainedigraph)
+  zs <- rep(1, length(uncertain))
+  community <- if (n.omit > 0) {
+    function() {
+      r <- runif(n.edges, lower, upper)
+      r <- sign(r) * constraint.order(abs(r), bounds)
+      r[uncertain] <- r[uncertain] * zs
+      W[k.edges] <- r
+      W
+    }
+  }
+  else {
+    function() {
+      r <- runif(n.edges, lower, upper)
+      r <- sign(r) * constraint.order(abs(r), bounds)
+      W[k.edges] <- r
+      W
+    }
+  }
+  select <- if (n.omit > 0) {
+    function(p) {
+      zs <<- rbinom(n.omit, 1, p)[expand]
+    }
+  }
+  else {
+    function(p = 0) {
+      zs
+    }
+  }
+  weights <- function(W) {
+    W[k.edges]
+  }
+  list(community = community, select = select, weights = weights, 
+       weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
+}
+
+
 # this function doesn't monitor press perturbations to validate. 
 # Instead just simulate and get stable matrices, 
 # record outcome (+ve, -ve, neutral) for landward and seaward mangroves
 # get weights 
 
-system.sim_press <- function (n.sims, edges, required.groups = c(0), 
-                              sampler = community.sampler(edges, required.groups),  
+system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
+                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class),  
                               perturb) {
   stableout <- list()
   stablews <- list()
   stable <- 0
   unstable <- 0
   
-  labels <- node.labels(edges)
+  edges1 <- constrainedigraph$edges
+  labels <- node.labels(edges1)
   index <- function(name) {
     k <- match(name, labels)
     if (any(is.na(k))) 
@@ -90,7 +172,7 @@ system.sim_press <- function (n.sims, edges, required.groups = c(0),
   stableout <- do.call(rbind, stableout)
   stablews <- do.call(rbind, stablews)
   stability <- data.frame(Num_unstable = unstable, Num_stable = stable, Pot_stability =  stable/(unstable+stable))
-  list(edges = edges, stability.df = stability, stableoutcome = stableout, stableweights = stablews)
+  list(edges = edges1, stability.df = stability, stableoutcome = stableout, stableweights = stablews)
 }
 
 # this function can only do one press scenario at a time
@@ -153,4 +235,57 @@ save_png <- function(plot, path){
     charToRaw() %>%
     rsvg::rsvg() %>%
     png::writePNG(path)
+}
+
+# Construct bounding sets used to order weights to meet the edge
+# weight constraints.
+# These bounds sets are used to order a set of random edge weights
+# so that they meet the imposed constraints.
+
+bound.sets <- function(constrained) {
+  a <- constrained$a
+  b <- constrained$b
+  
+  ## Find all weights bounded above by the root weight r
+  bounded <- function(r) {
+    v <- unique(a[b %in% r])
+    repeat {
+      va <- setdiff(a[b %in% v],v)
+      if(length(va)==0) break;
+      v <- c(va,v)
+    }
+    v
+  }
+  
+  bounds <- list()
+  n <- 0
+  
+  ## Unvisited weights
+  us <- b
+  ## Unbounded weights
+  vs <- setdiff(b,a)
+  while(length(vs) > 0) {
+    for(v in vs) {
+      ## Find all weights bounded by v
+      bs <- bounded(v)
+      if(v %in% bs) warning("Cyclic constraints found")
+      bounds[[n <- n+1]] <- c(v,bs)
+    }
+    ## Unvisited weights
+    us <- setdiff(us,vs)
+    ## Weights bounded only by visited weights
+    vs <- setdiff(us,a[b %in% us])
+  }
+  bounds
+}
+
+# Order a set of absolute edge weights to meet imposed edge weights
+# constraints.
+
+constraint.order <- function(w,bounds) {
+  for(bs in bounds) {
+    k <- which.max(w[bs])
+    if(k!=1) w[bs[c(1,k)]] <- w[bs[c(k,1)]]
+  }
+  w
 }

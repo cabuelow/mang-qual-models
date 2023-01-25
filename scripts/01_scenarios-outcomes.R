@@ -15,46 +15,88 @@ source('scripts/helpers.R')
 
 set.seed(123)
 numsims <- 10000
-model <- modelA
-model
 
 # check for stability where all weights are equal (i.e., = 1)
 
-stable.community(adjacency.matrix(model))
+stable.community(adjacency.matrix(modelA))
 
 # set-up perturbation scenarios
 
 pressures <- c('SeaLevelRise', 'Cyclones', 'GroundSubsid', 'CoastalDev', 'Erosion', 'Dams')
-scenarios <- lapply(pressures, function (x) {
- p <- rep(1, length(x))
- names(p) <- as.character(x)
- return(p)
-})
+press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), c(Erosion=1), c(Dams=1))
+
+# set-up edge constraint scenarios
+# **TODO: make this easier by changing how the function takes these constraints....
+
+con.scenarios <- list(c('H', 'H', 'H', 'H', 'H'),
+                    c('M', 'M', 'M', 'H', 'H'),
+                    c('L', 'L', 'L', 'H', 'H'),
+                    c('H', 'H', 'H',  'L', 'L'),
+                    c('M', 'M', 'M',  'L', 'L'),
+                    c('L', 'L', 'L',  'L', 'L'))
+names(con.scenarios) <- c('Microtidal, High Hydro-connectivity',
+                          'Mesotidal, High Hydro-connectivity',
+                          'Macrotidal, High Hydro-connectivity',
+                          'Microtidal, Low Hydro-connectivity',
+                          'Mesotidal, Low Hydro-connectivity',
+                          'Macrotidal, Low Hydro-connectivity')
+
+# set up relative edge constraint scenarios
+# high sed supply model, sediment -> subVol will be greater than SLR neg interactions
+# vice versa for low sed supply model
+
+model.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol',
+                                  'SeaLevelRise -* SeawardPropag < Sediment -> SubVol',
+                                  'SeaLevelRise -* SeawardPropag < Sediment -> SubVol'), modelA),
+                        parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang',
+                                  'Sediment -> SubVol < SeaLevelRise -* SeawardPropag',
+                                  'Sediment -> SubVol < SeaLevelRise -* SeawardPropag'), modelA))
+names(model.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply')
 
 # loop through scenarios with system.sim.press and store outcomes
+# do a nested for loop, iterate over model, then class scenarios, then perturbation scenarios
+# BUT do this better later! look into purrr
 
-out <- list()
-stability <- list()
-weights <- list()
+stability.ls1 <- list()
+outcomes.ls1 <- list()
 
+for(j in seq_along(model.scenarios)){
+stability.ls <- list()
+outcomes.ls <- list()
+model <- model.scenarios[[j]]
+for(k in seq_along(con.scenarios)){
+  out <- list()
+  stability <- list()
+  weights <- list()
+  class.con <- con.scenarios[[k]]
 for(i in seq_along(pressures)){
-  sim <- system.sim_press(numsims, model, perturb = scenarios[[i]])
+  sim <- system.sim_press(numsims, constrainedigraph = model, 
+                          from = c('SeaLevelRise', 'SeaLevelRise', 'SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp'),
+                          to = c('SeawardMang', 'SeawardPropag', 'SeawardEstabSpace', 'LandwardPropag', 'SeawardPropag'),
+                          class = class.con,
+                          perturb = press.scenarios[[i]])
   out[[i]] <- sim$stableoutcome
   stability[[i]] <- sim$stability.df
   weights[[i]] <- sim$stableweights
 }
+  # calculate potential stability in each scenario (i.e. proportion of stable matrices out of total simulated)
+  stability.ls[[k]] <- data.frame(pressures, do.call(rbind, stability))
+  # wrangle outcomes
+  outcomes.ls[[k]] <- do.call(rbind, out) %>% 
+    mutate(pressure = rep(pressures, each = c(numsims*length(node.labels(model$edges)))))
+}
+# calculate potential stability in each scenario (i.e. proportion of stable matrices out of total simulated)
+stability.ls1[[j]] <- data.frame(constraint_scenario = names(con.scenarios), do.call(rbind, stability.ls))
+# wrangle outcomes
+outcomes.ls1[[j]] <- do.call(rbind, outcomes.ls) %>% 
+  mutate(constraint_scenario = rep(names(con.scenarios), each = c(numsims*length(node.labels(model$edges))*length(pressures)))) 
+}
 
 # calculate potential stability in each scenario (i.e. proportion of stable matrices out of total simulated)
-
-scenario_stability <- data.frame(pressures, do.call(rbind, stability))
-
+stability <- data.frame(constraint_scenario = names(model.scenarios), do.call(rbind, stability.ls1))
 # wrangle outcomes
-
-outcomes <- do.call(rbind, out) %>% 
-  mutate(pressure = rep(pressures, each = c(numsims*length(node.labels(model)))))
-  #mutate(scnr = rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(node.labels(model)))),
-   #      setting = rep(all$setting, each = c(numsims*length(node.labels(model)))),
-    #     driver = rep(all$driver, each = c(numsims*length(node.labels(model)))))
+outcomes <- do.call(rbind, outcomes.ls1) %>% 
+  mutate(model_scenario = rep(names(model.scenarios), each = c(numsims*length(node.labels(modelA))*length(pressures)*length(con.scenarios)))) 
 
 outcomes <- outcomes %>% 
   mutate(pressure_label = recode(outcomes$pressure,
@@ -64,9 +106,9 @@ outcomes <- outcomes %>%
 
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
 
-seaward <- outcomes %>% 
-  filter(var == 'SeawardMang') %>% 
-  group_by(pressure, pressure_label) %>% 
+seaward_sedH <- outcomes %>% 
+  filter(var == 'SeawardMang' & model_scenario == 'High Sediment Supply') %>% 
+  group_by(constraint_scenario, pressure, pressure_label) %>% 
   summarise(Increase = sum(outcome>0)/n(),
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
@@ -76,9 +118,9 @@ seaward <- outcomes %>%
                                                           'Cyclones', 'Coastal Development',
                                                         'Groundwater Subsidence', 'Dams')))
 
-landward <- outcomes %>% 
-  filter(var == 'LandwardMang') %>% 
-  group_by(pressure, pressure_label) %>% 
+landward_sedH <- outcomes %>% 
+  filter(var == 'LandwardMang' & model_scenario == 'High Sediment Supply') %>% 
+  group_by(constraint_scenario, pressure, pressure_label) %>% 
   summarise(Increase = sum(outcome>0)/n(),
             Neutral = sum(outcome==0)/n(),
             Decrease = sum(outcome<0)/n()) %>% 
@@ -88,11 +130,36 @@ landward <- outcomes %>%
                                                             'Cyclones', 'Coastal Development',
                                                             'Groundwater Subsidence', 'Dams')))
 
-landsea <- rbind(data.frame(seaward, mangrove = 'seaward'), data.frame(landward, mangrove = 'landward'))
+seaward_sedL <- outcomes %>% 
+  filter(var == 'SeawardMang' & model_scenario == 'Low Sediment Supply') %>% 
+  group_by(constraint_scenario, pressure, pressure_label) %>% 
+  summarise(Increase = sum(outcome>0)/n(),
+            Neutral = sum(outcome==0)/n(),
+            Decrease = sum(outcome<0)/n()) %>% 
+  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>% 
+  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')),
+         pressure_label = factor(pressure_label, levels = c('Erosion', 'Sea-level Rise',
+                                                            'Cyclones', 'Coastal Development',
+                                                            'Groundwater Subsidence', 'Dams')))
+
+landward_sedL <- outcomes %>% 
+  filter(var == 'LandwardMang' & model_scenario == 'Low Sediment Supply') %>% 
+  group_by(constraint_scenario, pressure, pressure_label) %>% 
+  summarise(Increase = sum(outcome>0)/n(),
+            Neutral = sum(outcome==0)/n(),
+            Decrease = sum(outcome<0)/n()) %>% 
+  pivot_longer(Increase:Decrease ,names_to = 'outcome', values_to = 'prop') %>%  
+  mutate(outcome = factor(outcome, levels = c('Increase', 'Neutral', 'Decrease')),
+         pressure_label = factor(pressure_label, levels = c('Erosion', 'Sea-level Rise',
+                                                            'Cyclones', 'Coastal Development',
+                                                            'Groundwater Subsidence', 'Dams')))
+
+
+#landsea <- rbind(data.frame(seaward, mangrove = 'seaward'), data.frame(landward, mangrove = 'landward'))
 
 # Note, as potential TODO could boostrap resample here to get estimate of uncertainty around that probability
 
-a <- ggplot(seaward) +
+a <- ggplot(seaward_sedH) +
   geom_bar(aes(y = pressure_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
   scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
@@ -100,11 +167,12 @@ a <- ggplot(seaward) +
   geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
   ylab('') +
-  theme(legend.position = 'none') +
-  #facet_wrap(~setting_label) +
-  ggtitle('A) Seaward mangroves')
+  facet_wrap(~constraint_scenario) +
+  ggtitle('A) Seaward mangroves, High sediment supply') +
+  theme(legend.position = 'none', strip.text.x = element_text(size = 8))
+a
 
-b <- ggplot(landward) +
+b <- ggplot(landward_sedH) +
   geom_bar(aes(y = pressure_label, x = prop, fill = outcome),
            position = 'stack', stat = 'identity') +
   scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
@@ -112,42 +180,63 @@ b <- ggplot(landward) +
   geom_vline(xintercept = 0.6, linetype = 'dashed') +
   xlab('Proportion of outcomes') +
   ylab('') +
-  #facet_wrap(~setting_label) +
-  ggtitle('B) Landward mangroves') +
+  facet_wrap(~constraint_scenario) +
+  ggtitle('B) Landward mangroves, High sediment supply') +
   theme(legend.title = element_blank(),
-        axis.text.y =  element_blank())
+        #axis.text.y =  element_blank(),
+        strip.text.x = element_text(size = 8))
+b
 
-a+b
+c <- ggplot(seaward_sedL) +
+  geom_bar(aes(y = pressure_label, x = prop, fill = outcome),
+           position = 'stack', stat = 'identity') +
+  scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
+  geom_vline(xintercept = 0.4, linetype = 'dashed') +
+  geom_vline(xintercept = 0.6, linetype = 'dashed') +
+  xlab('Proportion of outcomes') +
+  ylab('') +
+  facet_wrap(~constraint_scenario) +
+  ggtitle('A) Seaward mangroves, Low sediment supply') +
+  theme(legend.position = 'none', strip.text.x = element_text(size = 8))
+c
 
-ggsave('outputs/outcomes.png', width = 10, height = 5.3)
+d <- ggplot(landward_sedL) +
+  geom_bar(aes(y = pressure_label, x = prop, fill = outcome),
+           position = 'stack', stat = 'identity') +
+  scale_fill_manual(values=c("darkslategray3", 'darkolivegreen2', "brown3")) +
+  geom_vline(xintercept = 0.4, linetype = 'dashed') +
+  geom_vline(xintercept = 0.6, linetype = 'dashed') +
+  xlab('Proportion of outcomes') +
+  ylab('') +
+  facet_wrap(~constraint_scenario) +
+  ggtitle('B) Landward mangroves, Low sediment supply') +
+  theme(legend.title = element_blank(),
+        #axis.text.y =  element_blank(),
+        strip.text.x = element_text(size = 8))
+d
+
+(a+b)/(c+d)
+
+ggsave('outputs/outcomes.png', width = 16, height = 10)
 
 # wrangle matrix weights
 
 scnr_weights <- do.call(rbind, weights) %>% 
-  mutate(scnr = rep(apply(all, 1, paste, collapse = ' & '), each = c(numsims*length(edge.labels(model)))),
-         setting = rep(all$setting, each = c(numsims*length(edge.labels(model)))),
-         driver = rep(all$driver, each = c(numsims*length(edge.labels(model))))) %>% 
-  left_join(filter(outcomes, var == 'SeawardMang'))
+  mutate(pressure = rep(pressures, each = c(numsims*length(edge.labels(modelA))))) #%>% 
+  #left_join(filter(outcomes, var == 'SeawardMang'))
 
 scnr_weights$from_var <- sapply(strsplit(as.character(scnr_weights$param), "\\ "), `[`, 1)
 scnr_weights$to_var <- sapply(strsplit(as.character(scnr_weights$param), "\\ "), `[`, 3)
 
-# extract for ambiguous scenarios
+# visualise edge weight distributions
 
-ambig <- scnr_weights %>% 
-  filter(setting == 'SedSupply', driver == 'Cyclones') %>% 
-  mutate(outcome = ifelse(outcome > 0, 1, outcome)) %>% 
-  mutate(outcome = ifelse(outcome < 0, 0, outcome))
-
-paramsvis <- subset(ambig, from_var != to_var)
+paramsvis <- subset(scnr_weights, from_var != to_var)
 
 ggplot() +
-  geom_density(data = filter(paramsvis, outcome == 1), 
+  geom_density(data = paramsvis, 
                aes(x = weight), colour = 'blue', fill = 'blue', alpha = 0.2) +
-  geom_density(data = filter(paramsvis, outcome == 0), 
-               aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.2) +
-  facet_wrap(~param, scales = 'free') +
+  #geom_density(data = filter(paramsvis, outcome == 0), 
+   #            aes(x = weight), colour = 'yellow', fill = 'yellow', alpha = 0.2) +
+  facet_wrap(~param, scales = 'free_y') +
   theme(strip.text.x = element_text(size = 5))
 
-nrow(filter(paramsvis, outcome == 1))
-nrow(filter(paramsvis, outcome == 0))
