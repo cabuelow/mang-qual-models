@@ -18,7 +18,7 @@ numsims <- 10000
 
 # check for stability where all weights are equal (i.e., = 1)
 
-stable.community(adjacency.matrix(modelA))
+stable.community(adjacency.matrix(modelB))
 
 # set-up perturbation scenarios
 
@@ -28,12 +28,12 @@ press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(C
 # set-up edge constraint scenarios
 # **TODO: make this easier by changing how the function takes these constraints....
 
-con.scenarios <- list(c('H', 'H', 'H', 'H', 'H'),
-                    c('M', 'M', 'M', 'H', 'H'),
-                    c('L', 'L', 'L', 'H', 'H'),
-                    c('H', 'H', 'H',  'L', 'L'),
-                    c('M', 'M', 'M',  'L', 'L'),
-                    c('L', 'L', 'L',  'L', 'L'))
+con.scenarios <- list(c('H', 'H', 'H', 'H'),
+                    c('M', 'M', 'H', 'H'),
+                    c('L', 'L', 'H', 'H'),
+                    c('H', 'H', 'L', 'L'),
+                    c('M', 'M',  'L', 'L'),
+                    c('L', 'L', 'L', 'L'))
 names(con.scenarios) <- c('Microtidal, High Hydro-connectivity',
                           'Mesotidal, High Hydro-connectivity',
                           'Macrotidal, High Hydro-connectivity',
@@ -47,10 +47,10 @@ names(con.scenarios) <- c('Microtidal, High Hydro-connectivity',
 
 model.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol',
                                   'SeaLevelRise -* SeawardPropag < Sediment -> SubVol',
-                                  'SeaLevelRise -* SeawardPropag < Sediment -> SubVol'), modelA),
+                                  'SeaLevelRise -* SeawardPropag < Sediment -> SubVol'), modelB),
                         parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang',
                                   'Sediment -> SubVol < SeaLevelRise -* SeawardPropag',
-                                  'Sediment -> SubVol < SeaLevelRise -* SeawardPropag'), modelA))
+                                  'Sediment -> SubVol < SeaLevelRise -* SeawardPropag'), modelB))
 names(model.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply')
 
 # loop through scenarios with system.sim.press and store outcomes
@@ -71,8 +71,10 @@ for(k in seq_along(con.scenarios)){
   class.con <- con.scenarios[[k]]
 for(i in seq_along(pressures)){
   sim <- system.sim_press(numsims, constrainedigraph = model, 
-                          from = c('SeaLevelRise', 'SeaLevelRise', 'SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp'),
-                          to = c('SeawardMang', 'SeawardPropag', 'SeawardEstabSpace', 'LandwardPropag', 'SeawardPropag'),
+                          from = c('SeaLevelRise', 'SeaLevelRise', #'SeaLevelRise', 
+                                   'LandwardAvailableProp', 'SeawardAvailableProp'),
+                          to = c('SeawardMang', 'SeawardPropag', #'SeawardEstabSpace', 
+                                 'LandwardPropag', 'SeawardPropag'),
                           class = class.con,
                           perturb = press.scenarios[[i]])
   out[[i]] <- sim$stableoutcome
@@ -96,7 +98,7 @@ outcomes.ls1[[j]] <- do.call(rbind, outcomes.ls) %>%
 stability <- data.frame(constraint_scenario = names(model.scenarios), do.call(rbind, stability.ls1))
 # wrangle outcomes
 outcomes <- do.call(rbind, outcomes.ls1) %>% 
-  mutate(model_scenario = rep(names(model.scenarios), each = c(numsims*length(node.labels(modelA))*length(pressures)*length(con.scenarios)))) 
+  mutate(model_scenario = rep(names(model.scenarios), each = c(numsims*length(node.labels(modelB))*length(pressures)*length(con.scenarios)))) 
 
 outcomes <- outcomes %>% 
   mutate(pressure_label = recode(outcomes$pressure,
