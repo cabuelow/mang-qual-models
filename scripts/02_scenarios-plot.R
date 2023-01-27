@@ -12,7 +12,7 @@ dat2 <- dat %>%
            constraint_scenario %in% c('Macrotidal, High Hydro-connectivity',
                                       'Mesotidal, High Hydro-connectivity',
                                       'Microtidal, High Hydro-connectivity') &
-           pressure %in% c('Sea-level rise', 'Sea-level rise & Cyclones', 
+           pressure %in% c('Sea-level rise', 'Cyclones', 'Sea-level rise & Cyclones', 
                            'Seal-level rise & Groundwater extraction', 'Sea-level rise  & Coastal development', 
                            'Sea-level rise & Erosion', 'Sea-level rise & Drought or Dams')) %>% 
   group_by(model_scenario, constraint_scenario, pressure, var) %>% 

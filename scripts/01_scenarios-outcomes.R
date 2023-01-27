@@ -14,7 +14,7 @@ source('scripts/helpers.R')
 # set up scenario simulations
 
 set.seed(123)
-numsims <- 10000
+numsims <- 1000
 
 # check for stability where all weights are equal (i.e., = 1)
 
