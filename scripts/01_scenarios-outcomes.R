@@ -1,4 +1,6 @@
-# determine probability of landward and seaward mangrove increase under different action, geomorphic, and pressure settings
+# determine probability of landward and seaward mangrove increase under different scenarios
+#devtools::install_github("SWotherspoon/QPress",ref="Constrain")
+# TODO: make scenario simulation more efficient and easier to implement
 
 library(igraph)
 library(QPress)
@@ -16,11 +18,7 @@ source('scripts/helpers.R')
 set.seed(123)
 numsims <- 1000
 
-# check for stability where all weights are equal (i.e., = 1)
-
-stable.community(adjacency.matrix(modelB))
-
-# set-up perturbation scenarios
+# perturbation scenarios
 
 pressures <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion', 'Drought or Dams',
                'Sea-level rise & Cyclones', 'Seal-level rise & Groundwater extraction',
@@ -33,7 +31,7 @@ press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(C
                         c(SeaLevelRise=1, Erosion=1),
                          c(SeaLevelRise=1, Sediment=-1))
 
-# set-up edge constraint scenarios
+# edge constraint scenarios
 # **TODO: make this easier by changing how the function takes these constraints....
 
 con.scenarios <- list(c('H', 'H', 'H'),
