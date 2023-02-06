@@ -194,3 +194,5 @@ smap
 maps <- tmap_arrange(lmap, smap, ncol = 1)
 
 tmap_save(maps, 'outputs/map_change.png', width = 10, height = 5)
+
+
