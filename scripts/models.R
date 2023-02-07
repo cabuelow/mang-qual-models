@@ -58,6 +58,53 @@ modelB <- parse.digraph(c(#'LandwardEstabSpace->LandwardPropag',
 grViz(grviz.digraph(modelB)) %>%
   export_svg %>% charToRaw %>% rsvg_png("outputs/modelB_signed-digraph.png")
 
+# mangrove model where cyclones increase sub volume
+modelB.1 <- parse.digraph(c(#'LandwardEstabSpace->LandwardPropag',
+  #'LandwardPropag->LandwardMang',
+  'LandwardMang->SubVol',
+  #'SeawardEstabSpace->SeawardPropag',
+  #'SeawardPropag->SeawardMang',
+  'SeawardMang<->SubVol',
+  #'OM->SubVol',
+  #'SubVol->SeawardMang', 
+  'LandwardAvailableProp->LandwardMang',
+  'SeawardAvailableProp->SeawardMang',
+  #'AccommSpace->LandwardEstabSpace',
+  #'AccommSpace->SeawardEstabSpace',
+  #'HydroEnergy-*SeawardEstabSpace',
+  #'HydroEnergy->Erosion',
+  'Erosion-*SubVol',
+  #'Erosion-*SeawardPropag',
+  'Erosion-*SeawardMang',
+  #'Precipitation->Sediment',
+  #'Dams-*Sediment',
+  'Sediment->SubVol',
+  #'Autocompaction-*SubVol',
+  #'TidalFreq-*SeawardPropag',
+  #'TidalFreq->SubVol',
+  #'CoastalDev-*LandwardEstabSpace',
+  #'CoastalDev-*LandwardPropag',
+  'CoastalDev-*LandwardMang',
+  'CoastalDev--*SeawardMang',
+  #'CoastalDev--*SeawardPropag',
+  'GroundSubsid->LandwardMang',
+  #'GroundSubsid-*SeawardEstabSpace',
+  #'GroundSubsid-*SeawardPropag',
+  'GroundSubsid-*SeawardMang',
+  'SeaLevelRise->LandwardMang',
+  #'SeaLevelRise-*SeawardEstabSpace',
+  #'SeaLevelRise-*SeawardPropag',
+  'SeaLevelRise-*SeawardMang',
+  #'Cyclones--*LandwardPropag',
+  'Cyclones--*LandwardMang',
+  'Cyclones-*SeawardMang',
+  #'Cyclones-*SeawardPropag',
+  'Cyclones->SubVol',
+  'Cyclones-->LandwardAvailableProp'
+  #'Drought-*Sediment'
+)) %>% 
+  enforce.limitation()
+
 # mangrove system + local factors + anthropogenic pressures + climate pressures
 modelA <- parse.digraph(c('LandwardEstabSpace->LandwardPropag',
                           'LandwardPropag->LandwardMang',
