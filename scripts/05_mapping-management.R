@@ -68,65 +68,66 @@ numsims <- 1000
 tmp <- list()
 
 for(i in 1:nrow(dat)){
-
+  
   # perturbation scenarios
   
-datselect <- select(dat[i,], SLR, Extreme_Weather, Settlement, Erosion) %>% 
-  pivot_longer(SLR:Erosion, names_to = 'press', values_to = 'vals') %>% 
-  filter(vals == 1) %>% 
-  mutate(press = recode(press, 'SLR' = "SeaLevelRise", 
-                        'Extreme_Weather' = "Cyclones", 
-                        'Settlement' = 'CoastalDev'))
-
-if(nrow(datselect) == 0){ # if there are no perturbations, go to next typology
-  next
-}
-
-press.scenario <- rep(1, nrow(datselect))
-names(press.scenario) <- datselect$press
-
-# edge constraint scenarios
-# **TODO: make this easier by changing how the function takes these constraints....
-
-datselect2 <- select(dat[i,], Tidal_Class, Connectivity) %>% 
-  pivot_longer(Tidal_Class:Connectivity, names_to = 'press', values_to = 'vals') 
-
-con.scenario <- c(datselect2$vals, datselect2$vals[2])
-
-# select model for sediment supply
-
-if(dat[i,]$SedSupply == 'H'){
-model <- model.scenarios[[1]]
-}else{
-  model <- model.scenarios[[2]]
-}
-
-# simulate outcomes
-
-      sim <- system.sim_press(numsims, constrainedigraph = model, 
-                              from = c('SeaLevelRise', #'SeaLevelRise', #'SeaLevelRise', 
-                                       'LandwardAvailableProp', 'SeawardAvailableProp'),
-                              to = c('SeawardMang', #'SeawardPropag', #'SeawardEstabSpace', 
-                                     'LandwardMang', 'SeawardMang'),
-                              class = con.scenario,
-                              perturb = press.scenario)
-
-      out <- sim$stableoutcome %>% 
-        filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
-        group_by(var) %>% 
-        summarise(Prob_gain_neutral = (sum(outcome>=0))/n())
-
-out$Type <- rep(dat[i, 'Type'], nrow(out))
-      
-tmp[[i]] <- out
+  datselect <- select(dat[i,], SLR, Extreme_Weather, Settlement, Erosion) %>% 
+    mutate(Sediment = 1) %>% # positively increase sediment
+    pivot_longer(SLR:Erosion, names_to = 'press', values_to = 'vals') %>% 
+    filter(vals == 1) %>% 
+    mutate(press = recode(press, 'SLR' = "SeaLevelRise", 
+                          'Extreme_Weather' = "Cyclones", 
+                          'Settlement' = 'CoastalDev'))
+  
+  if(nrow(datselect) == 0){ # if there are no perturbations, go to next typology
+    next
+  }
+  
+  press.scenario <- rep(1, nrow(datselect))
+  names(press.scenario) <- datselect$press
+  
+  # edge constraint scenarios
+  # **TODO: make this easier by changing how the function takes these constraints....
+  
+  datselect2 <- select(dat[i,], Tidal_Class, Connectivity) %>% 
+    pivot_longer(Tidal_Class:Connectivity, names_to = 'press', values_to = 'vals') 
+  
+  con.scenario <- c(datselect2$vals, datselect2$vals[2])
+  
+  # select model for sediment supply
+  
+  if(dat[i,]$SedSupply == 'H'){
+    model <- model.scenarios[[1]]
+  }else{
+    model <- model.scenarios[[2]]
+  }
+  
+  # simulate outcomes
+  
+  sim <- system.sim_press(numsims, constrainedigraph = model, 
+                          from = c('SeaLevelRise', #'SeaLevelRise', #'SeaLevelRise', 
+                                   'LandwardAvailableProp', 'SeawardAvailableProp'),
+                          to = c('SeawardMang', #'SeawardPropag', #'SeawardEstabSpace', 
+                                 'LandwardMang', 'SeawardMang'),
+                          class = con.scenario,
+                          perturb = press.scenario)
+  
+  out <- sim$stableoutcome %>% 
+    filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
+    group_by(var) %>% 
+    summarise(Prob_gain_neutral = (sum(outcome>=0))/n())
+  
+  out$Type <- rep(dat[i, 'Type'], nrow(out))
+  
+  tmp[[i]] <- out
 }
 
 allout <- do.call(rbind, tmp)
 allout$Prob_change <- rescale(allout$Prob_gain_neutral, to = c(-100, 100))
 
-write.csv(allout, 'outputs/typology_outcomes.csv', row.names = F)
+write.csv(allout, 'outputs/typology_outcomes_sediment.csv', row.names = F)
 
-allout <- read.csv('outputs/typology_outcomes.csv')
+allout <- read.csv('outputs/typology_outcomes_sediment.csv')
 
 # join outcomes to spatial typologies
 
@@ -194,9 +195,14 @@ smap
 
 maps <- tmap_arrange(lmap, smap, ncol = 1)
 
-tmap_save(maps, 'outputs/map_change.png', width = 10, height = 5)
+tmap_save(maps, 'outputs/map_change_sediment.png', width = 10, height = 5)
 
+# compare change in probabilities with or without managmeent
 
+allout2 <- read.csv('outputs/typology_outcomes.csv')
+allout$Prob_change2 <- allout2$Prob_change
 
+ggplot(allout) +
+  geom_point(aes(x = Prob_change, y = Prob_change2))
 
 
