@@ -15,6 +15,7 @@ library(DiagrammeRsvg)
 library(rsvg)
 library(scales)
 library(patchwork)
+library(caret)
 source('scripts/models.R')
 source('scripts/helpers.R')
 sf_use_s2(FALSE)
@@ -128,11 +129,30 @@ allout <- read.csv('outputs/typology_outcomes_validation.csv')
 # join outcomes to typologies, and compare probability of loss/gain with gross loss/gain
 # for landward and seaward
 
-land <- typ2 %>% 
-  inner_join(filter(allout, var == 'LandwardMang'), by = 'Type')
+landsea <- allout %>% 
+  pivot_wider(id_cols = -Prob_gain_neutral, names_from = 'var', values_from = 'Prob_change') %>% 
+  mutate(Land_Gain = ifelse(LandwardMang >= 50, 1, 0),
+         Land_Ambig = ifelse(LandwardMang <50 & LandwardMang > -50, 1, 0),
+         Land_Loss = ifelse(LandwardMang <= -50, 1, 0),
+         Sea_Gain = ifelse(SeawardMang >= 50, 1, 0),
+         Sea_Ambig = ifelse(SeawardMang <50 & SeawardMang > -50, 1, 0),
+         Sea_Loss = ifelse(SeawardMang <= -50, 1, 0)) %>% 
+  filter(Land_Ambig != 1 & Sea_Ambig != 1) %>% # filter out ambiguous predictions
+  mutate(SeaLand_Gain = ifelse(Land_Gain == 1 & Sea_Loss == 0 | Land_Loss == 0 & Sea_Gain == 1, 1, 0),
+         SeaLand_Loss = ifelse(Land_Gain == 0 & Sea_Loss == 1 | Land_Loss == 1 & Sea_Gain == 0, 1, 0)) %>% 
+  filter(SeaLand_Gain == 1 | SeaLand_Loss == 1) %>% # filter out predictions where land cancels sea
+  inner_join(typ2, by = 'Type') %>%
+  mutate(Net_Gain = ifelse(Net_Change >= 0, 1, 0),
+         Net_Loss = ifelse(Net_Change < 0, 1, 0)) %>% 
+  as.data.frame()
+head(landsea)
 
-sea <- typ2 %>% 
-  inner_join(filter(allout, var == 'SeawardMang'), by = 'Type')
+# now do confusion matrix of non-ambiguous predictions of gain or loss, compared to net gain or loss
+# also remove ambiguous predictions where land-cancels sea
+
+conMatrix <- confusionMatrix(factor(c(landsea$SeaLand_Loss,landsea$SeaLand_Gain), levels = c(0,1)), 
+                             factor(c(landsea$Net_Loss, landsea$Land_Gain)))
+conMatrix
 
 # plot probability of loss against gross loss
 
