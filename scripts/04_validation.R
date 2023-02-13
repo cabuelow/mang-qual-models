@@ -150,9 +150,13 @@ head(landsea)
 # now do confusion matrix of non-ambiguous predictions of gain or loss, compared to net gain or loss
 # also remove ambiguous predictions where land-cancels sea
 
-conMatrix <- confusionMatrix(factor(c(landsea$SeaLand_Loss,landsea$SeaLand_Gain), levels = c(0,1)), 
-                             factor(c(landsea$Net_Loss, landsea$Land_Gain)))
+conMatrix <- confusionMatrix(factor(landsea$SeaLand_Loss, levels = c(0,1)), 
+                             factor(landsea$Net_Loss, levels = c(0,1)))
 conMatrix
+
+conMatrix2 <- confusionMatrix(factor(landsea$SeaLand_Gain, levels = c(0,1)), 
+                             factor(landsea$Net_Gain, levels = c(0,1)))
+conMatrix2
 
 # plot probability of loss against gross loss
 
