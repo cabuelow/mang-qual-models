@@ -20,16 +20,23 @@ numsims <- 1000
 
 # perturbation scenarios
 
-pressures <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion', 'Drought or Dams',
+pressures <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion', #'Drought or Dams',
+               'Drought', 'Dams', 'Precipitation',
                'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
-               'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', 'Sea-level rise & Drought or Dams')
+               'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', #'Sea-level rise & Drought or Dams')
+               'Sea-level rise & Drought', 'Sea-level rise & Dams', 'Sea-level rise & Precipitation')
 press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), 
-                        c(Erosion=1), c(Sediment=-1),
+                        c(Erosion=1), #c(Sediment=-1),
+                        c(Drought=1), c(Dams=1),
+                        c(Precipitation=1),
                         c(SeaLevelRise=1, Cyclones=1),
                         c(SeaLevelRise=1, GroundSubsid=1),
                         c(SeaLevelRise=1, CoastalDev=1), 
                         c(SeaLevelRise=1, Erosion=1),
-                         c(SeaLevelRise=1, Sediment=-1))
+                        c(SeaLevelRise=1, Drought=1),
+                        c(SeaLevelRise=1, Dams=1),
+                        c(SeaLevelRise=1, Precipitation=1))
+                        # c(SeaLevelRise=1, Sediment=-1))
 
 # edge constraint scenarios
 # **TODO: make this easier by changing how the function takes these constraints....

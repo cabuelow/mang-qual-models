@@ -26,8 +26,8 @@ modelB <- parse.digraph(c(#'LandwardEstabSpace->LandwardPropag',
                           'Erosion-*SubVol',
                           #'Erosion-*SeawardPropag',
                           'Erosion-*SeawardMang',
-                          #'Precipitation->Sediment',
-                          #'Dams-*Sediment',
+                          'Precipitation->Sediment',
+                          'Dams-*Sediment',
                           'Sediment->SubVol',
                           #'Autocompaction-*SubVol',
                           #'TidalFreq-*SeawardPropag',
@@ -50,8 +50,8 @@ modelB <- parse.digraph(c(#'LandwardEstabSpace->LandwardPropag',
                           'Cyclones-*SeawardMang',
                           #'Cyclones-*SeawardPropag',
                           'Cyclones-*SubVol',
-                          'Cyclones-->LandwardAvailableProp'
-                          #'Drought-*Sediment'
+                          'Cyclones-->LandwardAvailableProp',
+                          'Drought-*Sediment'
 )) %>% 
   enforce.limitation()
 
@@ -76,8 +76,8 @@ modelB.1 <- parse.digraph(c(#'LandwardEstabSpace->LandwardPropag',
   'Erosion-*SubVol',
   #'Erosion-*SeawardPropag',
   'Erosion-*SeawardMang',
-  #'Precipitation->Sediment',
-  #'Dams-*Sediment',
+  'Precipitation->Sediment',
+  'Dams-*Sediment',
   'Sediment->SubVol',
   #'Autocompaction-*SubVol',
   #'TidalFreq-*SeawardPropag',
@@ -100,8 +100,8 @@ modelB.1 <- parse.digraph(c(#'LandwardEstabSpace->LandwardPropag',
   'Cyclones-*SeawardMang',
   #'Cyclones-*SeawardPropag',
   'Cyclones->SubVol',
-  'Cyclones-->LandwardAvailableProp'
-  #'Drought-*Sediment'
+  'Cyclones-->LandwardAvailableProp',
+  'Drought-*Sediment'
 )) %>% 
   enforce.limitation()
 

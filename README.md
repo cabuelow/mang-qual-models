@@ -8,12 +8,10 @@ o	Although Ward (2021) says symbolic analysis is powerful for identifying feedba
 
 Step 1
 - add in an alternative model structure for coastal squeeze - mangroves can't migrate landward with SLR - edge between SLR and landward mangroves removed
-- add in extreme rainfall - what do do - include as variables in model or directly perturb?
 - remove density dependence from sea level rise
-- add in scenario of increased sediment - see what happens
-- alternative model paramaterisation where added sediment means mangroves prograde seaward
--   but actually, I think model results make sense. Seaward mangrove may increase or decrease with SLR and high sediment supply
-- add management scenarios
+- see what co-authors think about SLR high sediment supply as seaward mangroves can either increase or decrease, but if we increase sediment under SLR, still could increase or decrease - but higher probability of gain
+- alternative is to constrain paramaterisation of high sed supply even more, and decrease infludence of SLR - put to coauthors
+
 Step 2: finish global predictions
 - process spatial data
 - Decide whether to get mangrove loss/gain to validate

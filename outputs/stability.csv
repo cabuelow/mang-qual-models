@@ -1,133 +1,181 @@
 "constraint_scenario","constraint_scenario.1","pressures","Num_unstable","Num_stable","Pot_stability"
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1487,1000,0.402090872537193
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1611,1000,0.382995021064726
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1587,1000,0.386548125241593
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1415,1000,0.41407867494824
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1656,1000,0.376506024096386
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought or Dams",1500,1000,0.4
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Cyclones",1667,1000,0.374953130858643
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Seal-level rise & Groundwater extraction",1546,1000,0.392772977219167
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1564,1000,0.390015600624025
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Erosion",1615,1000,0.382409177820268
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Drought or Dams",1538,1000,0.394011032308905
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise",1499,1000,0.40016006402561
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Cyclones",1581,1000,0.387446726075165
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Groundwater extraction",1572,1000,0.388802488335925
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Coastal development",1701,1000,0.370233246945576
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Erosion",1544,1000,0.393081761006289
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Drought or Dams",1502,1000,0.399680255795364
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1538,1000,0.394011032308905
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Seal-level rise & Groundwater extraction",1613,1000,0.382701875239189
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1590,1000,0.386100386100386
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1638,1000,0.379075056861259
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought or Dams",1494,1000,0.400962309542903
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise",1622,1000,0.3813882532418
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Cyclones",1658,1000,0.376222723852521
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Groundwater extraction",1548,1000,0.392464678178964
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Coastal development",1578,1000,0.387897595034911
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Erosion",1654,1000,0.376789751318764
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Drought or Dams",1543,1000,0.393236335037357
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1585,1000,0.386847195357834
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Seal-level rise & Groundwater extraction",1587,1000,0.386548125241593
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1549,1000,0.392310710082385
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Erosion",1641,1000,0.378644452858766
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Drought or Dams",1685,1000,0.37243947858473
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1561,1000,0.390472471690746
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1481,1000,0.403063280935107
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1620,1000,0.381679389312977
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1650,1000,0.377358490566038
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1550,1000,0.392156862745098
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought or Dams",1490,1000,0.401606425702811
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1685,1000,0.37243947858473
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Seal-level rise & Groundwater extraction",1603,1000,0.384172109104879
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1484,1000,0.402576489533011
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Erosion",1659,1000,0.376081233546446
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Drought or Dams",1616,1000,0.382262996941896
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise",1634,1000,0.379650721336371
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Cyclones",1570,1000,0.389105058365759
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Groundwater extraction",1597,1000,0.385059684251059
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Coastal development",1730,1000,0.366300366300366
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Erosion",1594,1000,0.38550501156515
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Drought or Dams",1559,1000,0.390777647518562
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1476,1000,0.403877221324717
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Seal-level rise & Groundwater extraction",1565,1000,0.389863547758285
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1552,1000,0.391849529780564
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1593,1000,0.385653682992673
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought or Dams",1530,1000,0.395256916996047
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise",1559,1000,0.390777647518562
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Cyclones",1589,1000,0.386249517188104
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Groundwater extraction",1552,1000,0.391849529780564
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Coastal development",1511,1000,0.398247710075667
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Erosion",1477,1000,0.40371417036738
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Drought or Dams",1576,1000,0.388198757763975
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1700,1000,0.37037037037037
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Seal-level rise & Groundwater extraction",1470,1000,0.404858299595142
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1650,1000,0.377358490566038
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1542,1000,0.3933910306845
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Drought or Dams",1646,1000,0.377928949357521
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1579,1000,0.387747188832881
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1575,1000,0.388349514563107
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1528,1000,0.395569620253165
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1615,1000,0.382409177820268
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1590,1000,0.386100386100386
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought or Dams",1599,1000,0.384763370527126
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Cyclones",1587,1000,0.386548125241593
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Seal-level rise & Groundwater extraction",1638,1000,0.379075056861259
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1565,1000,0.389863547758285
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Erosion",1579,1000,0.387747188832881
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Drought or Dams",1486,1000,0.402252614641995
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise",1453,1000,0.40766408479413
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Cyclones",1475,1000,0.404040404040404
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Groundwater extraction",1565,1000,0.389863547758285
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Coastal development",1643,1000,0.378357926598562
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Erosion",1663,1000,0.375516334960571
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Drought or Dams",1486,1000,0.402252614641995
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1479,1000,0.403388463089956
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Seal-level rise & Groundwater extraction",1533,1000,0.394788787998421
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1615,1000,0.382409177820268
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1579,1000,0.387747188832881
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1664,1000,0.375375375375375
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1497,1000,0.40048057669203
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1568,1000,0.389408099688474
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought",1484,1000,0.402576489533011
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Dams",1632,1000,0.379939209726444
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Precipitation",1474,1000,0.404203718674212
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1456,1000,0.407166123778502
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Groundwater extraction",1587,1000,0.386548125241593
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1564,1000,0.390015600624025
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1684,1000,0.3725782414307
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought",1610,1000,0.383141762452107
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Dams",1582,1000,0.387296669248644
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Precipitation",1549,1000,0.392310710082385
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1475,1000,0.404040404040404
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1568,1000,0.389408099688474
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1424,1000,0.412541254125413
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1630,1000,0.380228136882129
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1556,1000,0.391236306729264
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought",1541,1000,0.393545848091303
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Dams",1570,1000,0.389105058365759
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Precipitation",1557,1000,0.391083300743058
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1604,1000,0.384024577572965
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Groundwater extraction",1589,1000,0.386249517188104
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1567,1000,0.389559797428905
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1501,1000,0.39984006397441
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought",1590,1000,0.386100386100386
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Dams",1541,1000,0.393545848091303
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Precipitation",1543,1000,0.393236335037357
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1604,1000,0.384024577572965
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1671,1000,0.374391613627855
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1631,1000,0.380083618396047
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1510,1000,0.398406374501992
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1613,1000,0.382701875239189
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought",1507,1000,0.398883127243718
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Dams",1435,1000,0.410677618069815
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Precipitation",1560,1000,0.390625
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1729,1000,0.366434591425431
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Groundwater extraction",1589,1000,0.386249517188104
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1662,1000,0.375657400450789
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1693,1000,0.371333085777943
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought",1713,1000,0.368595650571323
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Dams",1570,1000,0.389105058365759
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Precipitation",1596,1000,0.385208012326656
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1583,1000,0.387146728610143
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1627,1000,0.380662352493338
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1651,1000,0.377216144851
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1634,1000,0.379650721336371
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1618,1000,0.381970970206264
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought",1519,1000,0.396982929734021
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Dams",1600,1000,0.384615384615385
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Precipitation",1570,1000,0.389105058365759
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1585,1000,0.386847195357834
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Groundwater extraction",1586,1000,0.386697602474865
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1637,1000,0.379218809252939
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1439,1000,0.410004100041
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought",1394,1000,0.417710944026733
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Dams",1494,1000,0.400962309542903
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Precipitation",1542,1000,0.3933910306845
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1674,1000,0.37397157816006
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1587,1000,0.386548125241593
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1663,1000,0.375516334960571
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1649,1000,0.377500943752359
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1544,1000,0.393081761006289
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought",1699,1000,0.370507595405706
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Dams",1535,1000,0.394477317554241
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Precipitation",1584,1000,0.386996904024768
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1480,1000,0.403225806451613
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Groundwater extraction",1511,1000,0.398247710075667
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1581,1000,0.387446726075165
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1485,1000,0.402414486921529
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought",1590,1000,0.386100386100386
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Dams",1632,1000,0.379939209726444
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Precipitation",1621,1000,0.381533765738268
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1529,1000,0.395413206801107
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1564,1000,0.390015600624025
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1530,1000,0.395256916996047
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1537,1000,0.394166338194718
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1572,1000,0.388802488335925
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought",1516,1000,0.397456279809221
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Dams",1678,1000,0.373412994772218
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Precipitation",1569,1000,0.389256520046711
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1552,1000,0.391849529780564
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Groundwater extraction",1471,1000,0.404694455685957
 "Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1513,1000,0.397930760047752
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1581,1000,0.387446726075165
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought or Dams",1662,1000,0.375657400450789
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise",1535,1000,0.394477317554241
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Cyclones",1573,1000,0.388651379712398
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Groundwater extraction",1626,1000,0.380807311500381
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Coastal development",1626,1000,0.380807311500381
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Erosion",1599,1000,0.384763370527126
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Drought or Dams",1527,1000,0.395726157499011
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1606,1000,0.383729854182655
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Seal-level rise & Groundwater extraction",1600,1000,0.384615384615385
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1580,1000,0.387596899224806
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Erosion",1501,1000,0.39984006397441
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Drought or Dams",1595,1000,0.385356454720617
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1657,1000,0.376364320662401
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1532,1000,0.394944707740916
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1517,1000,0.397298371076679
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1558,1000,0.390930414386239
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1617,1000,0.382116927779901
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought or Dams",1574,1000,0.388500388500388
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1534,1000,0.394632991318074
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Seal-level rise & Groundwater extraction",1523,1000,0.396353547364249
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1635,1000,0.379506641366224
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Erosion",1571,1000,0.388953714507974
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Drought or Dams",1691,1000,0.371609067261241
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise",1621,1000,0.381533765738268
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Cyclones",1514,1000,0.397772474144789
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Groundwater extraction",1472,1000,0.40453074433657
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Coastal development",1482,1000,0.40290088638195
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Erosion",1565,1000,0.389863547758285
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Drought or Dams",1609,1000,0.383288616328095
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1522,1000,0.396510705789056
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Seal-level rise & Groundwater extraction",1635,1000,0.379506641366224
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1511,1000,0.398247710075667
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1588,1000,0.386398763523957
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought or Dams",1602,1000,0.384319754035357
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise",1556,1000,0.391236306729264
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Cyclones",1608,1000,0.383435582822086
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Groundwater extraction",1502,1000,0.399680255795364
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Coastal development",1623,1000,0.381242851696531
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Erosion",1617,1000,0.382116927779901
-"High Sediment Supply","Microtidal, High Hydro-connectivity","Drought or Dams",1633,1000,0.379794910748196
-"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1525,1000,0.396039603960396
-"High Sediment Supply","Macrotidal, High Hydro-connectivity","Seal-level rise & Groundwater extraction",1508,1000,0.398724082934609
-"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1595,1000,0.385356454720617
-"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1550,1000,0.392156862745098
-"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Drought or Dams",1566,1000,0.38971161340608
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1571,1000,0.388953714507974
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought",1575,1000,0.388349514563107
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Dams",1539,1000,0.393855848759354
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Precipitation",1594,1000,0.38550501156515
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1598,1000,0.384911470361817
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1657,1000,0.376364320662401
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1578,1000,0.387897595034911
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1586,1000,0.386697602474865
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1647,1000,0.377786173026067
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought",1491,1000,0.401445202729827
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Dams",1628,1000,0.380517503805175
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Precipitation",1624,1000,0.38109756097561
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1623,1000,0.381242851696531
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Groundwater extraction",1655,1000,0.376647834274953
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1634,1000,0.379650721336371
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1674,1000,0.37397157816006
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought",1574,1000,0.388500388500388
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Dams",1575,1000,0.388349514563107
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Precipitation",1533,1000,0.394788787998421
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1542,1000,0.3933910306845
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1567,1000,0.389559797428905
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1609,1000,0.383288616328095
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1474,1000,0.404203718674212
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1663,1000,0.375516334960571
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought",1632,1000,0.379939209726444
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Dams",1535,1000,0.394477317554241
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Precipitation",1544,1000,0.393081761006289
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1710,1000,0.3690036900369
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Groundwater extraction",1539,1000,0.393855848759354
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1525,1000,0.396039603960396
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1599,1000,0.384763370527126
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought",1555,1000,0.391389432485323
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Dams",1615,1000,0.382409177820268
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Precipitation",1676,1000,0.373692077727952
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1460,1000,0.40650406504065
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1618,1000,0.381970970206264
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1597,1000,0.385059684251059
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1586,1000,0.386697602474865
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1604,1000,0.384024577572965
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought",1487,1000,0.402090872537193
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Dams",1608,1000,0.383435582822086
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Precipitation",1530,1000,0.395256916996047
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1594,1000,0.38550501156515
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Groundwater extraction",1673,1000,0.374111485222596
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1575,1000,0.388349514563107
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1582,1000,0.387296669248644
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought",1503,1000,0.399520575309628
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Dams",1595,1000,0.385356454720617
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Precipitation",1531,1000,0.395100750691426
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1667,1000,0.374953130858643
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1547,1000,0.392618767177071
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1558,1000,0.390930414386239
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1499,1000,0.40016006402561
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1652,1000,0.377073906485671
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought",1582,1000,0.387296669248644
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Dams",1628,1000,0.380517503805175
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Precipitation",1595,1000,0.385356454720617
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1499,1000,0.40016006402561
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Groundwater extraction",1469,1000,0.405022276225192
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1563,1000,0.390167772142021
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1630,1000,0.380228136882129
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought",1514,1000,0.397772474144789
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Dams",1604,1000,0.384024577572965
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Precipitation",1607,1000,0.383582662063675
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise",1553,1000,0.391696043869957
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Cyclones",1507,1000,0.398883127243718
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Groundwater extraction",1525,1000,0.396039603960396
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Coastal development",1616,1000,0.382262996941896
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Erosion",1605,1000,0.383877159309021
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Drought",1642,1000,0.378501135503407
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Dams",1593,1000,0.385653682992673
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Precipitation",1593,1000,0.385653682992673
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Cyclones",1502,1000,0.399680255795364
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Groundwater extraction",1443,1000,0.409332787556283
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise  & Coastal development",1602,1000,0.384319754035357
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Erosion",1514,1000,0.397772474144789
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Drought",1609,1000,0.383288616328095
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise & Dams",1592,1000,0.385802469135802
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Precipitation",1492,1000,0.401284109149278
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise",1616,1000,0.382262996941896
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Cyclones",1463,1000,0.406008932196508
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Groundwater extraction",1545,1000,0.392927308447937
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Coastal development",1555,1000,0.391389432485323
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Erosion",1653,1000,0.376931775348662
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Drought",1619,1000,0.381825124093165
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Dams",1705,1000,0.369685767097967
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Precipitation",1602,1000,0.384319754035357
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Cyclones",1608,1000,0.383435582822086
+"High Sediment Supply","Microtidal, High Hydro-connectivity","Sea-level rise & Groundwater extraction",1603,1000,0.384172109104879
+"Low Sediment Supply","Mesotidal, High Hydro-connectivity","Sea-level rise  & Coastal development",1515,1000,0.397614314115308
+"High Sediment Supply","Macrotidal, High Hydro-connectivity","Sea-level rise & Erosion",1590,1000,0.386100386100386
+"Low Sediment Supply","Microtidal, Low Hydro-connectivity","Sea-level rise & Drought",1648,1000,0.377643504531722
+"High Sediment Supply","Mesotidal, Low Hydro-connectivity","Sea-level rise & Dams",1566,1000,0.38971161340608
+"Low Sediment Supply","Macrotidal, Low Hydro-connectivity","Sea-level rise & Precipitation",1671,1000,0.374391613627855
