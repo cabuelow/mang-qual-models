@@ -21,7 +21,7 @@ numsims <- 1000
 # perturbation scenarios
 
 pressures <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion', 'Drought or Dams',
-               'Sea-level rise & Cyclones', 'Seal-level rise & Groundwater extraction',
+               'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
                'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', 'Sea-level rise & Drought or Dams')
 press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), 
                         c(Erosion=1), c(Sediment=-1),

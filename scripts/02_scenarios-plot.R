@@ -3,7 +3,7 @@ library(scales)
 
 # plot scenario outcomes
 
-dat <- readRDS('outputs/outcomes_alt-model.rds')
+dat <- readRDS('outputs/outcomes.rds')
 
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
 
@@ -43,4 +43,4 @@ a <- ggplot(dat2, aes(constraint_scenario, pressure, fill = Prob_change)) +
   guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
 a
 
-ggsave('outputs/outcomes-heatmap_alt-model.png', width = 6.5, height = 8)
+ggsave('outputs/outcomes-heatmap.png', width = 6.5, height = 8)
