@@ -18,7 +18,7 @@ sf_use_s2(FALSE)
 #st_write(typ_points, 'data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
 
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
-hydro <- read.csv('data/Hydro_Dat.csv')
+hydro <- read.csv('data/Hydro_Dat.csv') # only have for areas of restorable loss
 slr <- read.csv('data/SLR_Data.csv')
 world <- data("World")
 
