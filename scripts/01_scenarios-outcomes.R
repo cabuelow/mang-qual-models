@@ -21,14 +21,15 @@ numsims <- 1000
 # perturbation scenarios
 
 pressures <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion', #'Drought or Dams',
-               'Drought', 'Dams', 'Precipitation',
+               'Drought', 'Dams', 'Extreme rainfall', 'Dams & Extreme Rainfall',
                'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
                'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', #'Sea-level rise & Drought or Dams')
-               'Sea-level rise & Drought', 'Sea-level rise & Dams', 'Sea-level rise & Precipitation')
+               'Sea-level rise & Drought', 'Sea-level rise & Dams', 'Sea-level rise & Extreme rainfall')
 press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), 
                         c(Erosion=1), #c(Sediment=-1),
                         c(Drought=1), c(Dams=1),
                         c(Precipitation=1),
+                        c(Precipitation=1, Dams=1),
                         c(SeaLevelRise=1, Cyclones=1),
                         c(SeaLevelRise=1, GroundSubsid=1),
                         c(SeaLevelRise=1, CoastalDev=1), 
@@ -41,18 +42,42 @@ press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(C
 # edge constraint scenarios
 # **TODO: make this easier by changing how the function takes these constraints....
 
-con.scenarios <- list(c('H', 'H', 'H'),
-                    c('M', 'H', 'H'),
-                    c('L', 'H', 'H'),
-                    c('H', 'L', 'L'),
-                    c('M',  'L', 'L'),
-                    c('L', 'L', 'L'))
-names(con.scenarios) <- c('Microtidal, High Hydro-connectivity',
-                          'Mesotidal, High Hydro-connectivity',
-                          'Macrotidal, High Hydro-connectivity',
-                          'Microtidal, Low Hydro-connectivity',
-                          'Mesotidal, Low Hydro-connectivity',
-                          'Macrotidal, Low Hydro-connectivity')
+con.scenarios <- list(c('H', 'H', 'H', 'L'),
+                    c('M', 'H', 'H', 'L'),
+                    c('L', 'H', 'H', 'L'),
+                    c('H', 'L', 'L', 'L'),
+                    c('M',  'L', 'L', 'L'),
+                    c('L', 'L', 'L', 'L'),
+                    c('H', 'H', 'H', 'M'),
+                    c('M', 'H', 'H', 'M'),
+                    c('L', 'H', 'H', 'M'),
+                    c('H', 'L', 'L', 'M'),
+                    c('M',  'L', 'L', 'M'),
+                    c('L', 'L', 'L', 'M'),
+                    c('H', 'H', 'H', 'H'),
+                    c('M', 'H', 'H', 'H'),
+                    c('L', 'H', 'H', 'H'),
+                    c('H', 'L', 'L', 'H'),
+                    c('M',  'L', 'L', 'H'),
+                    c('L', 'L', 'L', 'H'))
+names(con.scenarios) <- c('Microtidal, High Hydro-connectivity, High Coastal development',
+                          'Mesotidal, High Hydro-connectivity, High Coastal development',
+                          'Macrotidal, High Hydro-connectivity, High Coastal development',
+                          'Microtidal, Low Hydro-connectivity, High Coastal development',
+                          'Mesotidal, Low Hydro-connectivity, High Coastal development',
+                          'Macrotidal, Low Hydro-connectivity, High Coastal development',
+                          'Microtidal, High Hydro-connectivity, Medium Coastal development',
+                          'Mesotidal, High Hydro-connectivity, Medium Coastal development',
+                          'Macrotidal, High Hydro-connectivity, Medium Coastal development',
+                          'Microtidal, Low Hydro-connectivity, Medium Coastal development',
+                          'Mesotidal, Low Hydro-connectivity, Medium Coastal development',
+                          'Macrotidal, Low Hydro-connectivity, Medium Coastal development',
+                          'Microtidal, High Hydro-connectivity, Low Coastal development',
+                          'Mesotidal, High Hydro-connectivity, Low Coastal development',
+                          'Macrotidal, High Hydro-connectivity, Low Coastal development',
+                          'Microtidal, Low Hydro-connectivity, Low Coastal development',
+                          'Mesotidal, Low Hydro-connectivity, Low Coastal development',
+                          'Macrotidal, Low Hydro-connectivity, Low Coastal development')
 
 # set up relative edge constraint scenarios
 # high sed supply model, sediment -> subVol will be greater than SLR neg interactions
@@ -81,9 +106,11 @@ for(k in seq_along(con.scenarios)){
 for(i in seq_along(pressures)){
   sim <- system.sim_press(numsims, constrainedigraph = model, 
                           from = c('SeaLevelRise', #'SeaLevelRise', #'SeaLevelRise', 
-                                   'LandwardAvailableProp', 'SeawardAvailableProp'),
+                                   'LandwardAvailableProp', 'SeawardAvailableProp',
+                                   'SeaLevelRise'),
                           to = c('SeawardMang', #'SeawardPropag', #'SeawardEstabSpace', 
-                                 'LandwardMang', 'SeawardMang'),
+                                 'LandwardMang', 'SeawardMang',
+                                 'LandwardMang'),
                           class = class.con,
                           perturb = press.scenarios[[i]])
   out[[i]] <- sim$stableoutcome

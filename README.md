@@ -6,15 +6,17 @@ TODO::
 -	Maple/loop analyst, which loops drive ambiguity?
 o	Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes
 
-Step 1
-- add in an alternative model structure for coastal squeeze - mangroves can't migrate landward with SLR - edge between SLR and landward mangroves removed
-- remove density dependence from sea level rise
-- see what co-authors think about SLR high sediment supply as seaward mangroves can either increase or decrease, but if we increase sediment under SLR, still could increase or decrease - but higher probability of gain
-- alternative is to constrain paramaterisation of high sed supply even more, and decrease infludence of SLR - put to coauthors
+- 1. Finish spatial processing
+- 1.a Decide whether to get mangrove loss/gain to validate
 
-Step 2: finish global predictions
-- process spatial data
-- Decide whether to get mangrove loss/gain to validate
+- 2. Ask co-authors what they think about new results - final logic check
+- Do we need a 'coastal-squeeze' paramaterisation - if coastal development = 1 (is perturbed),
+then SLR to Landward Mang interaction is 0, or close to 0 - or let strength of SLR->LandwardMang interaction vary by pop.size?
+- also futher explain what is happening with high vs. low sed supply (clarify that interaction strenght between sediment variable and sub volume = supply) - supply rate can be modified by hydrological connectivity
+- Sediment variable = amount of sediment available in lower catchment, can be modified by drought, dams, precipitation
+- model is saying that under slr and high sed supply mangroves have 50/50 chance of increasing (prograding) or decreasing
+- if we have an increase in sed to the system (i.e., via extreme rainfall event), model says mangroves have 100% chance of increasing
+- if we have dams and precipiation, what happens? - expect it to not be as much increase with dams
 
 Notes:
 - coastal squeeze isn't adequately represented in the model - coastal development just directly reduces mangrove forest, doesn't limit its ability to migrate landward with SLR
@@ -24,6 +26,7 @@ Notes:
 - So this is done - just explain difference between the scenarios
 - except this won't work for spatial predictions. in that way the model isn't adequately capturing coastal squeeze. Unless we do a model structure where if there is coastal development, interaction between SLR and mangroves is 0.
 - so for spatial predictions, we should have both scenarios, and identify sites where this changes predictions substantially. another source of ambiguity.
+- removed density dependence from sea level rise - matrix isn't sign stable. so will keep
 
 In the scripts folder you will find:
 

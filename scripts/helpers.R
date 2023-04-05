@@ -69,7 +69,12 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   edges <- constrainedigraph$edges
   if (length(from) > 0){ # here add new column to edges with high medium or low classification
     constrain <- data.frame(From = from, To = to, Class = class)
+    if(length(which(names(press.scenarios[[i]]) == 'CoastalDev')) != 0){ # only if coastal development is being perturbed to we constrain SeaLevelRise -> LandwardMang egde
     edges$Class <- dplyr::left_join(edges, constrain)$Class
+    }else{
+    edges$Class <- dplyr::left_join(edges, constrain)$Class
+    edges <- mutate(edges, Class = ifelse(To == 'LandwardMang', 'NA', Class))
+    }
   }
   n.nodes <- length(node.labels(edges))
   weight.labels <- edge.labels(edges)
