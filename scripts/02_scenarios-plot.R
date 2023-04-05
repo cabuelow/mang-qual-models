@@ -1,5 +1,6 @@
 library(tidyverse)
 library(scales)
+library(patchwork)
 
 # plot scenario outcomes
 
@@ -15,7 +16,9 @@ dat2 <- dat %>%
                                       'Macrotidal, High Hydro-connectivity, Low Coastal squeeze',
                                       #'Mesotidal, High Hydro-connectivity, Low Coastal squeeze',
                                       'Microtidal, High Hydro-connectivity, Low Coastal squeeze') & 
-           !pressure %in% c('Cyclones', 'Dams', 'Drought', 'Erosion', 'Groundwater extraction')) %>% 
+           !pressure %in% c('Cyclones', 'Dams', 'Drought', 'Erosion', 'Groundwater extraction',
+                            'Sea-level rise & Cyclones', 'Sea-level rise & Dams', 'Sea-level rise & Drought',
+                            'Sea-level rise & Erosion', 'Sea-level rise & Groundwater extraction')) %>% 
   group_by(model_scenario, constraint_scenario, pressure, var) %>% 
   summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
             Prob_loss = (sum(outcome<0)/n())*-100) %>%
@@ -78,5 +81,5 @@ b
 
 c <- a/b + plot_layout(heights = c(0.8, 2))
 c 
-
-ggsave('outputs/outcomes-heatmap.png', width = 5.8, height = 8.5)
+ggsave('outputs/outcomes-heatmap.png', width = 5.7, height = 7)
+ggsave('outputs/outcomes-heatmap.png', width = 5.8, height = 9)
