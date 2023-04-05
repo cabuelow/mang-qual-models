@@ -3,35 +3,35 @@ library(scales)
 
 # plot scenario outcomes
 
-dat <- readRDS('outputs/outcomes.rds')
+dat <- readRDS('outputs/outcomes.rds') 
 
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
 
 dat2 <- dat %>% 
   filter(var %in% c('SeawardMang', 'LandwardMang') & 
-           constraint_scenario %in% c('Macrotidal, High Hydro-connectivity, High Coastal development',
-                                      #'Mesotidal, High Hydro-connectivity, High Coastal development',
-                                      'Microtidal, High Hydro-connectivity, High Coastal development',
-                                      'Macrotidal, High Hydro-connectivity, Low Coastal development',
-                                      #'Mesotidal, High Hydro-connectivity, Low Coastal development',
-                                      'Microtidal, High Hydro-connectivity, Low Coastal development') & 
+           constraint_scenario %in% c('Macrotidal, High Hydro-connectivity, High Coastal squeeze',
+                                      #'Mesotidal, High Hydro-connectivity, High Coastal squeeze',
+                                      'Microtidal, High Hydro-connectivity, High Coastal squeeze',
+                                      'Macrotidal, High Hydro-connectivity, Low Coastal squeeze',
+                                      #'Mesotidal, High Hydro-connectivity, Low Coastal squeeze',
+                                      'Microtidal, High Hydro-connectivity, Low Coastal squeeze') & 
            !pressure %in% c('Cyclones', 'Dams', 'Drought', 'Erosion', 'Groundwater extraction')) %>% 
   group_by(model_scenario, constraint_scenario, pressure, var) %>% 
   summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
             Prob_loss = (sum(outcome<0)/n())*-100) %>%
-  mutate(tide = recode(constraint_scenario, 'Macrotidal, High Hydro-connectivity, High Coastal development' = 'Macrotidal',
-         'Mesotidal, High Hydro-connectivity, High Coastal development' = 'Mesotidal',
-         'Microtidal, High Hydro-connectivity, High Coastal development' = 'Microtidal',
-         'Macrotidal, High Hydro-connectivity, Low Coastal development' = 'Macrotidal',
-         'Mesotidal, High Hydro-connectivity, Low Coastal development' = 'Mesotidal',
-         'Microtidal, High Hydro-connectivity, Low Coastal development' = 'Microtidal'),
+  mutate(tide = recode(constraint_scenario, 'Macrotidal, High Hydro-connectivity, High Coastal squeeze' = 'Macrotidal',
+         'Mesotidal, High Hydro-connectivity, High Coastal squeeze' = 'Mesotidal',
+         'Microtidal, High Hydro-connectivity, High Coastal squeeze' = 'Microtidal',
+         'Macrotidal, High Hydro-connectivity, Low Coastal squeeze' = 'Macrotidal',
+         'Mesotidal, High Hydro-connectivity, Low Coastal squeeze' = 'Mesotidal',
+         'Microtidal, High Hydro-connectivity, Low Coastal squeeze' = 'Microtidal'),
          var = recode(var, 'LandwardMang' = 'Landward mangrove', 'SeawardMang' = 'Seaward mangrove')) %>% 
-  mutate(coastaldev = recode(constraint_scenario, 'Macrotidal, High Hydro-connectivity, High Coastal development' = 'High coastal development',
-                       'Mesotidal, High Hydro-connectivity, High Coastal development' = 'High coastal development',
-                       'Microtidal, High Hydro-connectivity, High Coastal development' = 'High coastal development',
-                       'Macrotidal, High Hydro-connectivity, Low Coastal development' = 'Low coastal development',
-                       'Mesotidal, High Hydro-connectivity, Low Coastal development' = 'Low coastal development',
-                       'Microtidal, High Hydro-connectivity, Low Coastal development' = 'Low coastal development')) %>% 
+  mutate(coastaldev = recode(constraint_scenario, 'Macrotidal, High Hydro-connectivity, High Coastal squeeze' = 'High coastal squeeze',
+                       'Mesotidal, High Hydro-connectivity, High Coastal squeeze' = 'High coastal squeeze',
+                       'Microtidal, High Hydro-connectivity, High Coastal squeeze' = 'High coastal squeeze',
+                       'Macrotidal, High Hydro-connectivity, Low Coastal squeeze' = 'Low coastal squeeze',
+                       'Mesotidal, High Hydro-connectivity, Low Coastal squeeze' = 'Low coastal squeeze',
+                       'Microtidal, High Hydro-connectivity, Low Coastal squeeze' = 'Low coastal squeeze')) %>% 
   mutate(tide = factor(tide, levels = c('Microtidal', 'Mesotidal', 'Macrotidal')))
 
 dat2$Prob_change <- rescale(dat2$Prob_gain_neutral, to = c(-100, 100))
