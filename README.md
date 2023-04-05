@@ -16,7 +16,6 @@ then SLR to Landward Mang interaction is 0, or close to 0 - or let strength of S
 - Sediment variable = amount of sediment available in lower catchment, can be modified by drought, dams, precipitation
 - model is saying that under slr and high sed supply mangroves have 50/50 chance of increasing (prograding) or decreasing
 - if we have an increase in sed to the system (i.e., via extreme rainfall event), model says mangroves have 100% chance of increasing
-- if we have dams and precipiation, what happens? - expect it to not be as much increase with dams
 
 Notes:
 - coastal squeeze isn't adequately represented in the model - coastal development just directly reduces mangrove forest, doesn't limit its ability to migrate landward with SLR
