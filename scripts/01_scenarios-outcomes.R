@@ -1,6 +1,7 @@
 # determine probability of landward and seaward mangrove increase under different scenarios
 #devtools::install_github("SWotherspoon/QPress",ref="Constrain")
 # TODO: make scenario simulation more efficient and easier to implement
+# Get rid of dams scenarios from function code
 
 library(igraph)
 library(QPress)
@@ -21,22 +22,23 @@ numsims <- 1000
 # perturbation scenarios
 
 pressures <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion', #'Drought or Dams',
-               'Drought', 'Dams', 'Extreme rainfall', 'Dams & Extreme Rainfall',
+               'Drought', 'Dams', #'Extreme rainfall', 'Dams & Extreme Rainfall',
                'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
                'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', #'Sea-level rise & Drought or Dams')
-               'Sea-level rise & Drought', 'Sea-level rise & Dams', 'Sea-level rise & Extreme rainfall')
+               'Sea-level rise & Drought', 'Sea-level rise & Sediment', 'Sea-level rise & Dams') #, 'Sea-level rise & Extreme rainfall')
 press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), 
                         c(Erosion=1), #c(Sediment=-1),
                         c(Drought=1), c(Dams=1),
-                        c(Precipitation=1),
-                        c(Precipitation=1, Dams=1),
+                        #c(Precipitation=1),
+                        #c(Precipitation=1, Dams=1),
                         c(SeaLevelRise=1, Cyclones=1),
                         c(SeaLevelRise=1, GroundSubsid=1),
                         c(SeaLevelRise=1, CoastalDev=1), 
                         c(SeaLevelRise=1, Erosion=1),
                         c(SeaLevelRise=1, Drought=1),
-                        c(SeaLevelRise=1, Dams=1),
-                        c(SeaLevelRise=1, Precipitation=1))
+                        c(SeaLevelRise=1, Sediment=1),
+                        c(SeaLevelRise=1, Dams=1))
+                        #c(SeaLevelRise=1, Precipitation=1))
                         # c(SeaLevelRise=1, Sediment=-1))
 
 # edge constraint scenarios
@@ -60,7 +62,7 @@ con.scenarios <- list(c('H', 'H', 'H', 'L'),
                     c('H', 'L', 'L', 'H'),
                     c('M',  'L', 'L', 'H'),
                     c('L', 'L', 'L', 'H'))
-names(con.scenarios) <- c('Microtidal, High Hydro-connectivity, High Coastal squeeze',
+names(con.scenarios) <- c('Microtidal, High Hydro-connectivity, High Coastal squeeze', 
                           'Mesotidal, High Hydro-connectivity, High Coastal squeeze',
                           'Macrotidal, High Hydro-connectivity, High Coastal squeeze',
                           'Microtidal, Low Hydro-connectivity, High Coastal squeeze',
@@ -136,7 +138,8 @@ write.csv(stability, 'outputs/stability.csv', row.names = F)
 
 # wrangle outcomes
 outcomes <- do.call(rbind, outcomes.ls1) %>% 
-  mutate(model_scenario = rep(names(model.scenarios), each = c(numsims*length(node.labels(modelB))*length(pressures)*length(con.scenarios)))) 
+  mutate(model_scenario = rep(names(model.scenarios), each = c(numsims*length(node.labels(modelB))*length(pressures)*length(con.scenarios)))) %>% 
+  mutate(outcome = ifelse(pressure == 'Dams', round(outcome, 2), outcome))
 saveRDS(outcomes, 'outputs/outcomes.rds')
 
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response

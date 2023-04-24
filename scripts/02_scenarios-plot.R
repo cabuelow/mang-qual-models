@@ -4,7 +4,8 @@ library(patchwork)
 
 # plot scenario outcomes
 
-dat <- readRDS('outputs/outcomes.rds') 
+pthfil <- 'outputs/outcomes.rds'
+dat <- readRDS(pthfil) 
 
 # calculate proportion of stable models that have positive, negative, or neutral outcome in landward/seaward mangrove response
 
@@ -15,10 +16,10 @@ dat2 <- dat %>%
                                       'Microtidal, High Hydro-connectivity, High Coastal squeeze',
                                       'Macrotidal, High Hydro-connectivity, Low Coastal squeeze',
                                       #'Mesotidal, High Hydro-connectivity, Low Coastal squeeze',
-                                      'Microtidal, High Hydro-connectivity, Low Coastal squeeze') & 
-           !pressure %in% c('Cyclones', 'Dams', 'Drought', 'Erosion', 'Groundwater extraction',
-                            'Sea-level rise & Cyclones', 'Sea-level rise & Dams', 'Sea-level rise & Drought',
-                            'Sea-level rise & Erosion', 'Sea-level rise & Groundwater extraction')) %>% 
+                                      'Microtidal, High Hydro-connectivity, Low Coastal squeeze')) %>% #& 
+          # !pressure %in% c('Cyclones', 'Dams', 'Drought', 'Erosion', 'Groundwater extraction',
+           #                 'Sea-level rise & Cyclones', 'Sea-level rise & Dams', 'Sea-level rise & Drought',
+            #                'Sea-level rise & Erosion', 'Sea-level rise & Groundwater extraction')) %>% 
   group_by(model_scenario, constraint_scenario, pressure, var) %>% 
   summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
             Prob_loss = (sum(outcome<0)/n())*-100) %>%
@@ -46,7 +47,10 @@ a <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
                        name = 'Probability of Loss (red) or Neutrality/Gain (blue)', 
-                       direction = 1) +
+                       direction = 1,
+                       limits = c(-100, 100),
+                       breaks = c(-100, -50, 0, 50, 100),
+                       labels = c("-100", "-75", "50", '75', '100')) +
   facet_wrap(~factor(coastaldev)) +
   #facet_wrap(~factor(model_scenario)) +
   theme_classic() +
@@ -55,8 +59,8 @@ a <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
         #axis.text.y =  element_blank(),
         strip.text.x = element_text(size = 9),
         axis.title = element_blank()) +
-  ggtitle('A) Landward mangrove') #+
-  #guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
+  ggtitle('A) Landward mangrove') +
+  guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
 a
 
 b <- ggplot(filter(dat2, var == 'Seaward mangrove'), 
@@ -65,6 +69,7 @@ b <- ggplot(filter(dat2, var == 'Seaward mangrove'),
   scale_fill_distiller(palette = 'Spectral', 
                        name = 'Probability of Loss (red) or Neutrality/Gain (blue)',
                        direction = 1,
+                       limits = c(-100, 100),
                        breaks = c(-100, -50, 0, 50, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
   facet_wrap(vars(factor(model_scenario), factor(coastaldev)), ncol = 2) +
@@ -81,5 +86,5 @@ b
 
 c <- a/b + plot_layout(heights = c(0.8, 2))
 c 
-ggsave('outputs/outcomes-heatmap.png', width = 5.7, height = 7)
-ggsave('outputs/outcomes-heatmap.png', width = 5.8, height = 9)
+ggsave(paste0('outputs/heatmap_', pthfil ,'.png'), width = 5.7, height = 7)
+ggsave(paste0('outputs/heatmap_', pthfil, '.png'), width = 5.8, height = 8)
