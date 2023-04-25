@@ -1,8 +1,9 @@
 ### Qualitative analysis of mangrove response to drivers of change
 
+Link to spatial processing doc [here](https://mangrove-climate-risk-mapping.netlify.app/).
+
 TODO:: 
 - Clean up code and make scenario simulation more efficient! purrrr....
--	Process data for missing for typologies
 -	Maple/loop analyst, which loops drive ambiguity?
 o	Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes
 

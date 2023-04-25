@@ -38,7 +38,9 @@ dat[[1]] <- coast # if happy add to dat list
 
 #### sediment supply
 
-sed <- read.csv('outputs/processed-data/free-flowing-rivers.csv') %>% 
+sed <- read.csv('outputs/processed-data/free-flowing-rivers.csv') %>%
+  left_join(select(st_drop_geometry(typ), Type, Class), by = 'Type') %>% 
+  mutate(SED_weighted_average = ifelse(Class != 'Delta', 100, SED_weighted_average)) %>% 
   mutate(sed_supp = ifelse(SED_weighted_average > 66, 'Low', NA)) %>% 
   mutate(sed_supp = ifelse(SED_weighted_average < 33, 'High', sed_supp)) %>% 
   mutate(sed_supp = ifelse(is.na(sed_supp), 'Medium', sed_supp)) %>% 
@@ -180,6 +182,18 @@ typ2 <- typ %>%
   left_join(hrain)
 qtm(typ2, dots.col = 'hist_ext_rain') 
 dat[[12]] <- hrain # if happy add to dat list
+
+#### tidal range
+
+tide <- read.csv('data/typologies/SLR_Data.csv') %>% 
+  select(Type, Tidal_Class)
+
+# map to check
+
+typ2 <- typ %>% 
+  left_join(tide)
+qtm(typ2, dots.col = 'Tidal_Class') 
+dat[[13]] <- tide # if happy add to dat list
 
 # merge into final master database
 

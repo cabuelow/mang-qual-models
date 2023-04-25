@@ -1,0 +1,4 @@
+- source: map.qmd
+  netlify:
+    - id: 99002f25-d84e-490a-a50c-e4a84303fd8a
+      url: 'https://chimerical-cascaron-0ca59d.netlify.app'
