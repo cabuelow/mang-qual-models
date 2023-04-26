@@ -10,7 +10,7 @@ tmap_mode('view')
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
 dat <- list() # list to store wrangled dat
 
-####TODO: tropical storms, propagule dispersal
+####TODO: propagule dispersal
 
 #### coastal squeeze
 
@@ -194,6 +194,20 @@ typ2 <- typ %>%
   left_join(tide)
 qtm(typ2, dots.col = 'Tidal_Class') 
 dat[[13]] <- tide # if happy add to dat list
+
+#### future slr
+
+fstorms <- read.csv('outputs/processed-data/future-cyclone-occurrences_CMCC_10000yrs.csv') %>% 
+  mutate(fut_storms = 1 - (1 - (cyclone_occurrences_10000yrs/10000))^(2050-2023)) %>% 
+  mutate(fut_storms = ifelse(fut_storms > 0.5, 1, 0)) %>% 
+  select(Type, fut_storms)
+
+# map to check
+
+typ2 <- typ %>% 
+  left_join(fstorms)
+qtm(typ2, dots.col = 'fut_storms') 
+dat[[14]] <- fstorms # if happy add to dat list
 
 # merge into final master database
 

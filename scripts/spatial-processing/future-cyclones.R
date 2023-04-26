@@ -4,13 +4,16 @@
 # number of tropical cyclone occurrences within a 200km buffer of mangrove typology centroids
 
 library(sf)
-library(tidyverse)
-library(tmap)
+library(dplyr)
+library(doParallel)
 
-typ_cent <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
-typ_cent_200buff <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% st_buffer(200000) %>% st_wrap_dateline()
-GCM <- 'CMCC'
-fils <- list.files(paste0('data/STORM-tracks/', GCM, '/'), full.names = T)
+# set HPC working directory
+setwd('/export/home/s2988833')
+
+typ_cent <- st_read('mang-qual-analysis/data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
+typ_cent_200buff <- st_read('mang-qual-analysis/data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% st_buffer(200000) %>% st_wrap_dateline()
+GCM <- 'CNRM'
+fils <- list.files(paste0('mang-qual-analysis/data/STORM-tracks/', GCM, '/'), full.names = T)
 dat <- lapply(fils, read.table, fill = T, header = F, sep = ',')
 dat <- do.call(rbind, dat)
 colnames(dat) <- c('Year', 'Month', 'TC_number', 'Time_step', 'Basin_ID',
@@ -28,28 +31,34 @@ dat.sf <- dat %>%
   #st_cast("LINESTRING")
 
 #st_write(dat.sf, 'data/STORM-tracks/CMCC.gpkg', append = F, overwrite = T)
-
 #dat.sf <- st_read('data/STORM-tracks/CMCC.gpkg')
 
 # get number of unique cyclone occurrences per year, in 10000 year period, forest patches 200 km buffer
+# register clusters for parallelisation
+cl <- makeCluster(2)
+registerDoParallel(cl)
 
-df <- data.frame(Type = NA, cyclone_occurrences_10000yrs = NA, cyclone_max_wind_speed_m_s_mean = NA) # df for storing results
+#df <- data.frame(Type = NA, cyclone_occurrences_10000yrs = NA, cyclone_max_wind_speed_m_s_mean = NA) # df for storing results
 
-for(i in 1:nrow(typ_cent_200buff)){
-  
+#for(i in 1:nrow(typ_cent_200buff)){
+#for(i in 1:10){
+#df = foreach(i = 1:20, .combine = rbind, .packages = c('sf', 'dplyr')) %dopar% {
+df = foreach(i = 1:nrow(typ_cent_200buff), .combine = rbind, .packages = c('sf', 'dplyr')) %dopar% { 
   unit <- typ_cent_200buff[i,]
-  
-  #system.time(occurrences <- unit %>% st_intersection(dat.sf))
   
   occurrences <- dat.sf %>% 
     mutate(unit = lengths(st_intersects(dat.sf, unit, sparse = T)) > 0) %>% 
     filter(unit == 'TRUE')
   
-  df[[i,1]] <- unit$Type
-  df[[i,2]] <- length(unique(occurrences$Year_TC_number_Basin))
-  df[[i,3]] <- mean(occurrences$Max_wind_speed_m_s, na.rm = T)
-  
+  #df[[i,1]] <- unit$Type
+  #df[[i,2]] <- length(unique(occurrences$Year_TC_number_Basin))
+  #df[[i,3]] <- mean(occurrences$Max_wind_speed_m_s, na.rm = T)
+  #write.csv(df, paste0('future2-cyclone-occurrences-test_', GCM, '.csv'), row.names = F)  
+  data.frame(Type = unit$Type, 
+             cyclone_occurrences_10000yrs = length(unique(occurrences$Year_TC_number_Basin)), 
+             cyclone_max_wind_speed_m_s_mean = mean(occurrences$Max_wind_speed_m_s, na.rm = T))
 }
+stopCluster(cl)
 
 df2 <- df %>% 
   mutate(cyclone_max_wind_speed_m_s_mean = ifelse(cyclone_occurrences_10000yrs == 0, 0, cyclone_max_wind_speed_m_s_mean))
@@ -62,4 +71,4 @@ df.final <- df2 %>%
   summarise(cyclone_occurrences_10000yrs = mean(cyclone_occurrences_10000yrs),
             cyclone_max_wind_speed_m_s_mean = mean(cyclone_max_wind_speed_m_s_mean))
 
-write.csv(df.final, paste0('future-cyclone-occurrences_', GCM, '_10000yrs.csv'), row.names = F)
+write.csv(df.final, paste0('future2-cyclone-occurrences_', GCM, '_10000yrs.csv'), row.names = F)

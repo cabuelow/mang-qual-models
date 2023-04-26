@@ -24,25 +24,33 @@ library(tidyverse)
 dat <- read.csv('outputs/master-dat.csv')
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
-  mutate_at(vars(fut_dams:hist_ext_rain), ~ifelse(.==0, 'Absent', 'Present')) %>% 
-  mutate_at(vars(csqueeze:Tidal_Class), as.factor) %>% 
+  mutate_at(vars(fut_dams:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
+  mutate_at(vars(csqueeze:fut_storms), as.factor) %>% 
   mutate_at(vars(csqueeze:sed_supp), ~factor(., levels = c('High', 'Medium', 'Low')))
 ```
+This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; Worthington et al. 2020). 
+
+Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for making predictions.
+
+### Network model of mangrove landward migration and seaward progradation
+
+Conceptual diagram of the network model that makes qualitative predictions of mangrove landward migration and seaward progradation (Figure 1). Details can be found in Buelow et al. (*in prep*).
+
+![Figure 1. Mangrove network model](images/network.png)
 
 ### Sea-level rise
 
-Antecedent sea-level rise is mapped in the left pane, future projected sea-level rise on the right.
-**Note, drag the pane separator in the middle of the map to compare antecedent and future SLR**
+Antecedent sea-level rise is mapped in the left pane, future projected sea-level rise on the right. **Note, drag the pane separator in the middle of the map to compare antecedent and future SLR**
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'ant_slr', layer.name = 'Antecdent sea-level rise', cex = 0.5, lwd = 0) | mapview(typ, zcol = 'fut_slr', layer.name = 'Future sea-level rise', cex = 0.5, lwd = 0)
+mapview(typ, zcol = 'ant_slr', layer.name = 'Antecdent sea-level rise', cex = 0.7, lwd = 0) | mapview(typ, zcol = 'fut_slr', layer.name = 'Future sea-level rise', cex = 0.7, lwd = 0)
 
 ```
 
 **Antecedent sea-level rise**
 
-[Regional mean sea level trends (mm/yr, 1993-2015)](https://catalogue.ceda.ac.uk/uuid/3ac333b828b54e3495c7749f5bce2fe3) were estimated for each mangrove typological unit by obtaining the raster pixel value (resolution of 1/4°) closest to the centroid of each unit. Extreme values were truncated at \> \|5\|mm yr-1 (Worthington et al. in prep). Typological units with sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
+[Regional mean sea level trends (mm/yr, 1993-2015)](https://catalogue.ceda.ac.uk/uuid/3ac333b828b54e3495c7749f5bce2fe3) were estimated for each mangrove typological unit by obtaining the raster pixel value (resolution of 1/4°) closest to the centroid of each unit. Extreme values were truncated at \> \|5\|mm yr-1 (Worthington et al. (*in review*)). Typological units with sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
 
 **Future sea-level rise**
 
@@ -54,7 +62,7 @@ Current coastal development (2020) is mapped in the left pane, future projected 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'csqueeze', layer.name = 'Coastal development', cex = 0.5, lwd = 0) | mapview(typ, zcol = 'fut_csqueeze', layer.name = 'Future coastal development', cex = 0.5, lwd = 0)
+mapview(typ, zcol = 'csqueeze', layer.name = 'Coastal development', cex = 0.7, lwd = 0) | mapview(typ, zcol = 'fut_csqueeze', layer.name = 'Future coastal development', cex = 0.7, lwd = 0)
 
 ```
 
@@ -72,7 +80,7 @@ Historical drought conditions (1996-2020) is mapped in the left pane, future pro
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'hist_drought', layer.name = 'Historical drought', cex = 0.5, lwd = 0) | mapview(typ, zcol = 'fut_drought', layer.name = 'Future drought', cex = 0.5, lwd = 0)
+mapview(typ, zcol = 'hist_drought', layer.name = 'Historical drought', cex = 0.7, lwd = 0) | mapview(typ, zcol = 'fut_drought', layer.name = 'Future drought', cex = 0.7, lwd = 0)
 
 ```
 
@@ -90,7 +98,7 @@ Historical extreme rainfall (1996-2020) is mapped in the left pane, future proje
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'hist_ext_rain', layer.name = 'Historical extreme rainfall', cex = 0.5, lwd = 0) | mapview(typ, zcol = 'fut_ext_rain', layer.name = 'Future extreme rainfall', cex = 0.5, lwd = 0)
+mapview(typ, zcol = 'hist_ext_rain', layer.name = 'Historical extreme rainfall', cex = 0.7, lwd = 0) | mapview(typ, zcol = 'fut_ext_rain', layer.name = 'Future extreme rainfall', cex = 0.7, lwd = 0)
 
 ```
 
@@ -104,11 +112,11 @@ Same as above for **Future drought**, except mangrove typological units with gre
 
 ### Intense tropical storms
 
-Historical Intense tropical storms (1996-2020) is mapped in the left pane, future projected intense tropical storms is still being processed.
+Historical Intense tropical storms (1996-2020) is mapped in the left pane, and future projected intense tropical storms on the right.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'storms', layer.name = 'Historical intense tropical storms', cex = 0.5, lwd = 0)
+mapview(typ, zcol = 'storms', layer.name = 'Historical intense tropical storms', cex = 0.7, lwd = 0) | mapview(typ, zcol = 'fut_storms', layer.name = 'Future intense tropical storms', cex = 0.7, lwd = 0)
 
 ```
 
@@ -118,7 +126,7 @@ The number of tropical cyclones within a 200 km radius buffer from the centroid 
 
 **Future intense tropical storms**
 
-The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (fcyc) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: pcyc = 1 -- (1 - fcyc)\^(2050-2023). Damage from future intense tropical storms was considered present if probability of cyclone occurring by 2050 was greater than 50%.
+The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of cyclone occurring by 2050 was greater than 50%.
 
 ### Subsidence from groundwater extraction
 
@@ -126,7 +134,7 @@ Historical subsidence from groundwater extraction (2010) is mapped in the left p
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.5, lwd = 0) | mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.5, lwd = 0)
+mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.7, lwd = 0) | mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.7, lwd = 0)
 
 ```
 
@@ -138,23 +146,31 @@ mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.5, lw
 
 Same as above for **Historical subsidence** except a raster with projected probability of subsidence by 2040 was used.
 
-### Biophysical settings
+### Sediment supply and future dams
 
-Sediment supply is mapped in the left pane, tidal range on the right.
+Sediment supply is mapped in the left pane, future dams either planned or under construction upstream of a typological unit on the right.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'sed_supp', layer.name = 'Sediment supply', cex = 0.5, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(typ, zcol = 'Tidal_Class', layer.name = 'Tidal range', cex = 0.5, lwd = 0)
+mapview(typ, zcol = 'sed_supp', layer.name = 'Sediment supply', cex = 0.7, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(typ, zcol = 'fut_dams', layer.name = 'Future dams upstream', cex = 0.7, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 
 ```
 
 **Sediment supply**
 
-Catchments representing all land and river networks associated with a mangrove typological unit were created by identifying basins from the HydroSHEDS database that either directly intersect with a unit or are associated with rivers upstream of a unit (Linke et al., 2019). Basins associated with each unit were then dissolved to create a single catchment for each mangrove typological unit. The [free-flowing river network (FFRN)(Grill et al., 2019)](https://figshare.com/articles/dataset/Mapping_the_world_s_free-flowing_rivers_data_set_and_technical_documentation/7688801) was intersected with each mangrove catchment, and the coastal outlets of each unique river network was identified. The sediment trapping index provided in the FFRN represents the proportion of sediment trapped upstream in the catchment by anthropogenic barriers and was used as an estimate of land-based sediment supply to each typological unit. Where multiple rivers intersected with a typological unit, an average of the sediment trapping index values was taken, weighted by the rivers average long-term (1971-2000) naturalised discharge (m3s-1). Where the FFRN did not intersect with a mangrove catchment, the typological unit was given a value of 0, indicating sediment is not trapped by anthropogenic barriers in that catchment. Processing followed steps taken by Worthington et al. (under review) and Hagger et al. (Hagger et al., 2022). All typological units other than deltaic (i.e., lagoonal, estuarine and open coast) were considered to have low sediment supply. Deltaic units with a sediment trapping index \>66% were classified as having low sediment supply; if it was \<33% the unit was classified as having high sediment supply.
+Catchments representing all land and river networks associated with a mangrove typological unit were created by identifying basins from the HydroSHEDS database that either directly intersect with a unit or are associated with rivers upstream of a unit (Linke et al., 2019). Basins associated with each unit were then dissolved to create a single catchment for each mangrove typological unit. The [free-flowing river network (FFRN)(Grill et al., 2019)](https://figshare.com/articles/dataset/Mapping_the_world_s_free-flowing_rivers_data_set_and_technical_documentation/7688801) was intersected with each mangrove catchment, and the coastal outlets of each unique river network was identified. The sediment trapping index provided in the FFRN represents the proportion of sediment trapped upstream in the catchment by anthropogenic barriers and was used as an estimate of land-based sediment supply to each typological unit. Where multiple rivers intersected with a typological unit, an average of the sediment trapping index values was taken, weighted by the rivers average long-term (1971-2000) naturalised discharge (m3s-1). Where the FFRN did not intersect with a mangrove catchment, the typological unit was given a value of 0, indicating sediment is not trapped by anthropogenic barriers in that catchment. Processing followed steps taken by Worthington et al. (*under review*) and Hagger et al. 2022. All typological units other than deltaic (i.e., lagoonal, estuarine and open coast) were considered to have low sediment supply. Deltaic units with a sediment trapping index \>66% were classified as having low sediment supply; if it was \<33% the unit was classified as having high sediment supply.
+
+**Future dams**
+
+River networks from the HydroRivers database (Lehner & Grill, 2013) that drain into mangrove typological units were identified and buffered by 10 kilometres. The number of dams either planned or under construction in the future (Zarfl et al., 2015) that intersected with each unit’s buffered river network was calculated and converted to future dam presence-absence. Mangrove typological units without river networks received a value of 0.
+
+### Biophysical settings
 
 **Tidal range**
 
-Tidal range was estimated for each mangrove typological unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). Typological units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and typological units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (under review).
+**Not mapped here due to memory limits**
+
+Tidal range was estimated for each mangrove typological unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). Typological units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and typological units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (*under review*).
 
 ### Propagule establishment capacity
 
