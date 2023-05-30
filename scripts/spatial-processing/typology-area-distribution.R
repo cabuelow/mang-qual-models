@@ -11,6 +11,7 @@ typ_area <- typ %>%
   mutate(area_ha = as.numeric(st_area(.))/10000) # calculate area with s2 on, so approximating a sphere
 
 df <- st_drop_geometry(typ_area)
+st_write(select(df, Type, area_ha), 'outputs/processed-data/typology-area.csv', row.names = F)
 
 ggplot(df) +
   geom_histogram(aes(log(area_ha))) +

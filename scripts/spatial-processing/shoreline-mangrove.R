@@ -1,0 +1,18 @@
+library(sf)
+library(terra)
+
+shore <- st_read('data/shoreline/USGS_WCMC_GlobalShoreline.shp')
+shore2 <- st_read('data/shoreline/USGS_WCMC_GlobalIslandsv1_BigIslands_lines.shp')
+shore3 <- st_read('data/shoreline/USGS_WCMC_GlobalIslandsv1_SmallIslands_lines.shp')
+shore4 <- st_read('data/shoreline/USGS_WCMC_GlobalIslandsv1_VerySmallIslands_lines.shp')
+shoreall <- rbind(shore, shore2, shore3, shore4)
+typ_cent <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% st_transform(st_crs(shore))
+shore_mang <- shoreall %>% st_crop(st_bbox(st_buffer(typ_cent, 10000)))
+st_write(shore_mang, 'data/shoreline/mangrove_shore_v2.gpkg', append = F, overwrite = T)
+
+typ_cent <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
+eez <- st_read('data/World_EEZ_v11_20191118/eez_v11.shp')
+sf_use_s2(TRUE)
+eez_mang <- eez %>% st_make_valid() %>% st_crop(st_bbox(st_buffer(typ_cent, 10000)))
+eez_mang <- st_make_valid(eez_mang)
+st_write(eez_mang, 'data/World_EEZ_v11_20191118/eez_v11_mang_v2.shp', overwrite = T, append = F)

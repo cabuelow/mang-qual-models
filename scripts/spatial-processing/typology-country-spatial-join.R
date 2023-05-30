@@ -1,8 +1,8 @@
 library(sf)
-sf_use_sf(FALSE)
+sf_use_s2(FALSE)
 
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite.shp')
-eez <- st_read('data/EEZ_land_union_v3_202003/EEZ_Land_v3_202030.shp')
+eez <- st_read('data/EEZ_land_union_v3_202003/EEZ_Land_v3_202030.shp') 
 
 # spatial join whereby if multiple countries intersect a typology, the one with largest area gets assigned
 

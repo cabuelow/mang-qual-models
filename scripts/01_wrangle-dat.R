@@ -1,6 +1,6 @@
 # take spatial data processed to mangrove typological units
 # convert to meaningful input for climate risk model
-# and make master dataframe
+# and combine into master dataframe
 
 library(tidyverse)
 library(sf)
@@ -9,8 +9,6 @@ tmap_mode('view')
 
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
 dat <- list() # list to store wrangled dat
-
-####TODO: propagule dispersal
 
 #### coastal squeeze
 
@@ -40,7 +38,7 @@ dat[[1]] <- coast # if happy add to dat list
 
 sed <- read.csv('outputs/processed-data/free-flowing-rivers.csv') %>%
   left_join(select(st_drop_geometry(typ), Type, Class), by = 'Type') %>% 
-  mutate(SED_weighted_average = ifelse(Class != 'Delta', 100, SED_weighted_average)) %>% 
+  mutate(SED_weighted_average = ifelse(Class != 'Delta', 100, SED_weighted_average)) %>%
   mutate(sed_supp = ifelse(SED_weighted_average > 66, 'Low', NA)) %>% 
   mutate(sed_supp = ifelse(SED_weighted_average < 33, 'High', sed_supp)) %>% 
   mutate(sed_supp = ifelse(is.na(sed_supp), 'Medium', sed_supp)) %>% 
@@ -195,9 +193,15 @@ typ2 <- typ %>%
 qtm(typ2, dots.col = 'Tidal_Class') 
 dat[[13]] <- tide # if happy add to dat list
 
-#### future slr
+#### future cyclones
 
-fstorms <- read.csv('outputs/processed-data/future-cyclone-occurrences_CMCC_10000yrs.csv') %>% 
+fils <- list.files('outputs/processed-data/', pattern = '10000yrs.csv', full.names = T)
+fstorms <- lapply(fils, read.csv) %>% 
+  lapply(select, Type, cyclone_occurrences_10000yrs) %>% 
+  reduce(left_join, by = 'Type') %>% 
+  pivot_longer(cols = cyclone_occurrences_10000yrs.x:cyclone_occurrences_10000yrs.y.y, names_to = 'model', values_to = 'cyclone_occurrences_10000yrs') %>% 
+  group_by(Type) %>% 
+  summarise(cyclone_occurrences_10000yrs = median(cyclone_occurrences_10000yrs)) %>% 
   mutate(fut_storms = 1 - (1 - (cyclone_occurrences_10000yrs/10000))^(2050-2023)) %>% 
   mutate(fut_storms = ifelse(fut_storms > 0.5, 1, 0)) %>% 
   select(Type, fut_storms)
@@ -208,6 +212,13 @@ typ2 <- typ %>%
   left_join(fstorms)
 qtm(typ2, dots.col = 'fut_storms') 
 dat[[14]] <- fstorms # if happy add to dat list
+
+#### propagule establishment distances
+
+propest <- read.csv('outputs/processed-data/propagule-establishment-distances.csv') %>% 
+  
+
+#### landward vs. seaward loss
 
 # merge into final master database
 
