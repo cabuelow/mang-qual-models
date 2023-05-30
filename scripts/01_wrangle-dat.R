@@ -8,6 +8,7 @@ library(tmap)
 tmap_mode('view')
 
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
+typ_area <- read.csv('outputs/processed-data/typology-area.csv')
 dat <- list() # list to store wrangled dat
 
 #### coastal squeeze
@@ -216,9 +217,44 @@ dat[[14]] <- fstorms # if happy add to dat list
 #### propagule establishment distances
 
 propest <- read.csv('outputs/processed-data/propagule-establishment-distances.csv') %>% 
+  left_join(typ_area) %>% 
+  mutate(prop_establishment = ifelse(extant_loss_dist_mean_m == 'no_loss', NA, extant_loss_dist_mean_m)) %>% 
+  mutate(prop_establishment = as.numeric(ifelse(prop_establishment == 'no_extant', NA, prop_establishment))) %>% 
+  mutate(prop_establishment = prop_establishment/area_ha) %>% 
+  mutate(prop_establishment = ifelse(is.na(prop_establishment), max(.$prop_establishment, na.rm = T), prop_establishment)) %>% 
+  mutate(prop_estab = ifelse(prop_establishment > quantile(.$prop_establishment, 0.66), 'Low', NA),
+         prop_estab = ifelse(prop_establishment < quantile(.$prop_establishment, 0.33), 'High', prop_estab),
+         prop_estab = ifelse(is.na(prop_estab), 'Medium', prop_estab)) %>% 
+  select(Type, prop_estab)
   
 
+# map to check
+
+typ2 <- typ %>% 
+  left_join(propest)
+qtm(typ2, dots.col = 'prop_estab') 
+dat[[15]] <- propest # if happy add to dat list
+
 #### landward vs. seaward loss
+
+sealand <- read.csv('outputs/processed-data/sea-land-extent-change.csv') %>% 
+  mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(is.na(.), 0, .)) %>% # NAs are where there was no loss or gain
+  mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(. < 100, 0, .)) %>% # only consider areas of loss or gain > 1km2 (100ha)
+  mutate(sea_gain = ifelse(sea_gain_ha > 0, 1, 0),
+         sea_loss = ifelse(sea_loss_ha > 0, 1, 0),
+         land_gain = ifelse(land_gain_ha > 0, 1, 0),
+         land_loss = ifelse(land_loss_ha > 0, 1, 0)) %>% 
+  select(Type, sea_gain:land_loss)
+
+# map to check
+
+typ2 <- typ %>% 
+  left_join(sealand)
+qtm(typ2, dots.col = 'sea_gain') 
+qtm(typ2, dots.col = 'sea_loss') 
+qtm(typ2, dots.col = 'land_gain')
+qtm(typ2, dots.col = 'land_loss') 
+dat[[16]] <- sealand # if happy add to dat list
 
 # merge into final master database
 

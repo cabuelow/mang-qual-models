@@ -43,7 +43,6 @@ df <- select(st_drop_geometry(typ_cent), Type) %>%
   left_join(sea_loss) %>% 
   left_join(land_gain) %>% 
   left_join(land_loss) %>% 
-  mutate_at(vars(sea_gain_ha:land_loss_ha), as.numeric) %>% 
-  mutate_at(vars(sea_gain_ha:land_loss_ha), function(x){x/10000})
+  mutate_at(vars(sea_gain_ha:land_loss_ha), as.numeric)
 
 write.csv(df, 'outputs/processed-data/sea-land-extent-change.csv', row.names = F)
