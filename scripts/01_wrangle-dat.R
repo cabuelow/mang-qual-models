@@ -239,11 +239,11 @@ dat[[15]] <- propest # if happy add to dat list
 
 sealand <- read.csv('outputs/processed-data/sea-land-extent-change.csv') %>% 
   mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(is.na(.), 0, .)) %>% # NAs are where there was no loss or gain
-  mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(. < 100, 0, .)) %>% # only consider areas of loss or gain > 1km2 (100ha)
+  #mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(. < 100, 0, .)) %>% # only consider areas of loss or gain > 1km2 (100ha)
   mutate(sea_gain = ifelse(sea_gain_ha > 0, 1, 0),
          sea_loss = ifelse(sea_loss_ha > 0, 1, 0),
          land_gain = ifelse(land_gain_ha > 0, 1, 0),
-         land_loss = ifelse(land_loss_ha > 0, 1, 0)) %>% 
+         land_loss = ifelse(land_loss_ha > 0, 1, 0)) %>%
   select(Type, sea_gain:land_loss)
 
 # map to check
