@@ -43,9 +43,9 @@ This webpage provides an overview of the data used to paramaterise a qualitative
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
-Due to memory limitations, only [sea-level rise](#sea-level-rise), [coastal development](#coastal-development), [drought](#drought), [extreme rainfall](#extreme-rainfall), and [intense storms](#instense-storms) are found on this page. 
+Due to memory limitations, only [sea-level rise](#sea-level-rise), [coastal development](#coastal-development), [drought](#drought), [extreme rainfall](#extreme-rainfall), and [intense storms](#intense-storms) are found on this page.
 
-Go [here](https://mangrove-climate-risk-mapping-2.netlify.app/) to see part 2, which provides information on sediment supply, future dams, tidal range, propagule establishment capacity and historical landward and seaward mangrove extent change. 
+Go [here](https://mangrove-climate-risk-mapping-2.netlify.app/) to see part 2, which provides information on sediment supply, future dams, tidal range, propagule establishment capacity and historical landward and seaward mangrove extent change.
 
 ### Network model of mangrove landward migration and seaward progradation
 
@@ -106,7 +106,7 @@ Historical drought conditions were estimated for each mangrove typological unit 
 
 [Long term (2081-2100) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove typological unit was calculated. Mangrove typological units with greater than 50% decrease in SPI values were considered at risk from drought.
 
-### Extreme rainfall
+### Extreme rainfall {#extreme-rainfall}
 
 Historical extreme rainfall (1996-2020) is mapped in the left pane, future projected extreme rainfall is mapped on the right.
 
