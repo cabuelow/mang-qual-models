@@ -13,13 +13,13 @@ Link to documents describing all spatial data processing:
 
 3.  03_plot-scenarios.R: plot the scenario results
 
-4.  04_model-sptial.R: map models to mangrove typologies
+4.  04_model-spatial.R: map models to mangrove typologies
 
 5.  05_model-spatial-validation.R: hindcast and validate spatial model
 
-6.  helpers.R: a script with helper functions
+6.  models.R: a script that builds different conceptual models
 
-7.  models.R: a script that builds different conceptual models for testing
+7.  helpers.R: a script with helper functions for simulating responses
 
 ##### TODO
 
