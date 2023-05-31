@@ -7,6 +7,11 @@ library(patchwork)
 source('scripts/helpers/models_v2.R')
 source('scripts/helpers/helpers.R')
 
+# which model do you want to run?
+
+names(models) # names of available models
+chosen_model <- models$mangrove_model
+
 # set up scenario simulations
 
 set.seed(123) # set random number generator to make results reproducible
@@ -38,13 +43,12 @@ labels.grid <- expand.grid(TidalRange = c('Microtidal', 'Mesotidal', 'Macrotidal
                            CoastalSqueeze = c('High coastal squeeze', 'Medium coastal squeeze', 'Low coastal squeeze'))
 names(edge.cons.scenarios) <- apply(d, 1,function(row) paste(row, collapse = ", ")) # label the list of edge constraint scenarios
 
-
 # define relative edge constraints - which edge interaction strengths are greater than other
 # high sed supply model, sediment -> subVol will be greater than SLR neg interactions
 # vice versa for low sed supply model
 
-model.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), modelB),
-                        parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), modelB))
+model.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                        parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
 names(model.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply')
 
 # loop through scenarios with system.sim.press and store outcomes

@@ -8,9 +8,12 @@ grViz(grviz.digraph(x)) %>%
   export_svg %>% charToRaw %>% rsvg_png(paste0(directory, '/', name, '.png'))
 }
 
+models <- vector(mode = "list", length = 5)
+names(models) <- c('mangrove_model', 'model_cyc_pos', 'model_rain', 'model_drought', 'model_cyc_seaward')
+
 # build models as signed digraphs
 # mangrove model
-model <- parse.digraph(c( 'LandwardMang->SubVol',
+models[[1]] <- parse.digraph(c( 'LandwardMang->SubVol',
                           'SeawardMang<->SubVol',
                           'LandwardAvailableProp->LandwardMang',
                           'SeawardAvailableProp->SeawardMang',
@@ -30,10 +33,10 @@ model <- parse.digraph(c( 'LandwardMang->SubVol',
                           'Cyclones-->LandwardAvailableProp',
                           'Drought--*Sediment'
 )) %>% enforce.limitation() 
-model %>% save_model_image('outputs/model-images', 'model')
+models[[1]] %>% save_model_image('outputs/model-images', 'model')
 
 # alternative model structure where cyclones increase sediment volume
-model_cyc_pos <- parse.digraph(c( 'LandwardMang->SubVol',
+models[[2]] <- parse.digraph(c( 'LandwardMang->SubVol',
                           'SeawardMang<->SubVol',
                           'LandwardAvailableProp->LandwardMang',
                           'SeawardAvailableProp->SeawardMang',
@@ -53,10 +56,10 @@ model_cyc_pos <- parse.digraph(c( 'LandwardMang->SubVol',
                           'Cyclones-->LandwardAvailableProp',
                           'Drought--*Sediment'
 )) %>% enforce.limitation() 
-model_cyc_pos %>% save_model_image('outputs/model-images', 'model_cyc_pos')
+models[[2]] %>% save_model_image('outputs/model-images', 'model_cyc_pos')
 
 # alternative model structure where rainfall is not uncertain
-model_rain <- parse.digraph(c(  'LandwardMang->SubVol',
+models[[3]] <- parse.digraph(c(  'LandwardMang->SubVol',
                                 'SeawardMang<->SubVol',
                                 'LandwardAvailableProp->LandwardMang',
                                 'SeawardAvailableProp->SeawardMang',
@@ -76,10 +79,10 @@ model_rain <- parse.digraph(c(  'LandwardMang->SubVol',
                                 'Cyclones-->LandwardAvailableProp',
                                 'Drought--*Sediment'
 )) %>% enforce.limitation() 
-model_rain %>% save_model_image('outputs/model-images', 'model_rain')
+models[[3]] %>% save_model_image('outputs/model-images', 'model_rain')
 
 # alternative model structure where drought is not uncertain
-model_drought <- parse.digraph(c(  'LandwardMang->SubVol',
+models[[4]] <- parse.digraph(c(  'LandwardMang->SubVol',
                                    'SeawardMang<->SubVol',
                                    'LandwardAvailableProp->LandwardMang',
                                    'SeawardAvailableProp->SeawardMang',
@@ -99,10 +102,10 @@ model_drought <- parse.digraph(c(  'LandwardMang->SubVol',
                                    'Cyclones-->LandwardAvailableProp',
                                    'Drought-*Sediment'
 )) %>% enforce.limitation() 
-model_drought %>% save_model_image('outputs/model-images', 'model_drought')
+models[[4]] %>% save_model_image('outputs/model-images', 'model_drought')
 
 # alternative model structure where cyclone seaward is uncertain
-model_cyc_seaward <- parse.digraph(c(  'LandwardMang->SubVol',
+models[[5]]<- parse.digraph(c(  'LandwardMang->SubVol',
                                    'SeawardMang<->SubVol',
                                    'LandwardAvailableProp->LandwardMang',
                                    'SeawardAvailableProp->SeawardMang',
@@ -122,5 +125,5 @@ model_cyc_seaward <- parse.digraph(c(  'LandwardMang->SubVol',
                                    'Cyclones-->LandwardAvailableProp',
                                    'Drought--*Sediment'
 )) %>% enforce.limitation() 
-model_cyc_seaward %>% save_model_image('outputs/model-images', 'model_cyc_seaward')
+models[[5]] %>% save_model_image('outputs/model-images', 'model_cyc_seaward')
 
