@@ -27,7 +27,7 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
--   [ ] Need to decide whether to indclude coastal development in hind casting?
--   [ ] Need to fix prop. estab. scenarios - curently only altering landward interaction strengths
+-   [ ] Need to decide whether to include coastal development in hind casting?
+-   [ ] Need to fix prop. estab. scenarios - currently only altering landward interaction strengths
 -   [ ] Consider whether to include a 'medium' sediment supply scenario
 -   [ ] Maple/loop analyst, which loops drive ambiguity? o Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes
