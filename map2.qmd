@@ -20,8 +20,11 @@ project:
 library(mapview)
 library(sf)
 library(tidyverse)
+library(scales)
 
 dat <- read.csv('outputs/master-dat.csv')
+dat2 <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') %>% 
+
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_dams:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
@@ -37,6 +40,7 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
          land_change_c = ifelse(land_change != 2 & land_gain ==1, 'Gain', land_change_c),
          land_change_c = ifelse(land_change != 2 & land_loss ==1, 'Loss', land_change_c),
          land_change_c = ifelse(land_change ==0, 'No change', land_change_c))
+
 ```
 
 This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5)).
@@ -89,7 +93,6 @@ Catchments representing all land and river networks associated with a mangrove t
 
 River networks from the HydroRivers database (Lehner & Grill, 2013) that drain into mangrove typological units were identified and buffered by 10 kilometres. The number of dams either [planned or under construction in the future (Zarfl et al., 2015)](https://www.globaldamwatch.org/fhred) that intersected with each unit's buffered river network was calculated and converted to future dam presence-absence. Mangrove typological units without river networks received a value of 0.
 
-
 ### Biophysical settings {#tidal-range}
 
 Tidal range (macro, meso or micro) is mapped in the left pane, propagule establishment capacity on the right.
@@ -106,7 +109,7 @@ Tidal range was estimated for each mangrove typological unit using principal lun
 
 **Progpagule establishment capacity**
 
-Propagule establishment capacity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having ‘high’, ‘medium’, or ‘low’ establishment capacity using terciles, where large average distance values corresponded to low establishment capacity and vice versa.
+Propagule establishment capacity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having 'high', 'medium', or 'low' establishment capacity using terciles, where large average distance values corresponded to low establishment capacity and vice versa.
 
 ### Historical mangrove loss and gain {#historical-mangrove-loss-and-gain}
 
@@ -118,4 +121,14 @@ mapview(typ, zcol = 'sea_change_c', layer.name = 'Seaward extent change', cex = 
 
 ```
 
-Areas of mangrove loss or gain were identified in each interval of the Global Mangrove Watch 1996-2020 time series [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU) and merged into one layer representing gross loss, and one layer representing gross gains of mangroves from 1996-2020. The gross loss and gross gain layers were then intersected with boundaries representing oceanic exclusive economic zones [(Flanders Marine Institute, 2019)](https://www.marineregions.org/) to classify areas of loss or gain as ‘seaward’. Remaining areas of loss or gain were classified as ‘landward’.
+Areas of mangrove loss or gain were identified in each interval of the Global Mangrove Watch 1996-2020 time series [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU) and merged into one layer representing gross loss, and one layer representing gross gains of mangroves from 1996-2020. The gross loss and gross gain layers were then intersected with boundaries representing oceanic exclusive economic zones [(Flanders Marine Institute, 2019)](https://www.marineregions.org/) to classify areas of loss or gain as 'seaward'. Remaining areas of loss or gain were classified as 'landward'.
+
+### Hindcast and forecast mangrove extent change {#hind-forecast}
+
+Hindcasts are mapped in the left pane, forecasts on the right
+
+```{r echo=FALSE, fig.height=1, fig.width=1, message=FALSE, warning=FALSE, results=TRUE}
+
+mapview(typ, zcol = 'sea_change_c', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'land_change_c', layer.name = 'Landward extent change', cex = 0.9, lwd = 0)
+
+```

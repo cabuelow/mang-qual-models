@@ -1,3 +1,5 @@
+library(QPress)
+
 # function for saving models as images
 
 save_model_image <- function(x, directory, name){

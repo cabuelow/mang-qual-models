@@ -3,6 +3,7 @@
 library(QPress)
 library(tidyverse)
 library(patchwork)
+library(scales)
 source('scripts/helpers/models_v2.R')
 source('scripts/helpers/helpers_v2.R')
 
@@ -22,17 +23,7 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
          sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
          fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
          prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
-         Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L'),
-         sea_change = sea_gain + sea_loss,
-         land_change = land_gain + land_loss) %>% 
-  mutate(sea_change_c = ifelse(sea_change == 2, 'Loss & Gain', NA),
-         sea_change_c = ifelse(sea_change != 2 & sea_gain ==1, 'Gain', sea_change_c),
-         sea_change_c = ifelse(sea_change != 2 & sea_loss ==1, 'Loss', sea_change_c),
-         sea_change_c = ifelse(sea_change ==0, 'No change', sea_change_c),
-         land_change_c = ifelse(land_change == 2, 'Loss & Gain', NA),
-         land_change_c = ifelse(land_change != 2 & land_gain ==1, 'Gain', land_change_c),
-         land_change_c = ifelse(land_change != 2 & land_loss ==1, 'Loss', land_change_c),
-         land_change_c = ifelse(land_change ==0, 'No change', land_change_c)) # note counterintuitive notation here
+         Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L'))
 
 # run a model for each typological unit
 
@@ -109,7 +100,8 @@ for(j in seq_along(runs)){
         filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
         group_by(var) %>% 
         summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
-                  Prob_loss = (sum(outcome<0)/n())*-100)
+                  Prob_loss = (sum(outcome<0)/n())*-100) %>% 
+        mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100)))
       
       out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
       out$cast <- 'forecast'
@@ -166,7 +158,8 @@ for(j in seq_along(runs)){
         filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
         group_by(var) %>% 
         summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
-                  Prob_loss = (sum(outcome<0)/n())*-100)
+                  Prob_loss = (sum(outcome<0)/n())*-100) %>% 
+        mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100)))
       
       out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
       out$cast <- 'hindcast'

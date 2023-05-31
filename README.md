@@ -1,4 +1,4 @@
-### Qualitative forecasts and hindcasts of mangrove extent change
+### Qualitative hindcasts and forecasts of mangrove extent change
 
 This repository provides code and data for Buelow et al. (*in prep*), 'Resolving ambiguous mangrove futures'.
 
@@ -27,7 +27,17 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
+-   [ ] Decide whether to map all typological units, or just those with extant forest (as of 2020)
 -   [ ] Need to decide whether to include coastal development in hind casting?
 -   [ ] Need to fix prop. estab. scenarios - currently only altering landward interaction strengths
 -   [ ] Consider whether to include a 'medium' sediment supply scenario
+-   [ ] Do sensitivity tests:
+    -   Extreme rainfall
+    -   Drought
+    -   Cyclones and sediment
+    -   Cyclones and the assumption that impacts are more certain on landward -make both uncertain
+    -   Inclusion of erosion in spatial model
+    -   Dam interaction strength
+    -   Also sensitivity of all the thresholds etc for mapping
+-   [ ] What happens to maps when we include local factors
 -   [ ] Maple/loop analyst, which loops drive ambiguity? o Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes

@@ -1,131 +1,29 @@
 # compare hindcast probability of mangrove loss and gain with historical loss and gain to validate network model
 
-library(sf)
-library(tmap)
 library(tidyverse)
-library(igraph)
-library(QPress)
-library(patchwork)
-library(DiagrammeR)
-library(DiagrammeRsvg)
-library(rsvg)
-library(scales)
-library(patchwork)
-library(caret)
-source('scripts/models.R')
-source('scripts/helpers.R')
-sf_use_s2(FALSE)
+source('scripts/helpers/models_v2.R')
 
-typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
-hydro <- read.csv('data/Hydro_Dat.csv')
-slr <- read.csv('data/SLR_Data.csv')
-world <- data("World")
+spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
+  mutate(sea_change = sea_gain + sea_loss,
+        land_change = land_gain + land_loss) %>% 
+  mutate(sea_change_c = ifelse(sea_change == 2, 'Loss & Gain', NA),
+         sea_change_c = ifelse(sea_change != 2 & sea_gain ==1, 'Gain', sea_change_c),
+         sea_change_c = ifelse(sea_change != 2 & sea_loss ==1, 'Loss', sea_change_c),
+         sea_change_c = ifelse(sea_change ==0, 'No change', sea_change_c),
+         land_change_c = ifelse(land_change == 2, 'Loss & Gain', NA),
+         land_change_c = ifelse(land_change != 2 & land_gain ==1, 'Gain', land_change_c),
+         land_change_c = ifelse(land_change != 2 & land_loss ==1, 'Loss', land_change_c),
+         land_change_c = ifelse(land_change ==0, 'No change', land_change_c))
 
-# join attributes to typologies
+# which model outcomes to validate? Get outcomes for that model
 
-typ2 <- typ_points %>% 
-  st_drop_geometry() %>% 
-  left_join(slr, 'Type') %>% 
-  inner_join(hydro) # note missing some hydro data
+names(models) # names of available models
+chosen_model_name <- 'mangrove_model'
+dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv'))
 
-# classify pressure and biophysical scenarios for each typology for validation
-# if proportion of loss due to a pressure is >0, make it a 1 (i.e., it is present)
-# also tide, hydro connectivity, and sediment supply
+# join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
 
-dat <- typ2 %>% 
-  mutate(Connectivity = ntile(DOF_Mean, 3), 
-         SedSupply = ntile((100-SED_Mean),2)) %>% 
-  mutate(Erosion = ifelse(Erosion > 0.1, 1, 0),
-         Extreme_Weather = ifelse(Extreme_Weather > 0.1, 1, 0),
-         Settlement = ifelse(Settlement > 0.1, 1, 0),
-         Connectivity = ifelse(Connectivity == 3, 'H', Connectivity),
-         Connectivity = ifelse(Connectivity == 2, 'M', Connectivity),
-         Connectivity = ifelse(Connectivity == 1, 'L', Connectivity),
-         SedSupply = ifelse(SedSupply == 2, 'H', SedSupply),
-         SedSupply = ifelse(SedSupply== 1, 'L', SedSupply),
-         Tidal_Class = ifelse(Tidal_Class == 'Micro', 'H', Tidal_Class),
-         Tidal_Class = ifelse(Tidal_Class == 'Meso', 'M', Tidal_Class),
-         Tidal_Class = ifelse(Tidal_Class == 'Macro', 'L', Tidal_Class))
-
-# run a model for each typlogy, based on pressures and biophysical settings
-
-# set up relative edge constraint scenarios
-# high sed supply model, sediment -> subVol will be greater than SLR neg interactions
-# vice versa for low sed supply model
-
-model.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), modelB),
-                        parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), modelB))
-names(model.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply')
-
-set.seed(123)
-numsims <- 1000
-
-tmp <- list()
-
-for(i in 1:nrow(dat)){
-  
-  # perturbation scenarios
-  
-  datselect <- select(dat[i,], Extreme_Weather, Settlement, Erosion) %>% 
-    pivot_longer(Extreme_Weather:Erosion, names_to = 'press', values_to = 'vals') %>% 
-    filter(vals == 1) %>% 
-    mutate(press = recode(press, 'Extreme_Weather' = "Cyclones", 
-                          'Settlement' = 'CoastalDev'))
-  
-  if(nrow(datselect) == 0){ # if there are no perturbations, go to next typology
-    next
-  }
-  
-  press.scenario <- rep(1, nrow(datselect))
-  names(press.scenario) <- datselect$press
-  
-  # edge constraint scenarios
-  # **TODO: make this easier by changing how the function takes these constraints....
-  
-  datselect2 <- select(dat[i,], Tidal_Class, Connectivity) %>% 
-    pivot_longer(Tidal_Class:Connectivity, names_to = 'press', values_to = 'vals') 
-  
-  con.scenario <- c(datselect2$vals, datselect2$vals[2])
-  
-  # select model for sediment supply
-  
-  if(dat[i,]$SedSupply == 'H'){
-    model <- model.scenarios[[1]]
-  }else{
-    model <- model.scenarios[[2]]
-  }
-  
-  # simulate outcomes
-  
-  sim <- system.sim_press(numsims, constrainedigraph = model, 
-                          from = c('SeaLevelRise', #'SeaLevelRise', #'SeaLevelRise', 
-                                   'LandwardAvailableProp', 'SeawardAvailableProp'),
-                          to = c('SeawardMang', #'SeawardPropag', #'SeawardEstabSpace', 
-                                 'LandwardMang', 'SeawardMang'),
-                          class = con.scenario,
-                          perturb = press.scenario)
-  
-  out <- sim$stableoutcome %>% 
-    filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
-    group_by(var) %>% 
-    summarise(Prob_gain_neutral = (sum(outcome>=0))/n())
-  
-  out$Type <- rep(dat[i, 'Type'], nrow(out))
-  
-  tmp[[i]] <- out
-}
-
-allout <- do.call(rbind, tmp)
-allout$Prob_change <- rescale(allout$Prob_gain_neutral, to = c(-100, 100))
-
-write.csv(allout, 'outputs/typology_outcomes_validation.csv', row.names = F)
-
-allout <- read.csv('outputs/typology_outcomes_validation.csv')
-
-# join outcomes to typologies, and compare probability of loss/gain with gross loss/gain
-# for landward and seaward
-
-landsea <- allout %>% 
+landsea <- dat %>% 
   pivot_wider(id_cols = -Prob_gain_neutral, names_from = 'var', values_from = 'Prob_change') %>% 
   mutate(Land_Gain = ifelse(LandwardMang >= 50, 1, 0),
          Land_Ambig = ifelse(LandwardMang <50 & LandwardMang > -50, 1, 0),
@@ -134,10 +32,10 @@ landsea <- allout %>%
          Sea_Ambig = ifelse(SeawardMang <50 & SeawardMang > -50, 1, 0),
          Sea_Loss = ifelse(SeawardMang <= -50, 1, 0)) %>% 
   filter(Land_Ambig != 1 & Sea_Ambig != 1) %>% # filter out ambiguous predictions
-  mutate(SeaLand_Gain = ifelse(Land_Gain == 1 & Sea_Loss == 0 | Land_Loss == 0 & Sea_Gain == 1, 1, 0),
-         SeaLand_Loss = ifelse(Land_Gain == 0 & Sea_Loss == 1 | Land_Loss == 1 & Sea_Gain == 0, 1, 0)) %>% 
-  filter(SeaLand_Gain == 1 | SeaLand_Loss == 1) %>% # filter out predictions where land cancels sea
-  inner_join(typ2, by = 'Type') %>%
+  #mutate(SeaLand_Gain = ifelse(Land_Gain == 1 & Sea_Loss == 0 | Land_Loss == 0 & Sea_Gain == 1, 1, 0),
+   #      SeaLand_Loss = ifelse(Land_Gain == 0 & Sea_Loss == 1 | Land_Loss == 1 & Sea_Gain == 0, 1, 0)) %>% 
+  #filter(SeaLand_Gain == 1 | SeaLand_Loss == 1) %>% # filter out predictions where land cancels sea
+  inner_join(select(spatial_dat, Tye, sea_gain:land_loss), by = 'Type') %>%
   mutate(Net_Gain = ifelse(Net_Change >= 0, 1, 0),
          Net_Loss = ifelse(Net_Change < 0, 1, 0)) %>% 
   as.data.frame()
