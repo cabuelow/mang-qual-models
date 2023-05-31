@@ -1,83 +1,45 @@
 # determine probability of landward and seaward mangrove increase under different scenarios
 # devtools::install_github("SWotherspoon/QPress",ref="Constrain")
-# TODO: make scenario simulation more efficient and easier to implement
-# Get rid of dams scenarios from function code
 
 library(QPress)
 library(tidyverse)
 library(patchwork)
-theme_set(theme_classic())
 source('scripts/helpers/models_v2.R')
 source('scripts/helpers/helpers.R')
 
 # set up scenario simulations
 
-set.seed(123)
-numsims <- 1000
+set.seed(123) # set random number generator to make results reproducible
+numsims <- 1000 # number of model simulations to run
 
-# perturbation scenarios
-
-pressures <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion', #'Drought or Dams',
-               'Drought', 'Dams', #'Extreme rainfall', 'Dams & Extreme Rainfall',
-               'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
-               'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', #'Sea-level rise & Drought or Dams')
-               'Sea-level rise & Drought', 'Sea-level rise & Sediment', 'Sea-level rise & Dams') #, 'Sea-level rise & Extreme rainfall')
+# define perturbations scenarios
+node.labels(model) # get model nodes for reference
 press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), 
-                        c(Erosion=1), #c(Sediment=-1),
-                        c(Drought=1), c(Dams=1),
-                        #c(Precipitation=1),
-                        #c(Precipitation=1, Dams=1),
-                        c(SeaLevelRise=1, Cyclones=1),
-                        c(SeaLevelRise=1, GroundSubsid=1),
-                        c(SeaLevelRise=1, CoastalDev=1), 
-                        c(SeaLevelRise=1, Erosion=1),
-                        c(SeaLevelRise=1, Drought=1),
-                        c(SeaLevelRise=1, Sediment=1),
-                        c(SeaLevelRise=1, Dams=1))
-                        #c(SeaLevelRise=1, Precipitation=1))
-                        # c(SeaLevelRise=1, Sediment=-1))
+                        c(Erosion=1), c(Drought=1), c(ExtremeRainfall=1), c(SeaLevelRise=1, Cyclones=1),
+                        c(SeaLevelRise=1, GroundSubsid=1), c(SeaLevelRise=1, CoastalDev=1), c(SeaLevelRise=1, Erosion=1),
+                        c(SeaLevelRise=1, Drought=1), c(SeaLevelRise=1, ExtremeRainfall=1))
+# define names of above scenarios for plot labelling later
+press.labels <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion','Drought',
+               'Extreme rainfall', 'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
+               'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', 'Sea-level rise & Drought', 
+               'Sea-level rise & Extreme rainfall')
 
-# edge constraint scenarios
-#TODO: make this easier by changing how the function takes these constraints....
+# define edge constraints - whether edge interaction strengths should be 'high', 'medium' or 'low'
+edge.labels(model) # get model edges for reference
+# create grid all combinations of high, medium and low for tidal range, propagule establishment capacity and coastal squeeze
+edge.cons.grid <- expand.grid(TidalRange = c('H', 'M', 'L'),
+                              PropEstab = c('H', 'M', 'L'),
+                              CoastalSqueeze = c('H', 'M', 'L'))
+# turn into a list
+edge.cons.scenarios <- as.list(as.data.frame(t(edge.cons.grid)))
+# label the list
+labels.grid <- expand.grid(TidalRange = c('Microtidal', 'Mesotidal', 'Macrotidal'),
+                           PropEstab = c('High propagule establishment capacity', 'Medium propagule establishment capacity', 'Low propagule establishment capacity'),
+                           CoastalSqueeze = c('High coastal squeeze', 'Medium coastal squeeze', 'Low coastal squeeze'))
+names(edge.cons.scenarios) <- apply(d, 1,function(row) paste(row, collapse = ", ")) # label the list of edge constraint scenarios
 
-con.scenarios <- list(c('H', 'H', 'H', 'L'),
-                    c('M', 'H', 'H', 'L'),
-                    c('L', 'H', 'H', 'L'),
-                    c('H', 'L', 'L', 'L'),
-                    c('M',  'L', 'L', 'L'),
-                    c('L', 'L', 'L', 'L'),
-                    c('H', 'H', 'H', 'M'),
-                    c('M', 'H', 'H', 'M'),
-                    c('L', 'H', 'H', 'M'),
-                    c('H', 'L', 'L', 'M'),
-                    c('M',  'L', 'L', 'M'),
-                    c('L', 'L', 'L', 'M'),
-                    c('H', 'H', 'H', 'H'),
-                    c('M', 'H', 'H', 'H'),
-                    c('L', 'H', 'H', 'H'),
-                    c('H', 'L', 'L', 'H'),
-                    c('M',  'L', 'L', 'H'),
-                    c('L', 'L', 'L', 'H'))
-names(con.scenarios) <- c('Microtidal, High Hydro-connectivity, High Coastal squeeze', 
-                          'Mesotidal, High Hydro-connectivity, High Coastal squeeze',
-                          'Macrotidal, High Hydro-connectivity, High Coastal squeeze',
-                          'Microtidal, Low Hydro-connectivity, High Coastal squeeze',
-                          'Mesotidal, Low Hydro-connectivity, High Coastal squeeze',
-                          'Macrotidal, Low Hydro-connectivity, High Coastal squeeze',
-                          'Microtidal, High Hydro-connectivity, Medium Coastal squeeze',
-                          'Mesotidal, High Hydro-connectivity, Medium Coastal squeeze',
-                          'Macrotidal, High Hydro-connectivity, Medium Coastal squeeze',
-                          'Microtidal, Low Hydro-connectivity, Medium Coastal squeeze',
-                          'Mesotidal, Low Hydro-connectivity, Medium Coastal squeeze',
-                          'Macrotidal, Low Hydro-connectivity, Medium Coastal squeeze',
-                          'Microtidal, High Hydro-connectivity, Low Coastal squeeze',
-                          'Mesotidal, High Hydro-connectivity, Low Coastal squeeze',
-                          'Macrotidal, High Hydro-connectivity, Low Coastal squeeze',
-                          'Microtidal, Low Hydro-connectivity, Low Coastal squeeze',
-                          'Mesotidal, Low Hydro-connectivity, Low Coastal squeeze',
-                          'Macrotidal, Low Hydro-connectivity, Low Coastal squeeze')
 
-# set up relative edge constraint scenarios
+# define relative edge constraints - which edge interaction strengths are greater than other
 # high sed supply model, sediment -> subVol will be greater than SLR neg interactions
 # vice versa for low sed supply model
 
