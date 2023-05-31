@@ -41,7 +41,6 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   n.omit <- max(0, expand)
   bounds <- bound.sets(constrainedigraph)
   zs <- rep(1, length(uncertain))
-  damrow <- row.names(edges[edges$From == 'Sediment' & edges$To == 'SubVol',])
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)

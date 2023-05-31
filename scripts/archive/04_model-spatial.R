@@ -8,8 +8,8 @@ library(DiagrammeR)
 library(DiagrammeRsvg)
 library(rsvg)
 library(scales)
-source('scripts/models.R')
-source('scripts/helpers.R')
+source('scripts/models_v2.R')
+source('scripts/helpers_v2.R')
 sf_use_s2(FALSE)
 
 # convert typologies to points for faster mapping
