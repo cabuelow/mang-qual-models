@@ -1,73 +1,11 @@
-# below are a set of functions adapted from the QPress R package: https://github.com/SWotherspoon/QPress
+# below are a set of functions either taken from, or adapted from, the QPress R package: https://github.com/SWotherspoon/QPress
 # devtools::install_github("SWotherspoon/QPress",ref="Constrain")
 
 # community sampler that allows weights to be constrained for certain edges
-
-community.sampler_con <- function (edges, required.groups = c(0), from, to, class) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
-{
-  if (length(from) > 0){ # here add new column to edges with high medium or low classification
-  constrain <- data.frame(From = from, To = to, Class = class)
-  edges$Class <- dplyr::left_join(edges, constrain)$Class
-  }
-  n.nodes <- length(node.labels(edges))
-  weight.labels <- edge.labels(edges)
-  n.edges <- nrow(edges)
-  W <- matrix(0, n.nodes, n.nodes)
-  lower <- ifelse(edges$Type == "U" | edges$Type == "N", -1L, 
-                  0L)
-  upper <- ifelse(edges$Type == "U" | edges$Type == "P" , 1L, 
-                  0L)
-  ## set up constraints for high, medium, low
-  lower[which(edges$Class == 'H' & edges$Type == 'P')] <- 0.66667
-  upper[which(edges$Class == 'H' & edges$Type == 'N')] <- -0.66667
-  lower[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.33334
-  upper[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.66666
-  lower[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.66666
-  upper[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.33334
-  upper[which(edges$Class == 'L' & edges$Type == 'P')] <- 0.33333
-  lower[which(edges$Class == 'L' & edges$Type == 'N')] <- -0.33333
-  k.edges <- as.vector(unclass(edges$To) + (unclass(edges$From) - 
-                                              1) * n.nodes)
-  uncertain <- which(!(edges$Group %in% required.groups))
-  expand <- match(edges$Pair[uncertain], unique(edges$Pair[uncertain]))
-  n.omit <- max(0, expand)
-  zs <- rep(1, n.omit)
-  community <- if (n.omit > 0) {
-    function() {
-      r <- runif(n.edges, lower, upper)
-      r[uncertain] <- r[uncertain] * zs
-      W[k.edges] <- r
-      W
-    }
-  }
-  else {
-    function() {
-      W[k.edges] <- runif(n.edges, lower, upper)
-      W
-    }
-  }
-  select <- if (n.omit > 0) {
-    function(p) {
-      zs <<- rbinom(n.omit, 1, p)[expand]
-    }
-  }
-  else {
-    function(p = 0) {
-      zs
-    }
-  }
-  weights <- function(W) {
-    W[k.edges]
-  }
-  list(community = community, select = select, weights = weights, 
-       weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
-}
-
-# community sampler that allows weights to be constrained for certain edges
-# **this one also allows relative strengths of edges to be constrained
+# and allows relative strengths of edges to be constrained
 # based on 'community.ordering.sampler' function from Wotherspoon
 
-community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class, dam.scenario = c(0)) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
   edges <- constrainedigraph$edges
   if (length(from) > 0){ # here add new column to edges with high medium or low classification
@@ -107,7 +45,6 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)
-      if(dam.scenario > 0){r[damrow] <- r[damrow] - r[damrow]*dam.scenario} # reduce sediment supply by dam factor
       r <- sign(r) * constraint.order(abs(r), bounds)
       r[uncertain] <- r[uncertain] * zs
       W[k.edges] <- r
@@ -117,7 +54,6 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   else {
     function() {
       r <- runif(n.edges, lower, upper)
-      if(dam.scenario > 0){r[damrow] <- r[damrow] - r[damrow]*dam.scenario} # reduce sediment supply by dam factor
       r <- sign(r) * constraint.order(abs(r), bounds)
       W[k.edges] <- r
       W
@@ -140,14 +76,12 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
        weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
 }
 
+# this function simulates matrices and gets stable ones, 
+# and records outcome (+ve, -ve, neutral) for landward and seaward mangroves
+# also gets interaction weights 
 
-# this function doesn't monitor press perturbations to validate. 
-# Instead just simulate and get stable matrices, 
-# record outcome (+ve, -ve, neutral) for landward and seaward mangroves
-# get weights 
-
-system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, dam.scenario = c(0), 
-                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, dam.scenario),  
+system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
+                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class),  
                               perturb) {
   stableout <- list()
   stablews <- list()
@@ -166,24 +100,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
   k.perturb <- index(names(perturb))
   S.press <- double(length(labels))
   S.press[k.perturb] <- -perturb
-  
-  if(names(perturb) == "Dams" && length(names(perturb)) == 1){
-    
-    while (stable < n.sims) {
-      z <- sampler$select(runif(1))
-      W <- sampler$community()
-      if (!stable.community(W) & !is.null(solve(W, S.press))){
-        unstable <- unstable + 1
-        next
-      } else if(all(round(solve(W, S.press)[index(names(c('SeawardMang'=1)))], 2) == 0) == FALSE)
-        next
-      else{
-        stable <- stable + 1
-        stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
-        stablews[[stable]] <- data.frame(nsim = stable, param = sampler$weight.labels, weight = sampler$weights(W))
-      }
-    }
-  }else{
+
     while (stable < n.sims) {
       z <- sampler$select(runif(1))
       W <- sampler$community()
@@ -196,18 +113,17 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
         stablews[[stable]] <- data.frame(nsim = stable, param = sampler$weight.labels, weight = sampler$weights(W))
       }
     }
-  }
   
   stableout <- do.call(rbind, stableout)
   stablews <- do.call(rbind, stablews)
-  stability <- data.frame(Num_unstable = unstable, Num_stable = stable, Pot_stability =  stable/(unstable+stable))
+  stability <- data.frame(Num_unstable = unstable, Num_stable = stable, Potential_stability =  stable/(unstable+stable))
   list(edges = edges1, stability.df = stability, stableoutcome = stableout, stableweights = stablews)
 }
 
 # include outcome validation 
 
-system.sim_press_valid <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, dam.scenario = c(0), 
-                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, dam.scenario),  
+system.sim_press_valid <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
+                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class),  
                               perturb, monitor, epsilon = 1e-05) {
   stableout <- list()
   stablews <- list()
@@ -311,8 +227,7 @@ save_png <- function(plot, path){
     png::writePNG(path)
 }
 
-# Construct bounding sets used to order weights to meet the edge
-# weight constraints.
+# Construct bounding sets used to order weights to meet the edge weight constraints.
 # These bounds sets are used to order a set of random edge weights
 # so that they meet the imposed constraints.
 
