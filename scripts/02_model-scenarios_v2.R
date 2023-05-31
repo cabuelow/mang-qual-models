@@ -5,7 +5,7 @@ library(QPress)
 library(tidyverse)
 library(patchwork)
 source('scripts/helpers/models_v2.R')
-source('scripts/helpers/helpers.R')
+source('scripts/helpers/helpers_v2.R')
 
 # which model do you want to run?
 
@@ -41,8 +41,8 @@ edge.cons.scenarios <- as.list(as.data.frame(t(edge.cons.grid)))
 # label the list
 labels.grid <- expand.grid(TidalRange = c('Microtidal', 'Mesotidal', 'Macrotidal'),
                            PropEstab = c('High propagule establishment capacity', 'Medium propagule establishment capacity', 'Low propagule establishment capacity'),
-                           CoastalSqueeze = c('High coastal squeeze', 'Medium coastal squeeze', 'Low coastal squeeze'))
-names(edge.cons.scenarios) <- apply(d, 1,function(row) paste(row, collapse = ", ")) # label the list of edge constraint scenarios
+                           CoastalSqueeze = c('Low coastal squeeze', 'Medium coastal squeeze', 'High coastal squeeze')) # note that a low value for the interaction strength = High coastal squeeze and vice-versa
+names(edge.cons.scenarios) <- apply(labels.grid, 1,function(row) paste(row, collapse = ", ")) # label the list of edge constraint scenarios
 # for each scenario, set up 'from' 'to' vectors specifying edges they apply to
 from_vec <-  c('SeaLevelRise','LandwardAvailableProp', 'SeaLevelRise')
 to_vec <- c('SeawardMang', 'LandwardMang', 'LandwardMang')
@@ -96,10 +96,10 @@ for(k in seq_along(rel.edge.cons.scenarios)){
 
 # save potential stability in each scenario (i.e. proportion of stable matrices out of total simulated)
 stability <- data.frame(constraint_scenario = names(rel.edge.cons.scenarios), do.call(rbind, stability.ls1))
-write.csv(stability, paste0('outputs/simulation-outcomes/stability', chosen_model_name, '.csv'), row.names = F)
+write.csv(stability, paste0('outputs/simulation-outcomes/stability_', chosen_model_name, '.csv'), row.names = F)
 
 # save outcomes in each scenario
 outcomes <- do.call(rbind, outcomes.ls1) %>% 
-  mutate(model_scenario = rep(names(rel.edge.cons.scenarios), each = c(numsims*length(node.labels(model))*length(press.scenarios)*length(egde.cons.scenarios))))
-saveRDS(outcomes, paste0('outputs/simulation-outcomes/outcomes', chosen_model_name, '.rds'))
+  mutate(model_scenario = rep(names(rel.edge.cons.scenarios), each = c(numsims*length(node.labels(chosen_model))*length(press.scenarios)*length(edge.cons.scenarios))))
+saveRDS(outcomes, paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '.rds'))
 
