@@ -1,4 +1,6 @@
-### Qualitative analysis of mangrove response to drivers of change
+### Qualitative forecasts and hindcasts of mangrove extent change
+
+This repository provides code and data for Buelow et al. (*in prep*), 'Resolving ambiguous mangrove futures'.
 
 Link to documents describing all spatial data processing:
 
@@ -25,10 +27,10 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
-- [ ] Need to decide whether to indclude coastal development in hind casting?
-- [ ] Need to fix prop. estab. scenarios - curently only altering landward interaction strengths
-- [ ] Consider whether to include a 'medium' sediment supply scenario
-- [ ]  Maple/loop analyst, which loops drive ambiguity? o Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes
+-   [ ] Need to decide whether to indclude coastal development in hind casting?
+-   [ ] Need to fix prop. estab. scenarios - curently only altering landward interaction strengths
+-   [ ] Consider whether to include a 'medium' sediment supply scenario
+-   [ ] Maple/loop analyst, which loops drive ambiguity? o Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes
 
 ##### Development notes
 

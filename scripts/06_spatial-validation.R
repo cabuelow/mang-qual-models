@@ -1,8 +1,4 @@
-# validation
-# for now use goldberg drivers to say whether a pressure is present or not (might need a threshold?)
-# simulate with those combination of pressures
-# compare probability of predicted loss and gain with gross loss and gain
-# eventually use Lagomasino et al. drivers 2.0 - gain and loss
+# compare hindcast probability of mangrove loss and gain with historical loss and gain to validate network model
 
 library(sf)
 library(tmap)
