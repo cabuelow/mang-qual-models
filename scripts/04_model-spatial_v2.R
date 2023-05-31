@@ -1,195 +1,188 @@
 # simulate models spatially, i.e., in each mangrove typological unit
 
-library(sf)
-library(tmap)
 library(QPress)
 library(tidyverse)
 library(patchwork)
 library(scales)
 source('scripts/helpers/models_v2.R')
 source('scripts/helpers/helpers_v2.R')
-sf_use_s2(FALSE)
 
-typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
-hydro <- read.csv('data/Hydro_Dat.csv') # only have for areas of restorable loss
-slr <- read.csv('data/SLR_Data.csv')
-world <- data("World")
+# which model do you want to run?
 
-# join attributes to typologies
+names(models) # names of available models
+chosen_model <- models$mangrove_model
+chosen_model_name <- 'mangrove_model'
 
-typ2 <- typ_points %>% 
-  st_drop_geometry() %>% 
-  left_join(slr, 'Type') %>% 
-  inner_join(hydro) # note missing some hydro data
+# read in and wrangle spatial data
 
-# classify pressure and biophysical scenarios for each typology
-# deciles for each pressure, and anything in top 10th decile the pressure is present
-# also tide, hydro connectivity, and sediment supply
+spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
+  mutate(csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
+         csqueeze_1 = ifelse(csqueeze == 'None', 0, 1), 
+         fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
+         fut_csqueeze_1 = ifelse(fut_csqueeze == 'None', 0, 1), 
+         sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
+         fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
+         prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
+         Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L'),
+         sea_change = sea_gain + sea_loss,
+         land_change = land_gain + land_loss) %>% 
+  mutate(sea_change_c = ifelse(sea_change == 2, 'Loss & Gain', NA),
+         sea_change_c = ifelse(sea_change != 2 & sea_gain ==1, 'Gain', sea_change_c),
+         sea_change_c = ifelse(sea_change != 2 & sea_loss ==1, 'Loss', sea_change_c),
+         sea_change_c = ifelse(sea_change ==0, 'No change', sea_change_c),
+         land_change_c = ifelse(land_change == 2, 'Loss & Gain', NA),
+         land_change_c = ifelse(land_change != 2 & land_gain ==1, 'Gain', land_change_c),
+         land_change_c = ifelse(land_change != 2 & land_loss ==1, 'Loss', land_change_c),
+         land_change_c = ifelse(land_change ==0, 'No change', land_change_c)) # note counterintuitive notation here
 
-dat <- typ2 %>% 
-  mutate(Erosion = ntile(Erosion, 10),
-         Extreme_Weather = ntile(Extreme_Weather, 10),
-         Settlement = ntile(Settlement, 10),
-         Connectivity = ntile(DOF_Mean, 3), 
-         SedSupply = ntile((100-SED_Mean),2)) %>% 
-  mutate(Erosion = ifelse(Erosion == 10, 1, 0),
-         Extreme_Weather = ifelse(Extreme_Weather == 10, 1, 0),
-         Settlement = ifelse(Settlement == 10, 1, 0),
-         SLR = ifelse(SLR_Class == 'High', 1, 0),
-         Connectivity = ifelse(Connectivity == 3, 'H', Connectivity),
-         Connectivity = ifelse(Connectivity == 2, 'M', Connectivity),
-         Connectivity = ifelse(Connectivity == 1, 'L', Connectivity),
-         SedSupply = ifelse(SedSupply == 2, 'H', SedSupply),
-         SedSupply = ifelse(SedSupply== 1, 'L', SedSupply),
-         Tidal_Class = ifelse(Tidal_Class == 'Micro', 'H', Tidal_Class),
-         Tidal_Class = ifelse(Tidal_Class == 'Meso', 'M', Tidal_Class),
-         Tidal_Class = ifelse(Tidal_Class == 'Macro', 'L', Tidal_Class))
+# run a model for each typological unit
 
-# run a model for each typlogy, based on pressures and biophysical settings
+set.seed(123) # set random number generator to make results reproducible
+numsims <- 1000 # number of model simulations to run
 
-# set up relative edge constraint scenarios
-# high sed supply model, sediment -> subVol will be greater than SLR neg interactions
-# vice versa for low sed supply model
+# define relative edge constraints - which edge interaction strengths are greater than other
+# in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
+# under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
+# the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
+rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                                parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
+names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
 
-model.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), modelB),
-                        parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), modelB))
-names(model.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply')
+# iterate forecasts and hindcasts
+runs <- c('forecast', 'hindcast') # run both a forecast and a hindcast for each model
 
-set.seed(123)
-numsims <- 1000
+# model nodes
+node.labels(chosen_model)
 
-tmp <- list()
-
-for(i in 1:nrow(dat)){
-
-  # perturbation scenarios
+tmp <- list() # tmp list to store results
+for(j in seq_along(runs)){
+  run <- runs[[j]]
+  tmp2 <- list() # tmp list to store results
+for(i in 1:nrow(spatial_dat)){
   
-datselect <- select(dat[i,], SLR, Extreme_Weather, Settlement, Erosion) %>% 
-  pivot_longer(SLR:Erosion, names_to = 'press', values_to = 'vals') %>% 
-  filter(vals == 1) %>% 
-  mutate(press = recode(press, 'SLR' = "SeaLevelRise", 
-                        'Extreme_Weather' = "Cyclones", 
-                        'Settlement' = 'CoastalDev'))
-
-if(nrow(datselect) == 0){ # if there are no perturbations, go to next typology
-  next
+  if(run == 'forecast'){
+    # perturbations for forecasting
+  datselect <- select(spatial_dat[i,], fut_csqueeze_1, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>% 
+    pivot_longer(fut_csqueeze_1:fut_storms, names_to = 'press', values_to = 'vals') %>% 
+    filter(vals == 1) %>% 
+    mutate(press = recode(press, 'fut_csqueeze_1' = 'CoastalDev', 'fut_slr' = "SeaLevelRise", 'fut_gwsub' = "GroundSubsid", 
+                          'fut_drought' = 'Drought', 'fut_ext_rain' = 'ExtremeRainfall', 'fut_storms' = 'Cyclones'))
+  
+  if(nrow(datselect) == 0){ # if there are no perturbations, go to next typology
+    next
+  }
+  
+  press.scenario <- rep(1, nrow(datselect))
+  names(press.scenario) <- datselect$press
+  
+  # edge constraint scenarios
+  
+  if(spatial_dat[i,]$fut_csqueeze == 'None'){
+    datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab) %>% 
+      pivot_longer(Tidal_Class:prop_estab, names_to = 'press', values_to = 'vals') 
+    from_vec <- c('SeaLevelRise', 'LandwardAvailableProp')
+    to_vec <- c('SeawardMang', 'LandwardMang')
+  }else{
+  datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab, fut_csqueeze) %>% 
+    pivot_longer(Tidal_Class:fut_csqueeze, names_to = 'press', values_to = 'vals') 
+  from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeaLevelRise')
+  to_vec <- c('SeawardMang', 'LandwardMang', 'LandwardMang')
+  }
+  
+  con.scenario <- c(datselect2$vals)
+  
+  # select model for sediment supply
+  
+  if(spatial_dat[i,]$fut_dams == 'L'){
+    model <- rel.edge.cons.scenarios[[2]]
+  }else if(spatial_dat[i,]$sed_supp == 'H'){
+    model <- rel.edge.cons.scenarios[[1]]
+  }else{
+    model <- rel.edge.cons.scenarios[[2]]
+  }
+  
+  # simulate outcomes
+  
+  sim <- system.sim_press(numsims, constrainedigraph = model, 
+                          from = from_vec,
+                          to = to_vec,
+                          class = con.scenario,
+                          perturb = press.scenario)
+  
+  out <- sim$stableoutcome %>% 
+    filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
+    group_by(var) %>% 
+    summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
+              Prob_loss = (sum(outcome<0)/n())*-100)
+  
+  out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
+  out$cast <- 'forecast'
+  tmp2[[i]] <- out
+  }else{
+    
+    # perturbations for hindcasting
+    datselect <- select(spatial_dat[i,], csqueeze_1, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
+      pivot_longer(csqueeze_1:storms, names_to = 'press', values_to = 'vals') %>% 
+      filter(vals == 1) %>% 
+      mutate(press = recode(press, 'csqueeze_1' = 'CoastalDev', 'ant_slr' = "SeaLevelRise", 'gwsub' = "GroundSubsid", 
+                            'hist_drought' = 'Drought', 'hist_ext_rain' = 'ExtremeRainfall', 'storms' = 'Cyclones'))
+    
+    if(nrow(datselect) == 0){ # if there are no perturbations, go to next typology
+      next
+    }
+    
+    press.scenario <- rep(1, nrow(datselect))
+    names(press.scenario) <- datselect$press
+    
+    # edge constraint scenarios
+    
+    if(spatial_dat[i,]$csqueeze == 'None'){
+      datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab) %>% 
+        pivot_longer(Tidal_Class:prop_estab, names_to = 'press', values_to = 'vals') 
+      from_vec <- c('SeaLevelRise', 'LandwardAvailableProp')
+      to_vec <- c('SeawardMang', 'LandwardMang')
+    }else{
+      datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab, csqueeze) %>% 
+        pivot_longer(Tidal_Class:csqueeze, names_to = 'press', values_to = 'vals') 
+      from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeaLevelRise')
+      to_vec <- c('SeawardMang', 'LandwardMang', 'LandwardMang')
+    }
+    
+    con.scenario <- c(datselect2$vals)
+    
+    # select model for sediment supply
+    
+    if(spatial_dat[i,]$sed_supp == 'H'){
+      model <- rel.edge.cons.scenarios[[1]]
+    }else{
+      model <- rel.edge.cons.scenarios[[2]]
+    }
+    
+    # simulate outcomes
+    
+    sim <- system.sim_press(numsims, constrainedigraph = model, 
+                            from = from_vec,
+                            to = to_vec,
+                            class = con.scenario,
+                            perturb = press.scenario)
+    
+    out <- sim$stableoutcome %>% 
+      filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
+      group_by(var) %>% 
+      summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
+                Prob_loss = (sum(outcome<0)/n())*-100)
+    
+    out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
+    out$cast <- 'hindcast'
+    tmp2[[i]] <- out
+  }
+}
+allout <- do.call(rbind, tmp2)
+tmp[[j]] <- allout
 }
 
-press.scenario <- rep(1, nrow(datselect))
-names(press.scenario) <- datselect$press
-
-# edge constraint scenarios
-# **TODO: make this easier by changing how the function takes these constraints....
-
-datselect2 <- select(dat[i,], Tidal_Class, Connectivity) %>% 
-  pivot_longer(Tidal_Class:Connectivity, names_to = 'press', values_to = 'vals') 
-
-con.scenario <- c(datselect2$vals, datselect2$vals[2])
-
-# select model for sediment supply
-
-if(dat[i,]$SedSupply == 'H'){
-model <- model.scenarios[[1]]
-}else{
-  model <- model.scenarios[[2]]
-}
-
-# simulate outcomes
-
-      sim <- system.sim_press(numsims, constrainedigraph = model, 
-                              from = c('SeaLevelRise', #'SeaLevelRise', #'SeaLevelRise', 
-                                       'LandwardAvailableProp', 'SeawardAvailableProp'),
-                              to = c('SeawardMang', #'SeawardPropag', #'SeawardEstabSpace', 
-                                     'LandwardMang', 'SeawardMang'),
-                              class = con.scenario,
-                              perturb = press.scenario)
-
-      out <- sim$stableoutcome %>% 
-        filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
-        group_by(var) %>% 
-        summarise(Prob_gain_neutral = (sum(outcome>=0))/n())
-
-out$Type <- rep(dat[i, 'Type'], nrow(out))
-      
-tmp[[i]] <- out
-}
-
-allout <- do.call(rbind, tmp)
-allout$Prob_change <- rescale(allout$Prob_gain_neutral, to = c(-100, 100))
-
-write.csv(allout, 'outputs/typology_outcomes.csv', row.names = F)
-
-allout <- read.csv('outputs/typology_outcomes.csv')
-
-# join outcomes to spatial typologies
-
-landward <- typ_points %>% 
-  left_join(filter(allout, var == 'LandwardMang'), by = 'Type') %>% 
-  st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
-
-seaward <- typ_points %>% 
-  left_join(filter(allout, var == 'SeawardMang'), by = 'Type') %>% 
-  st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
-
-world_mang <- st_crop(World, xmin = -150, ymin = -40, xmax = 180, ymax = 33)
-
-# map
-
-lmap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
-  tm_shape(filter(landward, is.na(Prob_change))) +
-  tm_dots('darkgrey') +
-  tm_shape(filter(landward, !is.na(Prob_change))) +
-  tm_dots('Prob_change', 
-          palette = 'Spectral',
-          breaks = c(-100,-50,0,50,100),
-          midpoint = 0,
-          title = '',
-          legend.is.portrait = T) +
-  tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
-            #legend.position = c(0.35, 0.6),
-            title.size = 0.8,
-            title.position = c(0.01,0.45),
-            legend.title.size = 0.9,
-            main.title = 'A) Landward mangrove',
-            title = 'Probability of Loss (red) \nor Neutrality/Gain (blue)',
-            main.title.size = 1,
-            frame = T,
-            legend.bg.color = 'white',
-            legend.bg.alpha = 0.8)
-lmap
-
-smap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
-  tm_shape(filter(seaward, is.na(Prob_change))) +
-  tm_dots('darkgrey') +
-  tm_shape(filter(seaward, !is.na(Prob_change))) +
-  tm_dots('Prob_change', 
-          palette = 'Spectral',
-          breaks = c(-100,-50,0,50,100),
-          midpoint = 0,
-          title = '',
-          legend.is.portrait = T) +
-  tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
-            #legend.position = c(0.35, 0.6),
-            title.size = 0.8,
-            title.position = c(0.01,0.45),
-            legend.title.size = 0.9,
-            main.title = 'B) Seaward mangrove',
-            title = 'Probability of Loss (red) \nor Neutrality/Gain (blue)',
-            main.title.size = 1,
-            frame = T,
-            legend.bg.color = 'white',
-            legend.bg.alpha = 0.8)
-smap
-
-maps <- tmap_arrange(lmap, smap, ncol = 1)
-
-tmap_save(maps, 'outputs/map_change.png', width = 10, height = 5)
+allout2
 
 
-
-
+write.csv(allout2, paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv'), row.names = F)
 

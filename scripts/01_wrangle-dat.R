@@ -19,12 +19,14 @@ coast <- read.csv('outputs/processed-data/coastal-population.csv') %>%
          sum.pop_size_lecz_2040 = ifelse(is.na(sum.pop_size_lecz_2040), max(.$sum.pop_size_lecz_2040, na.rm = T), sum.pop_size_lecz_2040),
          sum.pop_size_lecz_2060 = ifelse(is.na(sum.pop_size_lecz_2060), max(.$sum.pop_size_lecz_2060, na.rm = T), sum.pop_size_lecz_2060),
          sum.pop_size_lecz_2100 = ifelse(is.na(sum.pop_size_lecz_2100), max(.$sum.pop_size_lecz_2100, na.rm = T), sum.pop_size_lecz_2100)) %>% 
-  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020 + 0.00001) > quantile(log(.$sum.pop_size_lecz_2020+ 0.00001), 0.66), 'High', NA)) %>% 
-  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020 + 0.00001) < quantile(log(.$sum.pop_size_lecz_2020+ 0.00001), 0.66) & log(sum.pop_size_lecz_2020+ 0.00001) > quantile(log(.$sum.pop_size_lecz_2020+ 0.00001), 0.33), 'Medium', csqueeze)) %>% 
-  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020 + 0.00001) < quantile(log(.$sum.pop_size_lecz_2020+ 0.00001), 0.33), 'Low', csqueeze)) %>% 
-  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100+ 0.00001) > quantile(log(.$sum.pop_size_lecz_2100+ 0.00001), 0.66), 'High', NA)) %>% 
-  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100+ 0.00001) < quantile(log(.$sum.pop_size_lecz_2100+ 0.00001), 0.66) & log(sum.pop_size_lecz_2100+ 0.00001) > quantile(log(.$sum.pop_size_lecz_2100+ 0.00001), 0.33), 'Medium', fut_csqueeze)) %>% 
-  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100+ 0.00001) <= quantile(log(.$sum.pop_size_lecz_2100+ 0.00001), 0.33), 'Low', fut_csqueeze)) %>% 
+  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020) > quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.66), 'High', NA)) %>% 
+  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020) < quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.66) & log(sum.pop_size_lecz_2020) > quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.33), 'Medium', csqueeze)) %>% 
+  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020) < quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.33), 'Low', csqueeze)) %>% 
+  mutate(csqueeze = ifelse(sum.pop_size_lecz_2020 == 0, 'None', csqueeze)) %>% 
+  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.66), 'High', NA)) %>% 
+  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.66) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Medium', fut_csqueeze)) %>% 
+  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Low', fut_csqueeze)) %>% 
+  mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2100 == 0, 'None', fut_csqueeze)) %>% 
   select(Type, csqueeze, fut_csqueeze)
 
 # map to check
@@ -40,9 +42,8 @@ dat[[1]] <- coast # if happy add to dat list
 sed <- read.csv('outputs/processed-data/free-flowing-rivers.csv') %>%
   left_join(select(st_drop_geometry(typ), Type, Class), by = 'Type') %>% 
   mutate(SED_weighted_average = ifelse(Class != 'Delta', 100, SED_weighted_average)) %>%
-  mutate(sed_supp = ifelse(SED_weighted_average > 66, 'Low', NA)) %>% 
-  mutate(sed_supp = ifelse(SED_weighted_average < 33, 'High', sed_supp)) %>% 
-  mutate(sed_supp = ifelse(is.na(sed_supp), 'Medium', sed_supp)) %>% 
+  mutate(sed_supp = ifelse(SED_weighted_average >= 50, 'Low', NA)) %>% 
+  mutate(sed_supp = ifelse(SED_weighted_average < 50, 'High', sed_supp)) %>% 
   select(Type, sed_supp)
   
 # map to check
