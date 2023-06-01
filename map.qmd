@@ -26,17 +26,7 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
   left_join(dat) %>% 
   mutate_at(vars(fut_dams:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
   mutate_at(vars(csqueeze:fut_storms), as.factor) %>% 
-  mutate_at(vars(csqueeze:sed_supp), ~factor(., levels = c('High', 'Medium', 'Low'))) %>% 
-  mutate(sea_change = sea_gain + sea_loss,
-         land_change = land_gain + land_loss) %>% 
-  mutate(sea_change_c = ifelse(sea_change == 2, 'Loss & Gain', NA),
-         sea_change_c = ifelse(sea_change != 2 & sea_gain ==1, 'Gain', sea_change_c),
-         sea_change_c = ifelse(sea_change != 2 & sea_loss ==1, 'Loss', sea_change_c),
-         sea_change_c = ifelse(sea_change ==0, 'No change', sea_change_c),
-         land_change_c = ifelse(land_change == 2, 'Loss & Gain', NA),
-         land_change_c = ifelse(land_change != 2 & land_gain ==1, 'Gain', land_change_c),
-         land_change_c = ifelse(land_change != 2 & land_loss ==1, 'Loss', land_change_c),
-         land_change_c = ifelse(land_change ==0, 'No change', land_change_c))
+  mutate_at(vars(csqueeze:sed_supp), ~factor(., levels = c('High', 'Medium', 'Low')))
 ```
 
 This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5)).
@@ -45,7 +35,7 @@ Sections below provide an overview of the network model structure and the proces
 
 Due to memory limitations, only [sea-level rise](#sea-level-rise), [coastal development](#coastal-development), [drought](#drought), [extreme rainfall](#extreme-rainfall), and [intense storms](#intense-storms) are found on this page.
 
-Go [here](https://mangrove-climate-risk-mapping-2.netlify.app/) to see part 2, which provides information on sediment supply, future dams, tidal range, propagule establishment capacity and historical landward and seaward mangrove extent change.
+Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on sediment supply, future dams, tidal range, propagule establishment capacity, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
 
 ### Network model of mangrove landward migration and seaward progradation
 
@@ -82,11 +72,11 @@ mapview(typ, zcol = 'csqueeze', layer.name = 'Coastal development', cex = 0.9, l
 
 **Coastal development**
 
-[Human population density](https://sedac.ciesin.columbia.edu/data/collection/gpw-v4) in the lower elevation coastal zone (10m elevation above mean sea level (CIESIN, 2021)) for the year 2020 (raster of \~1km resolution) (CIESIN, 2018) was used as a proxy for coastal infrastructure that reduces space available for mangroves to migrate landward. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/)) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no LECZ within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles, or as ‘none’ if population density was 0.
+[Human population density](https://sedac.ciesin.columbia.edu/data/collection/gpw-v4) in the lower elevation coastal zone (10m elevation above mean sea level (CIESIN, 2021)) for the year 2020 (raster of \~1km resolution) (CIESIN, 2018) was used as a proxy for coastal infrastructure that reduces space available for mangroves to migrate landward. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/)) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no LECZ within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles, or as 'none' if population density was 0.
 
 **Future coastal development**
 
-[Projected human population size](https://figshare.com/s/9a94ae958d6a45684382) by the year 2100 (SSP5; raster of 1km resolution) (Merkens et al., 2016) located within 10m elevation above mean sea level (lower elevation coastal zone; (CIESIN, 2021)) was used as a proxy for the future development of coastal infrastructure that reduces space available for mangroves to migrate landward with climate change. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no lower elevation coastal zone within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles, or as ‘none’ if population density was 0.
+[Projected human population size](https://figshare.com/s/9a94ae958d6a45684382) by the year 2100 (SSP5; raster of 1km resolution) (Merkens et al., 2016) located within 10m elevation above mean sea level (lower elevation coastal zone; (CIESIN, 2021)) was used as a proxy for the future development of coastal infrastructure that reduces space available for mangroves to migrate landward with climate change. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no lower elevation coastal zone within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles, or as 'none' if population density was 0.
 
 ### Drought {#drought}
 
@@ -141,3 +131,5 @@ The number of tropical cyclones within a 200 km radius buffer from the centroid 
 **Future intense tropical storms**
 
 The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of cyclone occurring by 2050 was greater than 50%.
+
+Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on sediment supply, future dams, tidal range, propagule establishment capacity, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.

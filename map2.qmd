@@ -20,10 +20,10 @@ project:
 library(mapview)
 library(sf)
 library(tidyverse)
-library(scales)
 
 dat <- read.csv('outputs/master-dat.csv')
 dat2 <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') %>% 
+  mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
 
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
@@ -41,21 +41,32 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
          land_change_c = ifelse(land_change != 2 & land_loss ==1, 'Loss', land_change_c),
          land_change_c = ifelse(land_change ==0, 'No change', land_change_c))
 
+land_forecast <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+  left_join(filter(dat2, cast == 'forecast' & var == 'LandwardMang'))
+land_hindcast <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+  left_join(filter(dat2, cast == 'hindcast' & var == 'LandwardMang'))
+sea_forecast <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+  left_join(filter(dat2, cast == 'forecast' & var == 'SeawardMang'))
+sea_hindcast <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+  left_join(filter(dat2, cast == 'hindcast' & var == 'SeawardMang'))
+
 ```
 
 This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5)).
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
-Due to memory limitations, only [subsidence](#subsidence), [sediment supply](#sediment-supply-and-future-dams), [future dams](#sediment-supply-and-future-dams), [tidal range](#tidal-range), [propagule establishment capacity](#tidal-range) and [historical landward and seaward mangrove extent change](#historical-mangrove-loss-and-gain) are found on this page.
+Due to memory limitations, only [subsidence](#subsidence), [sediment supply](#sediment-supply-and-future-dams), [future dams](#sediment-supply-and-future-dams), [tidal range](#tidal-range), [propagule establishment capacity](#tidal-range), [historical landward and seaward mangrove extent change](#historical-mangrove-loss-and-gain), and [landward](#landhind-forecast) abd [seaward](#seahind-forecast) are found on this page.
 
-Go [here](https://mangrove-climate-risk-mapping.netlify.app/) to see part 1, which provides information on sea-level rise, coastal development, drought, extreme rainfall, intense storms, and subsidence.
+Go [here to see part 1](https://mangrove-climate-risk-mapping.netlify.app/), which provides information on sea-level rise, coastal development, drought, extreme rainfall, intense storms, and subsidence.
 
+::: {.callout-note icon="false" collapse="true"}
 ### Network model of mangrove landward migration and seaward progradation
 
 Conceptual diagram of the network model that makes qualitative predictions of mangrove landward migration and seaward progradation (Figure 1). Details can be found in Buelow et al. (*in prep*).
 
 ![Figure 1. Mangrove network model](images/network.png)
+:::
 
 ### Subsidence from groundwater extraction {#subsidence}
 
@@ -123,12 +134,21 @@ mapview(typ, zcol = 'sea_change_c', layer.name = 'Seaward extent change', cex = 
 
 Areas of mangrove loss or gain were identified in each interval of the Global Mangrove Watch 1996-2020 time series [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU) and merged into one layer representing gross loss, and one layer representing gross gains of mangroves from 1996-2020. The gross loss and gross gain layers were then intersected with boundaries representing oceanic exclusive economic zones [(Flanders Marine Institute, 2019)](https://www.marineregions.org/) to classify areas of loss or gain as 'seaward'. Remaining areas of loss or gain were classified as 'landward'.
 
-### Hindcast and forecast mangrove extent change {#hind-forecast}
+### Hindcasts and forecasts of landward mangrove extent change {#landhind-forecast}
 
 Hindcasts are mapped in the left pane, forecasts on the right
 
 ```{r echo=FALSE, fig.height=1, fig.width=1, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'sea_change_c', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'land_change_c', layer.name = 'Landward extent change', cex = 0.9, lwd = 0)
+mapview(land_hindcast, zcol = 'Prob_change', layer.name = 'Landward extent change', cex = 0.9, lwd = 0) | mapview(land_forecast, zcol = 'Prob_change', layer.name = 'Landward extent change', cex = 0.9, lwd = 0)
 
+```
+
+### Hindcasts and forecasts of seaward mangrove extent change {#seahind-forecast}
+
+Hindcasts are mapped in the left pane, forecasts on the right
+
+```{r echo=FALSE, fig.height=1, fig.width=1, message=FALSE, warning=FALSE, results=TRUE}
+
+mapview(sea_hindcast, zcol = 'Prob_change', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0) | mapview(sea_forecast, zcol = 'Prob_change', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0)
 ```
