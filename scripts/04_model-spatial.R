@@ -100,8 +100,7 @@ for(j in seq_along(runs)){
         filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
         group_by(var) %>% 
         summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
-                  Prob_loss = (sum(outcome<0)/n())*-100) %>% 
-        mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100)))
+                  Prob_loss = (sum(outcome<0)/n())*-100)
       
       out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
       out$cast <- 'forecast'
@@ -158,8 +157,7 @@ for(j in seq_along(runs)){
         filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
         group_by(var) %>% 
         summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
-                  Prob_loss = (sum(outcome<0)/n())*-100) %>% 
-        mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100)))
+                  Prob_loss = (sum(outcome<0)/n())*-100)
       
       out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
       out$cast <- 'hindcast'

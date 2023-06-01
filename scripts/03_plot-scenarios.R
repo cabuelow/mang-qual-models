@@ -22,24 +22,21 @@ dat2 <- dat %>%
             #                'Sea-level rise & Erosion', 'Sea-level rise & Groundwater extraction')) %>% 
   group_by(model_scenario, constraint_scenario, pressure, var) %>% 
   summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
-            Prob_loss = (sum(outcome<0)/n())*-100) %>%
+            Prob_loss = (sum(outcome<0)/n())*-100) %>%  
   mutate(tide = strsplit(constraint_scenario, ', ')[[1]][1],
          coastalsqueeze = strsplit(constraint_scenario, ', ')[[1]][3],
          var = recode(var, 'LandwardMang' = 'Landward mangrove', 'SeawardMang' = 'Seaward mangrove')) %>% 
   mutate(tide = factor(tide, levels = c('Microtidal', 'Mesotidal', 'Macrotidal')))
 
-dat2$Prob_change <- rescale(dat2$Prob_gain_neutral, to = c(-100, 100))
-
 # plot
 
 a <- ggplot(filter(dat2, var == 'Landward mangrove'), 
-            aes(tide, pressure, fill = Prob_change)) +
+            aes(tide, pressure, fill = Prob_gain_neutral)) +
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
                        name = 'Probability of Loss (red) or Neutrality/Gain (blue)', 
                        direction = 1,
-                       limits = c(-100, 100),
-                       breaks = c(-100, -50, 0, 50, 100),
+                       breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
   #facet_wrap(~factor(coastalsqueeze)) +
   facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 2) +
@@ -54,13 +51,12 @@ a <- ggplot(filter(dat2, var == 'Landward mangrove'),
 a
 
 b <- ggplot(filter(dat2, var == 'Seaward mangrove'), 
-            aes(tide, pressure, fill = Prob_change)) +
+            aes(tide, pressure, fill = Prob_gain_neutral)) +
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
                        name = 'Probability of Loss (red) or Neutrality/Gain (blue)',
                        direction = 1,
-                       limits = c(-100, 100),
-                       breaks = c(-100, -50, 0, 50, 100),
+                       breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
   facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 2) +
   #facet_wrap(~factor(model_scenario)) +

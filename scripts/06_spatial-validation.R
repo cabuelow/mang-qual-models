@@ -3,6 +3,8 @@
 library(tidyverse)
 source('scripts/helpers/models_v2.R')
 
+# wrangle historical SRS observations of mangrove loss and gain into categories of change (no change, loss, gain, loss and gain)
+
 spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
   mutate(sea_change = sea_gain + sea_loss,
         land_change = land_gain + land_loss) %>% 
@@ -19,25 +21,21 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
 
 names(models) # names of available models
 chosen_model_name <- 'mangrove_model'
-dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv'))
+dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
+  mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
 
 # join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
 
 landsea <- dat %>% 
-  pivot_wider(id_cols = -Prob_gain_neutral, names_from = 'var', values_from = 'Prob_change') %>% 
-  mutate(Land_Gain = ifelse(LandwardMang >= 50, 1, 0),
-         Land_Ambig = ifelse(LandwardMang <50 & LandwardMang > -50, 1, 0),
-         Land_Loss = ifelse(LandwardMang <= -50, 1, 0),
-         Sea_Gain = ifelse(SeawardMang >= 50, 1, 0),
-         Sea_Ambig = ifelse(SeawardMang <50 & SeawardMang > -50, 1, 0),
-         Sea_Loss = ifelse(SeawardMang <= -50, 1, 0)) %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  mutate(Land_Gain = ifelse(LandwardMang > 75, 1, 0),
+         Land_Ambig = ifelse(LandwardMang <= 50 & LandwardMang >= -75, 1, 0),
+         Land_Loss = ifelse(LandwardMang < -75, 1, 0),
+         Sea_Gain = ifelse(SeawardMang > 75, 1, 0),
+         Sea_Ambig = ifelse(SeawardMang <= 50 & SeawardMang >= -75, 1, 0),
+         Sea_Loss = ifelse(SeawardMang < -75, 1, 0)) %>% 
   filter(Land_Ambig != 1 & Sea_Ambig != 1) %>% # filter out ambiguous predictions
-  #mutate(SeaLand_Gain = ifelse(Land_Gain == 1 & Sea_Loss == 0 | Land_Loss == 0 & Sea_Gain == 1, 1, 0),
-   #      SeaLand_Loss = ifelse(Land_Gain == 0 & Sea_Loss == 1 | Land_Loss == 1 & Sea_Gain == 0, 1, 0)) %>% 
-  #filter(SeaLand_Gain == 1 | SeaLand_Loss == 1) %>% # filter out predictions where land cancels sea
-  inner_join(select(spatial_dat, Tye, sea_gain:land_loss), by = 'Type') %>%
-  mutate(Net_Gain = ifelse(Net_Change >= 0, 1, 0),
-         Net_Loss = ifelse(Net_Change < 0, 1, 0)) %>% 
+  inner_join(select(spatial_dat, Type, sea_gain:land_loss), by = 'Type') %>%
   as.data.frame()
 head(landsea)
 

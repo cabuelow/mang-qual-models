@@ -57,7 +57,6 @@ names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply
 
 # loop through scenarios defined above and store model outcomes
 # do a nested for loop, iterate over relative edge constraint scenarios, absolute edge constraint scenarios, then perturbation scenarios
-#TODO: BUT do this better later! look into purrr
 
 stability.ls1 <- list() # list for storing model stability results
 outcomes.ls1 <- list() # list for storing model outcome results

@@ -20,26 +20,18 @@ dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_nam
 
 landward_forecast <- typ_points %>% 
   left_join(filter(dat, var == 'LandwardMang' & cast == 'forecast'), by = 'Type') %>% 
-  #filter(!is.na(Prob_gain_neutral)) %>% 
-  mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100))) %>% 
   st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
 
 seaward_forecast <- typ_points %>% 
   left_join(filter(dat, var == 'SeawardMang' & cast == 'forecast'), by = 'Type') %>% 
-  #filter(!is.na(Prob_gain_neutral)) %>% 
-  mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100))) %>% 
   st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
 
 landward_hindcast <- typ_points %>% 
   left_join(filter(dat, var == 'LandwardMang' & cast == 'hindcast'), by = 'Type') %>% 
-  #filter(!is.na(Prob_gain_neutral)) %>% 
-  mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100))) %>% 
   st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
 
 seaward_hindcast <- typ_points %>% 
   left_join(filter(dat, var == 'SeawardMang' & cast == 'hindcast'), by = 'Type') %>% 
-  #filter(!is.na(Prob_gain_neutral)) %>% 
-  mutate(Prob_change = rescale(Prob_gain_neutral, to = c(-100, 100))) %>% 
   st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
 
 world_mang <- st_crop(World, xmin = -150, ymin = -40, xmax = 180, ymax = 33)
@@ -51,10 +43,9 @@ lmap <- tm_shape(world_mang) +
   tm_shape(filter(landward_forecast, is.na(Prob_change))) +
   tm_dots('darkgrey') +
   tm_shape(filter(landward_forecast, !is.na(Prob_change))) +
-  tm_dots('Prob_change', 
+  tm_dots('Prob_gain_neutral', 
           palette = 'Spectral',
-          breaks = c(-100,-50,0,50,100),
-          midpoint = 0,
+          breaks = c(0,25,50,75,100),
           labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
           title = '',
           legend.is.portrait = T, 
@@ -78,10 +69,9 @@ smap <- tm_shape(world_mang) +
   tm_shape(filter(seaward_forecast, is.na(Prob_change))) +
   tm_dots('darkgrey') +
   tm_shape(filter(seaward_forecast, !is.na(Prob_change))) +
-  tm_dots('Prob_change', 
+  tm_dots('Prob_gain_neutral', 
           palette = 'Spectral',
-          breaks = c(-100,-50,0,50,100),
-          midpoint = 0,
+          breaks = c(0,25,50,75,100),
           labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
           title = '',
           legend.is.portrait = T,
@@ -112,10 +102,9 @@ lmap <- tm_shape(world_mang) +
   #tm_shape(filter(landward_hindcast, is.na(Prob_change))) +
   #tm_dots('darkgrey') +
   tm_shape(filter(landward_hindcast, !is.na(Prob_change))) +
-  tm_dots('Prob_change', 
+  tm_dots('Prob_gain_neutral', 
           palette = 'Spectral',
-          breaks = c(-100,-50,0,50,100),
-          midpoint = 0,
+          breaks = c(0,25,50,75,100),
           labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
           title = '',
           legend.is.portrait = T, 
@@ -139,10 +128,9 @@ smap <- tm_shape(world_mang) +
   tm_shape(filter(seaward_forecast, is.na(Prob_change))) +
   tm_dots('darkgrey') +
   tm_shape(filter(seaward_forecast, !is.na(Prob_change))) +
-  tm_dots('Prob_change', 
+  tm_dots('Prob_gain_neutral', 
           palette = 'Spectral',
-          breaks = c(-100,-50,0,50,100),
-          midpoint = 0,
+          breaks = c(0,25,50,75,100),
           labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
           title = '',
           legend.is.portrait = T,
