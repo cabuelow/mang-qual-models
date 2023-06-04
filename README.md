@@ -17,9 +17,9 @@ Link to documents describing all spatial data processing:
 
 4.  04_model-spatial.R: map forecasts and hindcasts to mangrove typologies
 
-5.  05_map-spatial.R: map spatial outcomes
+5.  05_spatial-validation.R: compare hindcast to historical mangrove loss and gain to validate
 
-6.  06_spatial-validation.R: compare hindcast to historical mangrove loss and gain to validate
+6.  06_map-spatial.R: map spatial outcomes
 
 7.  helpers/models.R: a script that builds different conceptual models
 
