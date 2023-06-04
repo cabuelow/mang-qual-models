@@ -27,6 +27,9 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
+- [ ] Improve validation
+    - Try including restoration as a driver. Other gain drivers too?
+    - train model to improve interaction strength estimates
 -   [ ] Decide whether to map all typological units, or just those with extant forest (as of 2020)
 -   [ ] Need to decide whether to include coastal development in hind casting?
 -   [ ] Need to fix prop. estab. scenarios - currently only altering landward interaction strengths
