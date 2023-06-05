@@ -241,20 +241,30 @@ dat[[15]] <- propest # if happy add to dat list
 sealand <- read.csv('outputs/processed-data/sea-land-extent-change.csv') %>% 
   mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(is.na(.), 0, .)) %>% # NAs are where there was no loss or gain
   #mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(. < 100, 0, .)) %>% # only consider areas of loss or gain > 1km2 (100ha)
-  mutate(sea_gain = ifelse(sea_gain_ha > 0, 1, 0),
-         sea_loss = ifelse(sea_loss_ha > 0, 1, 0),
-         land_gain = ifelse(land_gain_ha > 0, 1, 0),
-         land_loss = ifelse(land_loss_ha > 0, 1, 0)) %>%
-  select(Type, sea_gain:land_loss)
+  mutate(sea_net = sea_gain_ha - sea_loss_ha,
+         land_net = land_gain_ha - land_loss_ha) %>% 
+  mutate(sea_gross_gain = ifelse(sea_gain_ha > 0, 1, 0),
+         sea_gross_loss = ifelse(sea_loss_ha > 0, 1, 0),
+         land_gross_gain = ifelse(land_gain_ha > 0, 1, 0),
+         land_gross_loss = ifelse(land_loss_ha > 0, 1, 0),
+         sea_net_gain = ifelse(sea_net > 0, 1, 0),
+         sea_net_loss = ifelse(sea_net < 0, 1, 0),
+         land_net_gain = ifelse(land_net > 0, 1, 0),
+         land_net_loss = ifelse(land_net < 0, 1, 0)) %>%
+  select(Type, sea_gross_gain:land_net_loss)
 
 # map to check
 
 typ2 <- typ %>% 
   left_join(sealand)
-qtm(typ2, dots.col = 'sea_gain') 
-qtm(typ2, dots.col = 'sea_loss') 
-qtm(typ2, dots.col = 'land_gain')
-qtm(typ2, dots.col = 'land_loss') 
+qtm(typ2, dots.col = 'sea_gross_gain') 
+qtm(typ2, dots.col = 'sea_net_gain') 
+qtm(typ2, dots.col = 'sea_gross_loss') 
+qtm(typ2, dots.col = 'sea_net_loss') 
+qtm(typ2, dots.col = 'land_gross_gain')
+qtm(typ2, dots.col = 'land_net_gain') 
+qtm(typ2, dots.col = 'land_gross_gain')
+qtm(typ2, dots.col = 'land_net_gain') 
 dat[[16]] <- sealand # if happy add to dat list
 
 # merge into final master database
