@@ -44,20 +44,18 @@ land <- dat %>%
   mutate(Land_Gain = ifelse(LandwardMang > threshold, 1, 0),
          Land_Ambig = ifelse(LandwardMang <= threshold & LandwardMang >= -threshold, 1, 0),
          Land_Loss = ifelse(LandwardMang < -threshold, 1, 0)) %>% 
-  #filter(Land_Ambig != 1) %>% # filter out ambiguous predictions
-  inner_join(select(spatial_dat, Type, sea_gross_gain:land_gross_gain_loss, sea_change_c, land_change_c), by = 'Type') %>%
-  #filter(land_change_c != 'Loss & Gain') %>%  # filter out ambiguous observations
-  as.data.frame()
+  inner_join(select(spatial_dat, Type, sea_gross_gain:land_gross_gain_loss, sea_change_c, land_change_c), by = 'Type') %>% 
+  select(Type, Land_Gain:Land_Loss, land_gross_gain, land_gross_loss, land_gross_gain_loss, land_change_c)
+write.csv(land, 'outputs/land-validation-results.csv', row.names = F)
 
 sea <- dat %>% 
   pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
   mutate(Sea_Gain = ifelse(SeawardMang > threshold, 1, 0),
          Sea_Ambig = ifelse(SeawardMang <= threshold & SeawardMang >= -threshold, 1, 0),
          Sea_Loss = ifelse(SeawardMang < -threshold, 1, 0)) %>% 
-  #filter(Sea_Ambig != 1) %>% # filter out ambiguous predictions
-  inner_join(select(spatial_dat, Type, sea_gross_gain:land_gross_gain_loss, sea_change_c, land_change_c), by = 'Type') %>%
-  #filter(sea_change_c != 'Loss & Gain') %>%  # filter out ambiguous observations
-  as.data.frame()
+  inner_join(select(spatial_dat, Type, sea_gross_gain:land_gross_gain_loss, sea_change_c, land_change_c), by = 'Type') %>% 
+  select(Type, Sea_Gain:Sea_Loss, sea_gross_gain, sea_gross_loss, sea_gross_gain_loss, sea_change_c)
+write.csv(sea, 'outputs/sea-validation-results.csv', row.names = F)
 
 # now do confusion matrix of non-ambiguous predictions of gain or loss, compared to net gain or loss
 
