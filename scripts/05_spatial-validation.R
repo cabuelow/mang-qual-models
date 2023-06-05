@@ -37,7 +37,7 @@ dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_nam
 
 # join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
 
-threshold <- 95 # threshold for defining when a prediction is ambiguous or not
+threshold <- 99 # threshold for defining when a prediction is ambiguous or not
 
 land <- dat %>% 
   pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
