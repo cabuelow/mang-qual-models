@@ -22,11 +22,20 @@ library(sf)
 library(tidyverse)
 library(caret)
 
-calc_accuracy <- function(x, x2){
-  conMatrix <- confusionMatrix(factor(x, levels = c(0,1)), factor(x2, levels = c(0,1)))
-  accuracy_percent <- conMatrix$overall[1]*100
-  return(accuracy_percent)
-  }
+calc_accuracy_multi <- function(x, x2){
+  conMatrix <- confusionMatrix(factor(x), factor(x2))
+  df <- data.frame(accuracy = unname(conMatrix$overall[1]*100),
+                   precision_gain = conMatrix$byClass[1,5]*100,
+                   precision_loss = conMatrix$byClass[2,5]*100,
+                   precision_loss_gain = conMatrix$byClass[3,5]*100,
+                   sensitivity_gain = conMatrix$byClass[1,1]*100,
+                   sensitivity_loss = conMatrix$byClass[2,1]*100,
+                   sensitivity_loss_gain = conMatrix$byClass[3,1]*100,
+                   specificity_gain = conMatrix$byClass[1,2]*100,
+                   specificity_loss = conMatrix$byClass[2,2]*100,
+                   specificity_loss_gain = conMatrix$byClass[3,2]*100)
+  return(df)
+}
 
 dat <- read.csv('outputs/master-dat.csv') %>% select(Type:prop_estab)
 dat2 <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') %>% 
@@ -34,13 +43,11 @@ dat2 <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.cs
 land <- read.csv('outputs/land-validation-results.csv') %>% 
   mutate(Land_hindcast = ifelse(Land_Gain == 1, 'Gain', NA),
          Land_hindcast = ifelse(Land_Ambig == 1, 'Loss or Gain', Land_hindcast),
-         Land_hindcast = ifelse(Land_Loss == 1, 'Loss', Land_hindcast)) #%>% 
-  #select(Type, Land_hindcast, land_change_c)
+         Land_hindcast = ifelse(Land_Loss == 1, 'Loss', Land_hindcast))
 sea <- read.csv('outputs/sea-validation-results.csv') %>% 
     mutate(Sea_hindcast = ifelse(Sea_Gain == 1, 'Gain', NA),
          Sea_hindcast = ifelse(Sea_Ambig == 1, 'Loss or Gain', Sea_hindcast),
-         Sea_hindcast = ifelse(Sea_Loss == 1, 'Loss', Sea_hindcast)) #%>% 
-  #select(Type, Sea_hindcast, sea_change_c)
+         Sea_hindcast = ifelse(Sea_Loss == 1, 'Loss', Sea_hindcast))
 
 threshold <- 95
 landfor <- dat2 %>% 
@@ -172,12 +179,13 @@ Hindcasts of landward mangrove extent change are mapped in the left pane, foreca
 mapview(typ_hind, zcol = 'Land_hindcast', layer.name = 'Landward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(typ_fore, zcol = 'Land_forecast', layer.name = 'Landward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 
 ```
+Hindcasts of **landward extent change** have an overall classification accuracy of `r round(calc_accuracy_multi(land$Land_Change, land$land_change_c))$accuracy`%.
 
-Hindcasts of **landward gains** have an accuracy of `r round(unname(calc_accuracy(land$Land_Gain, land$land_gross_gain)))`%.
+The percentage of **landward gain** hindcast predictions that are correct is `r round(calc_accuracy_multi(land$Land_Change, land$land_change_c))$precision_gain`%.
 
-Hindcasts of **landward losses** have an accuracy of `r round(unname(calc_accuracy(land$Land_Loss, land$land_gross_loss)))`%.
+The percentage of **landward loss** hindcast predictions that are correct is `r round(calc_accuracy_multi(land$Land_Change, land$land_change_c))$precision_loss`%.
 
-Hindcasts of **landward gains or losses** have an accuracy of `r round(unname(calc_accuracy(land$Land_Ambig, land$land_gross_gain_loss)))`%.
+The percentage of **landward gain or loss** hindcast predictions that are correct is `r round(calc_accuracy_multi(land$Land_Change, land$land_change_c))$precision_loss_gain`%.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -189,11 +197,9 @@ Hindcasts of seaward mangrove extent change are mapped in the left pane, forecas
 
 mapview(typ_hind, zcol = 'Sea_hindcast', layer.name = 'Seaward hindcast', cex = 0.9, lwd = 0) | mapview(typ_fore, zcol = 'Sea_forecast', layer.name = 'Seaward forecast', cex = 0.9, lwd = 0)
 ```
-Hindcasts of **seaward gains** have an accuracy of `r round(unname(calc_accuracy(sea$Sea_Gain, sea$sea_gross_gain)))`%.
+Hindcasts of **seaward extent change** have an overall classification accuracy of `r round(calc_accuracy_multi(sea$Sea_Change, sea$sea_change_c))$accuracy`%.
 
-Hindcasts of **seaward losses** have an accuracy of `r round(unname(calc_accuracy(sea$Sea_Loss, sea$sea_gross_loss)))`%.
+The percentage of **seaward loss** hindcast predictions that are correct is `r round(calc_accuracy_multi(sea$Sea_Change, sea$sea_change_c))$precision_loss`%.
 
-Hindcasts of **seaward gains or losses** have an accuracy of `r round(unname(calc_accuracy(sea$Sea_Ambig, sea$sea_gross_gain_loss)))`%.
+The percentage of **seaward gain or loss** hindcast predictions that are correct is `r round(calc_accuracy_multi(sea$Sea_Change, sea$sea_change_c))$precision_loss_gain`%.
 :::
-
-
