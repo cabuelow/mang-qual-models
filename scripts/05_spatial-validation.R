@@ -44,8 +44,11 @@ land <- dat %>%
   mutate(Land_Gain = ifelse(LandwardMang > threshold, 1, 0),
          Land_Ambig = ifelse(LandwardMang <= threshold & LandwardMang >= -threshold, 1, 0),
          Land_Loss = ifelse(LandwardMang < -threshold, 1, 0)) %>% 
+  mutate(Land_Change = ifelse(Land_Gain == 1, 'Gain', NA),
+         Land_Change = ifelse(Land_Ambig == 1, 'Loss & Gain', Land_Change),
+         Land_Change = ifelse(Land_Loss == 1, 'Loss', Land_Change)) %>% 
   inner_join(select(spatial_dat, Type, sea_gross_gain:land_gross_gain_loss, sea_change_c, land_change_c), by = 'Type') %>% 
-  select(Type, Land_Gain:Land_Loss, land_gross_gain, land_gross_loss, land_gross_gain_loss, land_change_c)
+  select(Type, Land_Gain:Land_Change, land_gross_gain, land_gross_loss, land_gross_gain_loss, land_change_c)
 write.csv(land, 'outputs/land-validation-results.csv', row.names = F)
 
 sea <- dat %>% 
@@ -53,14 +56,17 @@ sea <- dat %>%
   mutate(Sea_Gain = ifelse(SeawardMang > threshold, 1, 0),
          Sea_Ambig = ifelse(SeawardMang <= threshold & SeawardMang >= -threshold, 1, 0),
          Sea_Loss = ifelse(SeawardMang < -threshold, 1, 0)) %>% 
+  mutate(Sea_Change = ifelse(Sea_Gain == 1, 'Gain', NA),
+         Sea_Change = ifelse(Sea_Ambig == 1, 'Loss & Gain', Sea_Change),
+         Sea_Change = ifelse(Sea_Loss == 1, 'Loss', Sea_Change)) %>% 
   inner_join(select(spatial_dat, Type, sea_gross_gain:land_gross_gain_loss, sea_change_c, land_change_c), by = 'Type') %>% 
-  select(Type, Sea_Gain:Sea_Loss, sea_gross_gain, sea_gross_loss, sea_gross_gain_loss, sea_change_c)
+  select(Type, Sea_Gain:Sea_Change, sea_gross_gain, sea_gross_loss, sea_gross_gain_loss, sea_change_c)
 write.csv(sea, 'outputs/sea-validation-results.csv', row.names = F)
 
-# now do confusion matrix of non-ambiguous predictions of gain or loss, compared to net gain or loss
+# calculate prediction/classification accuracy for different classes
 
 calc_accuracy <- function(x, x2){
-  conMatrix <- confusionMatrix(factor(x, levels = c(0,1)), factor(x2, levels = c(0,1)))
+  conMatrix <- confusionMatrix(factor(x), factor(x2))
   accuracy_percent <- conMatrix$overall[1]*100
   return(accuracy_percent)
   }
@@ -71,6 +77,26 @@ calc_accuracy(land$Land_Ambig, land$land_gross_gain_loss)
 calc_accuracy(sea$Sea_Loss, sea$sea_gross_loss)
 calc_accuracy(sea$Sea_Gain, sea$sea_gross_gain)
 calc_accuracy(sea$Sea_Ambig, sea$sea_gross_gain_loss)
+
+# multi-class prediction/classification accuracy
+
+calc_accuracy_multi <- function(x, x2){
+  conMatrix <- confusionMatrix(factor(x), factor(x2))
+  df <- data.frame(accuracy = unname(conMatrix$overall[1]*100),
+                   precision_gain = conMatrix$byClass[1,5]*100,
+                   precision_loss = conMatrix$byClass[2,5]*100,
+                   precision_loss_gain = conMatrix$byClass[3,5]*100,
+                   sensitivity_gain = conMatrix$byClass[1,1]*100,
+                   sensitivity_loss = conMatrix$byClass[2,1]*100,
+                   sensitivity_loss_gain = conMatrix$byClass[3,1]*100,
+                   specificity_gain = conMatrix$byClass[1,2]*100,
+                   specificity_loss = conMatrix$byClass[2,2]*100,
+                   specificity_loss_gain = conMatrix$byClass[3,2]*100)
+  return(df)
+}
+
+calc_accuracy_multi(land$Land_Change, land$land_change_c)
+calc_accuracy_multi(sea$Sea_Change, sea$sea_change_c)
 
 # where are we not predicting well for seaward losses and seaward ambiguous responses? what are we predicting instead?
 
