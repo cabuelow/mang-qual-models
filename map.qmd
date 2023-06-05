@@ -4,10 +4,10 @@ format:
   html:
     embed-resources: true
 theme: minty
-toc: true
-toc-location: left
-toc-title: Content
-toc-depth: 4
+toc: false
+#toc-location: left
+#toc-title: Content
+#toc-depth: 4
 #published-title: Date
 #date: 2022-10-23
 editor: visual
@@ -33,7 +33,7 @@ This webpage provides an overview of the data used to paramaterise a qualitative
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
-Due to memory limitations, only [sea-level rise](#sea-level-rise), [coastal development](#coastal-development), [drought](#drought), [extreme rainfall](#extreme-rainfall), and [intense storms](#intense-storms) are found on this page.
+Due to memory limitations, only **sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, and **intense storms** are found on this page.
 
 Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on sediment supply, future dams, tidal range, propagule establishment capacity, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
 
@@ -43,6 +43,7 @@ Conceptual diagram of the network model that makes qualitative predictions of ma
 
 ![Figure 1. Mangrove network model](images/network.png)
 
+::: {.callout-tip icon="false" collapse="true"}
 ### Sea-level rise {#sea-level-rise}
 
 Antecedent sea-level rise is mapped in the left pane, future projected sea-level rise on the right. **Note, drag the pane separator in the middle of the map to compare antecedent and future SLR**
@@ -60,7 +61,9 @@ mapview(typ, zcol = 'ant_slr', layer.name = 'Antecdent sea-level rise', cex = 0.
 **Future sea-level rise**
 
 [Long term (2081-2100) sea-level rise (m) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The raster pixel value closest to the centroid of each mangrove typological unit was obtained. Typological units with future sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
+:::
 
+::: {.callout-tip icon="false" collapse="true"}
 ### Coastal development {#coastal-development}
 
 Current coastal development (2020) is mapped in the left pane, future projected coastal development is mapped on the right.
@@ -77,7 +80,9 @@ mapview(typ, zcol = 'csqueeze', layer.name = 'Coastal development', cex = 0.9, l
 **Future coastal development**
 
 [Projected human population size](https://figshare.com/s/9a94ae958d6a45684382) by the year 2100 (SSP5; raster of 1km resolution) (Merkens et al., 2016) located within 10m elevation above mean sea level (lower elevation coastal zone; (CIESIN, 2021)) was used as a proxy for the future development of coastal infrastructure that reduces space available for mangroves to migrate landward with climate change. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no lower elevation coastal zone within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles, or as 'none' if population density was 0.
+:::
 
+::: {.callout-tip icon="false" collapse="true"}
 ### Drought {#drought}
 
 Historical drought conditions (1996-2020) is mapped in the left pane, future projected drought is mapped on the right.
@@ -95,7 +100,9 @@ Historical drought conditions were estimated for each mangrove typological unit 
 **Future drought**
 
 [Long term (2081-2100) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove typological unit was calculated. Mangrove typological units with greater than 50% decrease in SPI values were considered at risk from drought.
+:::
 
+::: {.callout-tip icon="false" collapse="true"}
 ### Extreme rainfall {#extreme-rainfall}
 
 Historical extreme rainfall (1996-2020) is mapped in the left pane, future projected extreme rainfall is mapped on the right.
@@ -113,7 +120,9 @@ Same as above for **Historical drought**, except extreme rainfall was considered
 **Future extreme rainfall**
 
 Same as above for **Future drought**, except mangrove typological units with greater than 50% increase in SPI values were considered at risk from extreme rainfall.
+:::
 
+::: {.callout-tip icon="false" collapse="true"}
 ### Intense tropical storms {#intense-storms}
 
 Historical Intense tropical storms (1996-2020) is mapped in the left pane, and future projected intense tropical storms on the right.
@@ -131,5 +140,6 @@ The number of tropical cyclones within a 200 km radius buffer from the centroid 
 **Future intense tropical storms**
 
 The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of cyclone occurring by 2050 was greater than 50%.
+:::
 
 Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on sediment supply, future dams, tidal range, propagule establishment capacity, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
