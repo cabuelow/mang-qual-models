@@ -24,12 +24,6 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
          sea_loss_obs = ifelse(sea_gross_loss == 1, 'Loss', 'No Loss'),
          land_gain_obs = ifelse(land_gross_gain == 1, 'Gain', 'No Gain'),
          land_loss_obs = ifelse(land_gross_loss == 1, 'Loss', 'No Loss'))      
-   #sea_gross_loss = ifelse(sea_gross_gain_loss == 2, 0, sea_gross_loss),
-         #sea_gross_gain = ifelse(sea_gross_gain_loss == 2, 0, sea_gross_gain),
-         #land_gross_loss = ifelse(land_gross_gain_loss == 2, 0, land_gross_loss),
-         #land_gross_gain = ifelse(land_gross_gain_loss == 2, 0, land_gross_gain)) %>% 
-  #mutate(sea_gross_gain_loss = ifelse(sea_gross_gain_loss == 2, 1, 0),
-   #      land_gross_gain_loss = ifelse(land_gross_gain_loss == 2, 1, 0))
 
 # which model outcomes to validate? Get outcomes for that model
 
