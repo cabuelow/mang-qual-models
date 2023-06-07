@@ -63,13 +63,22 @@ sea <- dat %>%
   select(Type, Sea_Gain:Sea_Change, sea_gross_gain, sea_gross_loss, sea_gross_gain_loss, sea_change_c)
 write.csv(sea, 'outputs/sea-validation-results.csv', row.names = F)
 
-# calculate prediction/classification accuracy for different classes
+# calculate overall prediction/classification accuracy
+# and commission (users accuracy) and omission (producers accuracy) for each class
 
-calc_accuracy <- function(x, x2){
-  conMatrix <- confusionMatrix(factor(x), factor(x2))
-  accuracy_percent <- conMatrix$overall[1]*100
-  return(accuracy_percent)
-  }
+calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference vector
+cont.table <- confusionMatrix(factor(x), factor(x2))$table # get a contingency table of reference values and predictions
+commission <- diag(cont.table)/rowSums(cont.table)*100
+omission <- diag(cont.table)/colSums(cont.table)*100
+overall.accuracy <- sum(diag(cont.table))/sum(cont.table)*100
+class.df <- data.frame(class = levels(factor(x2)), overall_accuracy = overall.accuracy, omission_accuracy = omission, commission_accuracy = commission)
+accuracy_list <- list(class.df, cont.table)
+names(accuracy_list) <- c('accuracy.results', 'contingency.table')
+return(accuracy_list)
+}
+
+accuracy <- calc_accuracy(land$Land_Change, land$land_change_c)
+accuracy
 
 calc_accuracy(land$Land_Gain, land$land_gross_gain)
 calc_accuracy(land$Land_Loss, land$land_gross_loss)
@@ -77,26 +86,8 @@ calc_accuracy(land$Land_Ambig, land$land_gross_gain_loss)
 calc_accuracy(sea$Sea_Loss, sea$sea_gross_loss)
 calc_accuracy(sea$Sea_Gain, sea$sea_gross_gain)
 calc_accuracy(sea$Sea_Ambig, sea$sea_gross_gain_loss)
-
-# multi-class prediction/classification accuracy
-
-calc_accuracy_multi <- function(x, x2){
-  conMatrix <- confusionMatrix(factor(x), factor(x2))
-  df <- data.frame(accuracy = unname(conMatrix$overall[1]*100),
-                   precision_gain = conMatrix$byClass[1,5]*100,
-                   precision_loss = conMatrix$byClass[2,5]*100,
-                   precision_loss_gain = conMatrix$byClass[3,5]*100,
-                   sensitivity_gain = conMatrix$byClass[1,1]*100,
-                   sensitivity_loss = conMatrix$byClass[2,1]*100,
-                   sensitivity_loss_gain = conMatrix$byClass[3,1]*100,
-                   specificity_gain = conMatrix$byClass[1,2]*100,
-                   specificity_loss = conMatrix$byClass[2,2]*100,
-                   specificity_loss_gain = conMatrix$byClass[3,2]*100)
-  return(df)
-}
-
-calc_accuracy_multi(land$Land_Change, land$land_change_c)
-calc_accuracy_multi(sea$Sea_Change, sea$sea_change_c)
+calc_accuracy(land$Land_Change, land$land_change_c)
+calc_accuracy(sea$Sea_Change, sea$sea_change_c)
 
 # where are we not predicting well for seaward losses and seaward ambiguous responses? what are we predicting instead?
 
