@@ -37,7 +37,7 @@ dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_nam
 
 # join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
 
-threshold <- 99 # threshold for defining when a prediction is ambiguous or not
+threshold <- 75 # threshold for defining when a prediction is ambiguous or not
 
 land <- dat %>% 
   pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
@@ -77,15 +77,15 @@ names(accuracy_list) <- c('accuracy.results', 'contingency.table')
 return(accuracy_list)
 }
 
-accuracy <- calc_accuracy(land$Land_Change, land$land_change_c)
-accuracy
-
+# individual classes
 calc_accuracy(land$Land_Gain, land$land_gross_gain)
 calc_accuracy(land$Land_Loss, land$land_gross_loss)
 calc_accuracy(land$Land_Ambig, land$land_gross_gain_loss)
 calc_accuracy(sea$Sea_Loss, sea$sea_gross_loss)
 calc_accuracy(sea$Sea_Gain, sea$sea_gross_gain)
 calc_accuracy(sea$Sea_Ambig, sea$sea_gross_gain_loss)
+
+# multi-class
 calc_accuracy(land$Land_Change, land$land_change_c)
 calc_accuracy(sea$Sea_Change, sea$sea_change_c)
 
