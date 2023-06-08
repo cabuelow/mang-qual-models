@@ -23,7 +23,11 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
   mutate(sea_gain_obs = ifelse(sea_gross_gain == 1, 'Gain', 'No Gain'),
          sea_loss_obs = ifelse(sea_gross_loss == 1, 'Loss', 'No Loss'),
          land_gain_obs = ifelse(land_gross_gain == 1, 'Gain', 'No Gain'),
-         land_loss_obs = ifelse(land_gross_loss == 1, 'Loss', 'No Loss'))      
+         land_loss_obs = ifelse(land_gross_loss == 1, 'Loss', 'No Loss'),
+         sea_net_gain_obs = ifelse(sea_net_gain == 1, 'Gain', 'No Gain'),
+         sea_net_loss_obs = ifelse(sea_net_loss == 1, 'Loss', 'No Loss'),
+         land_net_gain_obs = ifelse(land_net_gain == 1, 'Gain', 'No Gain'),
+         land_net_loss_obs = ifelse(land_net_loss == 1, 'Loss', 'No Loss'))      
 
 # which model outcomes to validate? Get outcomes for that model
 
@@ -45,8 +49,8 @@ land <- dat %>%
   mutate(Land_Change = ifelse(Land_Gain == 'Gain', 'Gain', NA),
          Land_Change = ifelse(Land_Ambig == 'Ambiguous', 'Ambiguous', Land_Change),
          Land_Change = ifelse(Land_Loss == 'Loss', 'Loss', Land_Change)) %>% 
-  inner_join(select(spatial_dat, Type, sea_change_obs:land_loss_obs), by = 'Type') %>% 
-  select(Type, Land_Gain:Land_Change, land_change_obs, land_gain_obs, land_loss_obs)
+  inner_join(select(spatial_dat, Type, sea_change_obs:land_net_loss_obs), by = 'Type') %>% 
+  select(Type, Land_Gain:Land_Change, land_change_obs, land_gain_obs, land_loss_obs, land_net_gain_obs, land_net_loss_obs)
 write.csv(land, 'outputs/land-validation-results.csv', row.names = F)
 
 sea <- dat %>% 
@@ -57,8 +61,8 @@ sea <- dat %>%
   mutate(Sea_Change = ifelse(Sea_Gain == 'Gain', 'Gain', NA),
          Sea_Change = ifelse(Sea_Ambig == 'Ambiguous', 'Ambiguous', Sea_Change),
          Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
-  inner_join(select(spatial_dat, Type, sea_change_obs:land_loss_obs), by = 'Type') %>% 
-  select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs)
+  inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_loss_obs), by = 'Type') %>% 
+  select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs)
 write.csv(sea, 'outputs/sea-validation-results.csv', row.names = F)
 
 # calculate overall prediction/classification accuracy
