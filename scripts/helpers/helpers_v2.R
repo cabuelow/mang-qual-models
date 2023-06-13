@@ -5,16 +5,20 @@
 # and allows relative strengths of edges to be constrained
 # based on 'community.ordering.sampler' function from Wotherspoon
 
-community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class, perturb) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class, perturb, spatial) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
   edges <- constrainedigraph$edges
-  if (length(from) > 0){ # here add new column to edges with high medium or low classification
+  if (length(from) > 0){ # here add new column to edges with high, medium or low classification
     constrain <- data.frame(From = from, To = to, Class = class)
-    if(length(which(names(perturb) == 'CoastalDev')) != 0){ # only if coastal development is being perturbed do we constrain SeaLevelRise -> LandwardMang egde
+    if(spatial == 'N'){ # in non-spatial model, only if coastal development is being perturbed do we constrain SeaLevelRise -> LandwardMang edge
+    if(length(which(names(perturb) == 'CoastalDev')) != 0){ 
     edges$Class <- dplyr::left_join(edges, constrain)$Class
     }else{
     edges$Class <- dplyr::left_join(edges, constrain)$Class
     edges <- mutate(edges, Class = ifelse(To == 'LandwardMang', 'NA', Class))
+    }
+    }else{ # in spatial model, always constrain SeaLevelRise -> LandwardMang edge according to pop. density
+      edges$Class <- dplyr::left_join(edges, constrain)$Class
     }
   }
   n.nodes <- length(node.labels(edges))
@@ -80,8 +84,8 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
 # also gets interaction weights 
 
 system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
-                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb),  
-                              perturb) {
+                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial),  
+                              perturb, spatial) {
   stableout <- list()
   stablews <- list()
   stable <- 0

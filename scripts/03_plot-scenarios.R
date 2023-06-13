@@ -17,9 +17,6 @@ dat2 <- dat %>%
                                       'Microtidal, High propagule establishment capacity, High coastal squeeze',
                                       'Macrotidal, High propagule establishment capacity, Low coastal squeeze',
                                       'Microtidal, High propagule establishment capacity, Low coastal squeeze')) %>% #& 
-          # !pressure %in% c('Cyclones', 'Dams', 'Drought', 'Erosion', 'Groundwater extraction',
-           #                 'Sea-level rise & Cyclones', 'Sea-level rise & Dams', 'Sea-level rise & Drought',
-            #                'Sea-level rise & Erosion', 'Sea-level rise & Groundwater extraction')) %>% 
   group_by(model_scenario, constraint_scenario, pressure, var) %>% 
   summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
             Prob_loss = (sum(outcome<0)/n())*-100) %>%  
@@ -30,27 +27,7 @@ dat2 <- dat %>%
 
 # plot
 
-a <- ggplot(filter(dat2, var == 'Landward mangrove'), 
-            aes(tide, pressure, fill = Prob_gain_neutral)) +
-  geom_tile(color = 'black') +
-  scale_fill_distiller(palette = 'Spectral', 
-                       name = 'Probability of Loss (red) or Neutrality/Gain (blue)', 
-                       direction = 1,
-                       breaks = c(0, 25, 50, 75, 100),
-                       labels = c("-100", "-75", "50", '75', '100')) +
-  #facet_wrap(~factor(coastalsqueeze)) +
-  facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 2) +
-  theme_classic() +
-  theme(legend.position = 'none',
-        legend.justification = 'left',
-        #axis.text.y =  element_blank(),
-        strip.text.x = element_text(size = 9),
-        axis.title = element_blank()) +
-  ggtitle('A) Landward mangrove') +
-  guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
-a
-
-b <- ggplot(filter(dat2, var == 'Seaward mangrove'), 
+a <- ggplot(filter(dat2, var == 'Seaward mangrove'), 
             aes(tide, pressure, fill = Prob_gain_neutral)) +
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
@@ -58,7 +35,7 @@ b <- ggplot(filter(dat2, var == 'Seaward mangrove'),
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
-  facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 2) +
+  facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 4) +
   #facet_wrap(~factor(model_scenario)) +
   theme_classic() +
   theme(legend.position = 'bottom',
@@ -66,11 +43,31 @@ b <- ggplot(filter(dat2, var == 'Seaward mangrove'),
         #axis.text.y =  element_blank(),
         strip.text.x = element_text(size = 9),
         axis.title = element_blank()) +
-  ggtitle('B) Seaward mangrove') +
+  ggtitle('A) Seaward mangrove') +
+  guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
+a
+
+b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Sediment Supply'), 
+            aes(tide, pressure, fill = Prob_gain_neutral)) +
+  geom_tile(color = 'black') +
+  scale_fill_distiller(palette = 'Spectral', 
+                       name = 'Probability of Loss (red) or Neutrality/Gain (blue)', 
+                       direction = 1,
+                       breaks = c(0, 25, 50, 75, 100),
+                       labels = c("-100", "-75", "50", '75', '100')) +
+  facet_wrap(~factor(coastalsqueeze)) +
+  #facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 2) +
+  theme_classic() +
+  theme(legend.position = 'none',
+        legend.justification = 'left',
+        axis.text.y =  element_blank(),
+        strip.text.x = element_text(size = 9),
+        axis.title = element_blank()) +
+  ggtitle('B) Landward mangrove') +
   guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
 b
 
-c <- a/b #+ plot_layout(heights = c(0.8, 2))
+c <- a+b+plot_layout(widths = c(2, 1))
 c 
-ggsave(paste0('outputs/heatmap_outputs/', model_name ,'_heatmap.png'), width = 7, height = 10)
+ggsave(paste0('outputs/heatmap_outputs/', model_name ,'_heatmap.png'), width = 11, height = 4)
 

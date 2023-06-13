@@ -67,16 +67,16 @@ for(j in seq_along(runs)){
       if(spatial_dat[i,]$fut_csqueeze == 'None'){
         datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab) %>% 
           pivot_longer(Tidal_Class:prop_estab, names_to = 'press', values_to = 'vals') 
-        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp')
-        to_vec <- c('SeawardMang', 'LandwardMang')
+        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp')
+        to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang')
+        con.scenario <- c(datselect2$vals, datselect2$vals[2])
       }else{
         datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab, fut_csqueeze) %>% 
           pivot_longer(Tidal_Class:fut_csqueeze, names_to = 'press', values_to = 'vals') 
-        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeaLevelRise')
-        to_vec <- c('SeawardMang', 'LandwardMang', 'LandwardMang')
+        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp', 'SeaLevelRise')
+        to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang', 'LandwardMang')
+        con.scenario <- c(datselect2$vals[c(1,2)], datselect2$vals[2], datselect2$vals[3])
       }
-      
-      con.scenario <- c(datselect2$vals)
       
       # select model for sediment supply
       
@@ -94,7 +94,8 @@ for(j in seq_along(runs)){
                               from = from_vec,
                               to = to_vec,
                               class = con.scenario,
-                              perturb = press.scenario)
+                              perturb = press.scenario,
+                              spatial = 'Y')
       
       out <- sim$stableoutcome %>% 
         filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
@@ -126,16 +127,17 @@ for(j in seq_along(runs)){
       if(spatial_dat[i,]$csqueeze == 'None'){
         datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab) %>% 
           pivot_longer(Tidal_Class:prop_estab, names_to = 'press', values_to = 'vals') 
-        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp')
-        to_vec <- c('SeawardMang', 'LandwardMang')
+        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp')
+        to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang')
+        con.scenario <- c(datselect2$vals, datselect2$vals[2])
       }else{
         datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab, csqueeze) %>% 
           pivot_longer(Tidal_Class:csqueeze, names_to = 'press', values_to = 'vals') 
-        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeaLevelRise')
-        to_vec <- c('SeawardMang', 'LandwardMang', 'LandwardMang')
+        from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp', 'SeaLevelRise')
+        to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang', 'LandwardMang')
+        con.scenario <- c(datselect2$vals, datselect2$vals[2], datselect2$vals[3])
+        con.scenario <- c(datselect2$vals[c(1,2)], datselect2$vals[2], datselect2$vals[3])
       }
-      
-      con.scenario <- c(datselect2$vals)
       
       # select model for sediment supply
       
@@ -151,7 +153,8 @@ for(j in seq_along(runs)){
                               from = from_vec,
                               to = to_vec,
                               class = con.scenario,
-                              perturb = press.scenario)
+                              perturb = press.scenario,
+                              spatial = 'Y')
       
       out <- sim$stableoutcome %>% 
         filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 

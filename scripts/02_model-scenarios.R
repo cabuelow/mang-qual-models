@@ -20,15 +20,15 @@ numsims <- 1000 # number of model simulations to run
 
 # define perturbations scenarios
 node.labels(chosen_model) # get model nodes for reference
-press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), 
-                        c(Erosion=1), c(Drought=1), c(ExtremeRainfall=1), c(SeaLevelRise=1, Cyclones=1),
-                        c(SeaLevelRise=1, GroundSubsid=1), c(SeaLevelRise=1, CoastalDev=1), c(SeaLevelRise=1, Erosion=1),
+press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), c(Erosion=1), c(Drought=1), 
+                        c(ExtremeRainfall=1), c(SeaLevelRise=1, Cyclones=1), c(SeaLevelRise=1, GroundSubsid=1), 
+                        c(SeaLevelRise=1, CoastalDev=1), c(SeaLevelRise=1, Erosion=1),
                         c(SeaLevelRise=1, Drought=1), c(SeaLevelRise=1, ExtremeRainfall=1))
 # define names of above scenarios for plot labelling later
-press.labels <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion','Drought',
-               'Extreme rainfall', 'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
-               'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', 'Sea-level rise & Drought', 
-               'Sea-level rise & Extreme rainfall')
+press.labels <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion',
+                  'Drought', 'Extreme rainfall', 'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
+               'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', 
+               'Sea-level rise & Drought', 'Sea-level rise & Extreme rainfall')
 
 # define edge constraints - whether edge interaction strengths should be 'high', 'medium' or 'low'
 edge.labels(chosen_model) # get model edges for reference
@@ -42,10 +42,12 @@ edge.cons.scenarios <- as.list(as.data.frame(t(edge.cons.grid)))
 labels.grid <- expand.grid(TidalRange = c('Microtidal', 'Mesotidal', 'Macrotidal'),
                            PropEstab = c('High propagule establishment capacity', 'Medium propagule establishment capacity', 'Low propagule establishment capacity'),
                            CoastalSqueeze = c('Low coastal squeeze', 'Medium coastal squeeze', 'High coastal squeeze')) # note that a low value for the interaction strength = High coastal squeeze and vice-versa
-names(edge.cons.scenarios) <- apply(labels.grid, 1,function(row) paste(row, collapse = ", ")) # label the list of edge constraint scenarios
+names(edge.cons.scenarios) <- apply(labels.grid, 1, function(row) paste(row, collapse = ", ")) # label the list of edge constraint scenarios
+# in each list element, repeat the middle character
+edge.cons.scenarios <- lapply(edge.cons.scenarios, function(x) c(x[c(1,2)], x[2], x[3]))
 # for each scenario, set up 'from' 'to' vectors specifying edges they apply to
-from_vec <-  c('SeaLevelRise','LandwardAvailableProp', 'SeaLevelRise')
-to_vec <- c('SeawardMang', 'LandwardMang', 'LandwardMang')
+from_vec <-  c('SeaLevelRise','LandwardAvailableProp', 'SeawardAvailableProp', 'SeaLevelRise')
+to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang', 'LandwardMang')
 
 # define relative edge constraints - which edge interaction strengths are greater than other
 # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
@@ -61,6 +63,7 @@ names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply
 stability.ls1 <- list() # list for storing model stability results
 outcomes.ls1 <- list() # list for storing model outcome results
 
+system.time(
 for(k in seq_along(rel.edge.cons.scenarios)){
   stability.ls <- list()
   outcomes.ls <- list()
@@ -75,7 +78,8 @@ for(k in seq_along(rel.edge.cons.scenarios)){
                               from = from_vec,
                               to = to_vec,
                               class = class.con,
-                              perturb = press.scenarios[[i]])
+                              perturb = press.scenarios[[i]],
+                              spatial = 'N')
       out[[i]] <- sim$stableoutcome
       stability[[i]] <- sim$stability.df
       weights[[i]] <- sim$stableweights
@@ -92,6 +96,7 @@ for(k in seq_along(rel.edge.cons.scenarios)){
   outcomes.ls1[[k]] <- do.call(rbind, outcomes.ls) %>% 
     mutate(constraint_scenario = rep(names(edge.cons.scenarios), each = c(numsims*length(node.labels(model$edges))*length(press.scenarios)))) 
 } # end k loop
+)
 
 # save potential stability in each scenario (i.e. proportion of stable matrices out of total simulated)
 stability <- data.frame(constraint_scenario = names(rel.edge.cons.scenarios), do.call(rbind, stability.ls1))
