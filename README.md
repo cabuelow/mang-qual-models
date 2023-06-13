@@ -27,10 +27,12 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
--   [ ] Decide whether to map all typological units, or just those with extant forest (as of 2020)
--   [ ] Need to decide whether to include coastal development in hind casting?
+-   [X] Decide whether to map all typological units, or just those with extant forest (as of 2020)
+        - Will use all units (extant or only historical loss) as areas with historical loss could be restored
+-   [X] Need to decide whether to include coastal development in hind casting?
+        - I think yes, in the sense that it can limit landward migration. But what about as a pressure? Maybe only where population density is very high - but then we are assuming mangroves will be cut down...
 -   [ ] Need to fix prop. estab. scenarios - currently only altering landward interaction strengths
--   [ ] Consider whether to include a 'medium' sediment supply scenario
+
 -   [ ] Do sensitivity tests:
     -   Extreme rainfall
     -   Drought
