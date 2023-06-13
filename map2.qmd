@@ -36,9 +36,9 @@ return(accuracy_list)
 dat <- read.csv('outputs/master-dat.csv') %>% select(Type:prop_estab)
 dat2 <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') %>% 
   mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
-land <- read.csv('outputs/land-validation-results.csv') %>% 
+land <- read.csv('outputs/validation/land-validation-results.csv') %>% 
   mutate(Land_hindcast = Land_Change)
-sea <- read.csv('outputs/sea-validation-results.csv') %>% 
+sea <- read.csv('outputs/validation/sea-validation-results.csv') %>% 
     mutate(Sea_hindcast = Sea_Change)
 land_validate <- filter(land, Land_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 sea_validate <- filter(sea, Sea_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate

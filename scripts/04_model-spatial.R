@@ -41,6 +41,7 @@ names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply
 # iterate forecasts and hindcasts
 runs <- c('forecast', 'hindcast') # run both a forecast and a hindcast for each model
 
+system.time(
 tmp <- list() # tmp list to store results
 for(j in seq_along(runs)){
   run <- runs[[j]]
@@ -170,6 +171,7 @@ for(j in seq_along(runs)){
   allout <- do.call(rbind, tmp2)
   tmp[[j]] <- allout
 }
+)
 
 allout2 <- do.call(rbind, tmp)
 

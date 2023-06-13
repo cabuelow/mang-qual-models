@@ -51,7 +51,7 @@ land <- dat %>%
          Land_Change = ifelse(Land_Loss == 'Loss', 'Loss', Land_Change)) %>% 
   inner_join(select(spatial_dat, Type, sea_change_obs:land_net_loss_obs), by = 'Type') %>% 
   select(Type, Land_Gain:Land_Change, land_change_obs, land_gain_obs, land_loss_obs, land_net_gain_obs, land_net_loss_obs)
-write.csv(land, 'outputs/land-validation-results.csv', row.names = F)
+write.csv(land, 'outputs/validation/land-validation-results.csv', row.names = F)
 
 sea <- dat %>% 
   pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
@@ -63,7 +63,7 @@ sea <- dat %>%
          Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
   inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_loss_obs), by = 'Type') %>% 
   select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs)
-write.csv(sea, 'outputs/sea-validation-results.csv', row.names = F)
+write.csv(sea, 'outputs/validation/sea-validation-results.csv', row.names = F)
 
 # calculate overall prediction/classification accuracy
 # and commission (users accuracy) and omission (producers accuracy) for each class
@@ -83,11 +83,11 @@ return(accuracy_list)
 land_validate <- filter(land, Land_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 sea_validate <- filter(sea, Sea_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 
-calc_accuracy(land_validate$Land_Gain, land_validate$land_gain_obs)
-calc_accuracy(land_validate$Land_Loss, land_validate$land_loss_obs)
+calc_accuracy(land_validate$Land_Gain, land_validate$land_net_gain_obs)
+calc_accuracy(land_validate$Land_Loss, land_validate$land_net_loss_obs)
 
-calc_accuracy(sea_validate$Sea_Gain, sea_validate$sea_gain_obs)
-calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)
+calc_accuracy(sea_validate$Sea_Gain, sea_validate$sea_net_gain_obs)
+calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_net_loss_obs)
 
 # where are we not predicting well for seaward losses and seaward ambiguous responses? what are we predicting instead?
 
