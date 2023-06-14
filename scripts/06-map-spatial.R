@@ -4,6 +4,8 @@ library(sf)
 library(tmap)
 library(tidyverse)
 library(scales)
+library(cowplot)
+library(ggplotify)
 sf_use_s2(FALSE)
 tmap_mode('plot')
 
@@ -14,50 +16,90 @@ world <- data("World")
 
 names(models) # names of available models
 chosen_model_name <- 'mangrove_model'
-dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv'))
+dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
+  filter(cast == 'forecast') %>% 
+  mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
 
-# join outcomes to spatial typologies
+# wrangle historical SRS observations of mangrove loss and gain into categories of change (no change, loss, gain, loss and gain)
+
+spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
+  mutate(sea_gross_gain_loss = sea_gross_gain + sea_gross_loss,
+         land_gross_gain_loss = land_gross_gain + land_gross_loss) %>% 
+  mutate(sea_change_obs = ifelse(sea_gross_gain_loss == 2, 'Loss & Gain', NA),
+         sea_change_obs = ifelse(sea_gross_gain_loss != 2 & sea_gross_gain ==1, 'Gain', sea_change_obs),
+         sea_change_obs = ifelse(sea_gross_gain_loss != 2 & sea_gross_loss ==1, 'Loss', sea_change_obs),
+         sea_change_obs = ifelse(sea_gross_gain_loss == 0, 'Gain', sea_change_obs), # here treating neutrality as gain, as in network model
+         land_change_obs = ifelse(land_gross_gain_loss == 2, 'Loss & Gain', NA),
+         land_change_obs = ifelse(land_gross_gain_loss != 2 & land_gross_gain ==1, 'Gain', land_change_obs),
+         land_change_obs = ifelse(land_gross_gain_loss != 2 & land_gross_loss ==1, 'Loss', land_change_obs),
+         land_change_obs = ifelse(land_gross_gain_loss == 0, 'Gain', land_change_obs)) %>%  # here treating neutrality as gain, as in network model 
+  mutate(sea_gain_obs = ifelse(sea_gross_gain == 1, 'Gain', 'No Gain'),
+         sea_loss_obs = ifelse(sea_gross_loss == 1, 'Loss', 'No Loss'),
+         land_gain_obs = ifelse(land_gross_gain == 1, 'Gain', 'No Gain'),
+         land_loss_obs = ifelse(land_gross_loss == 1, 'Loss', 'No Loss'),
+         sea_net_gain_obs = ifelse(sea_net_gain == 1, 'Gain', 'No Gain'),
+         sea_net_loss_obs = ifelse(sea_net_loss == 1, 'Loss', 'No Loss'),
+         land_net_gain_obs = ifelse(land_net_gain == 1, 'Gain', 'No Gain'),
+         land_net_loss_obs = ifelse(land_net_loss == 1, 'Loss', 'No Loss'),
+         land_net_change_obs = ifelse(land_net_gain == 1, 'Gain', 'Loss'),
+         sea_net_change_obs = ifelse(sea_net_gain == 1, 'Gain', 'Loss'))
+
+# join to forecast outcomes and classify forecasts according to ambiguity threshold
+thresh <- 75
+
+land <- dat %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  mutate(Land_Gain = ifelse(LandwardMang > thresh, 'Gain', 'No Gain'),
+         Land_Ambig = ifelse(LandwardMang <= thresh & LandwardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
+         Land_Loss = ifelse(LandwardMang < -thresh, 'Loss', 'No Loss')) %>% 
+  mutate(Land_Change = ifelse(Land_Gain == 'Gain', 'Gain', NA),
+         Land_Change = ifelse(Land_Ambig == 'Ambiguous', 'Ambiguous', Land_Change),
+         Land_Change = ifelse(Land_Loss == 'Loss', 'Loss', Land_Change)) %>% 
+  inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
+  select(Type, Land_Gain:Land_Change, land_change_obs, land_gain_obs, land_loss_obs, land_net_gain_obs, land_net_loss_obs, land_net_change_obs) 
+
+sea <- dat %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  mutate(Sea_Gain = ifelse(SeawardMang > thresh, 'Gain', 'No Gain'),
+         Sea_Ambig = ifelse(SeawardMang <= thresh & SeawardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
+         Sea_Loss = ifelse(SeawardMang < -thresh, 'Loss', 'No Loss')) %>% 
+  mutate(Sea_Change = ifelse(Sea_Gain == 'Gain', 'Gain', NA),
+         Sea_Change = ifelse(Sea_Ambig == 'Ambiguous', 'Ambiguous', Sea_Change),
+         Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
+  inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
+  select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs, sea_net_change_obs)
+
+# join to spatial typologies for plotting
 
 landward_forecast <- typ_points %>% 
-  left_join(filter(dat, var == 'LandwardMang' & cast == 'forecast'), by = 'Type') %>% 
-  st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
+  left_join(land, by = 'Type') %>% 
+  st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
 seaward_forecast <- typ_points %>% 
-  left_join(filter(dat, var == 'SeawardMang' & cast == 'forecast'), by = 'Type') %>% 
-  st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
+  left_join(sea, by = 'Type') %>% 
+  st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
-landward_hindcast <- typ_points %>% 
-  left_join(filter(dat, var == 'LandwardMang' & cast == 'hindcast'), by = 'Type') %>% 
-  st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
-
-seaward_hindcast <- typ_points %>% 
-  left_join(filter(dat, var == 'SeawardMang' & cast == 'hindcast'), by = 'Type') %>% 
-  st_crop(xmin = -150, ymin = -40, xmax = 180, ymax = 33)
-
-world_mang <- st_crop(World, xmin = -150, ymin = -40, xmax = 180, ymax = 33)
+world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
 # map forecasts
 
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
-  tm_shape(filter(landward_forecast, is.na(Prob_change))) +
+  tm_shape(filter(landward_forecast, is.na(Land_Change))) +
   tm_dots('darkgrey') +
-  tm_shape(filter(landward_forecast, !is.na(Prob_change))) +
-  tm_dots('Prob_gain_neutral', 
-          palette = 'Spectral',
-          breaks = c(0,25,50,75,100),
-          labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
+  tm_shape(filter(landward_forecast, !is.na(Land_Change))) +
+  tm_dots('Land_Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
           title = '',
-          legend.is.portrait = T, 
-          alpha = 0.5) +
+          legend.is.portrait = T) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
             #legend.position = c(0.35, 0.6),
             title.size = 0.8,
             title.position = c(0.01,0.45),
             legend.title.size = 0.9,
-            main.title = 'A) Landward mangrove forecast',
-            title = 'Probability of Loss (red) \nor Neutrality/Gain (blue)',
+            main.title = 'B) Landward mangrove forecast',
             main.title.size = 1,
             frame = T,
             legend.bg.color = 'white',
@@ -66,94 +108,145 @@ lmap
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
-  tm_shape(filter(seaward_forecast, is.na(Prob_change))) +
+  tm_shape(filter(seaward_forecast, is.na(Sea_Change))) +
   tm_dots('darkgrey') +
-  tm_shape(filter(seaward_forecast, !is.na(Prob_change))) +
-  tm_dots('Prob_gain_neutral', 
-          palette = 'Spectral',
-          breaks = c(0,25,50,75,100),
-          labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
+  tm_shape(filter(seaward_forecast, !is.na(Sea_Change))) +
+  tm_dots('Sea_Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
           title = '',
-          legend.is.portrait = T,
-          alpha = 0.5) +
+          legend.is.portrait = T) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
             #legend.position = c(0.35, 0.6),
             title.size = 0.8,
             title.position = c(0.01,0.45),
             legend.title.size = 0.9,
-            main.title = 'B) Seaward mangrove forecast',
-            title = 'Probability of Loss (red) \nor Neutrality/Gain (blue)',
+            main.title = 'A) Seaward mangrove forecast',
             main.title.size = 1,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8)
 smap
 
-maps <- tmap_arrange(lmap, smap, ncol = 1)
+maps <- tmap_arrange(smap, lmap, ncol = 1)
 maps
 
-tmap_save(maps, paste0('outputs/maps/forecast_map_', chosen_model_name, '.png'), width = 10, height = 5)
+tmap_save(maps, paste0('outputs/maps/forecast_map_', chosen_model_name, '.png'), width = 6, height = 3.5)
 
-# map hindcasts
+# summarise characteristics of typologies with gains, losses, or ambiguity
 
-lmap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
-  #tm_shape(filter(landward_hindcast, is.na(Prob_change))) +
-  #tm_dots('darkgrey') +
-  tm_shape(filter(landward_hindcast, !is.na(Prob_change))) +
-  tm_dots('Prob_gain_neutral', 
-          palette = 'Spectral',
-          breaks = c(0,25,50,75,100),
-          labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
-          title = '',
-          legend.is.portrait = T, 
-          alpha = 0.5) +
-  tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
-            #legend.position = c(0.35, 0.6),
-            title.size = 0.8,
-            title.position = c(0.01,0.45),
-            legend.title.size = 0.9,
-            main.title = 'A) Landward mangrove hindcast',
-            title = 'Probability of Loss (red) \nor Neutrality/Gain (blue)',
-            main.title.size = 1,
-            frame = T,
-            legend.bg.color = 'white',
-            legend.bg.alpha = 0.8)
-lmap
+# land
+land_sum <- spatial_dat %>% 
+  select(Type, fut_csqueeze, sed_supp, fut_slr, fut_dams, fut_gwsub, fut_storms, fut_drought, fut_ext_rain, 
+         Tidal_Class, prop_estab) %>% 
+  rowwise() %>% dplyr::mutate(geomorph = strsplit(Type, split="_")[[1]][1]) %>% 
+  pivot_wider(names_from = 'geomorph', values_from = 'geomorph') %>% 
+  mutate_at(vars(Delta:OpenCoast), ~ifelse(is.na(.), 0, 1)) %>% 
+  inner_join(filter(land, !is.na(Land_Change)), by = 'Type') %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Low', 1, .)) %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Medium', 2, .)) %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'High', 3, .)) %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'None', 0, .)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Micro', 1, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Meso', 2, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Macro', 3, Tidal_Class)) %>% 
+  mutate_at(vars(fut_csqueeze:OpenCoast), ~rescale(as.integer(.), c(0,1))) %>% 
+  pivot_longer(fut_csqueeze:OpenCoast, names_to = 'variable', values_to = 'val') %>% 
+  group_by(Land_Change, variable) %>% 
+  summarise(val = mean(val),
+            total_change_cat = n(),
+            percent_change_cat = (n()/nrow(filter(land, !is.na(Land_Change))))*100) %>% 
+  mutate(variable = recode(variable, 'Tidal_Class' = 'Tidal range',
+                           'sed_supp' = 'Sediment supply',
+                           'prop_estab' = 'Propagule establishment capacity',
+                           'OpenCoast' = 'Open coast',
+                           'fut_storms' = 'Intense storms',
+                           'fut_slr' = 'Sea-level rise',
+                           'fut_dams' = 'Dams',
+                           'fut_gwsub' = 'Subsidence (groundwater extraction)',
+                           'fut_ext_rain' = 'Extreme rainfall',
+                           'fut_drought' = 'Drought', 
+                           'fut_csqueeze' = 'Coastal squeeze')) %>% 
+  mutate(group = ifelse(variable %in% c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
+                                        'Drought'), 'Climate', NA),
+         group = ifelse(variable %in% c('Subsidence (groundwater extraction)',  'Dams',
+                                        'Coastal squeeze','Sediment supply'), 'Anthropogenic', group),
+         group = ifelse(variable %in% c('Tidal range', 'Propagule establishment capacity',
+                                        'Delta', 'Lagoon', 'Open coast', 'Estuary'), 'Biophysical', group)) %>% 
+  mutate(variable = factor(variable, levels = c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
+                                                'Drought',
+                                                'Subsidence (groundwater extraction)',  'Dams',
+                                                'Coastal squeeze','Sediment supply', 'Tidal range', 'Propagule establishment capacity',
+                                                'Delta', 'Lagoon', 'Open coast', 'Estuary'))) %>% 
+  mutate(group = factor(group, levels = c('Climate', 'Anthropogenic', 'Biophysical')))
 
-smap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
-  tm_shape(filter(seaward_forecast, is.na(Prob_change))) +
-  tm_dots('darkgrey') +
-  tm_shape(filter(seaward_forecast, !is.na(Prob_change))) +
-  tm_dots('Prob_gain_neutral', 
-          palette = 'Spectral',
-          breaks = c(0,25,50,75,100),
-          labels = c("-100 to -75", "-75 to -50", "50 to 75", '75 to 100'),
-          title = '',
-          legend.is.portrait = T,
-          alpha = 0.5) +
-  tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
-            #legend.position = c(0.35, 0.6),
-            title.size = 0.8,
-            title.position = c(0.01,0.45),
-            legend.title.size = 0.9,
-            main.title = 'B) Seaward mangrove hindcast',
-            title = 'Probability of Loss (red) \nor Neutrality/Gain (blue)',
-            main.title.size = 1,
-            frame = T,
-            legend.bg.color = 'white',
-            legend.bg.alpha = 0.8)
-smap
+a <- ggplot(land_sum) +
+  geom_tile(aes(x = Land_Change, y = variable, fill = val) ) +
+  scale_fill_distiller(palette = 'Blues', direction = 1,  name = '') +
+  facet_grid(rows = vars(group), scales = 'free', space = 'free_y') +
+  xlab('') +
+  ylab('') +
+  #ggtitle('B) Landward') +
+  theme_classic()
+a
 
-maps <- tmap_arrange(lmap, smap, ncol = 1)
-maps
+#sea
+sea_sum <- spatial_dat %>% 
+  select(Type, fut_csqueeze, sed_supp, fut_slr, fut_dams, fut_gwsub, fut_storms, fut_drought, fut_ext_rain, 
+         Tidal_Class, prop_estab) %>% 
+  rowwise() %>% dplyr::mutate(geomorph = strsplit(Type, split="_")[[1]][1]) %>% 
+  pivot_wider(names_from = 'geomorph', values_from = 'geomorph') %>% 
+  mutate_at(vars(Delta:OpenCoast), ~ifelse(is.na(.), 0, 1)) %>% 
+  inner_join(filter(sea, !is.na(Sea_Change)), by = 'Type') %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Low', 1, .)) %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Medium', 2, .)) %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'High', 3, .)) %>% 
+  mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'None', 0, .)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Micro', 1, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Meso', 2, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Macro', 3, Tidal_Class)) %>%  
+  mutate_at(vars(fut_csqueeze:OpenCoast), ~rescale(as.integer(.), c(0,1))) %>% 
+  pivot_longer(fut_csqueeze:OpenCoast, names_to = 'variable', values_to = 'val') %>% 
+  group_by(Sea_Change, variable) %>% 
+  summarise(val = mean(val),
+            total_change_cat = n(),
+            percent_change_cat = (n()/nrow(filter(sea, !is.na(Sea_Change))))*100) %>% 
+  mutate(variable = recode(variable, 'Tidal_Class' = 'Tidal range',
+                           'sed_supp' = 'Sediment supply',
+                           'prop_estab' = 'Propagule establishment capacity',
+                           'OpenCoast' = 'Open coast',
+                           'fut_storms' = 'Intense storms',
+                           'fut_slr' = 'Sea-level rise',
+                           'fut_dams' = 'Dams',
+                           'fut_gwsub' = 'Subsidence (groundwater extraction)',
+                           'fut_ext_rain' = 'Extreme rainfall',
+                           'fut_drought' = 'Drought', 
+                           'fut_csqueeze' = 'Coastal squeeze')) %>% 
+  mutate(group = ifelse(variable %in% c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
+                                        'Drought'), 'Climate', NA),
+         group = ifelse(variable %in% c('Subsidence (groundwater extraction)',  'Dams',
+                                        'Coastal squeeze','Sediment supply'), 'Anthropogenic', group),
+         group = ifelse(variable %in% c('Tidal range', 'Propagule establishment capacity',
+                                        'Delta', 'Lagoon', 'Open coast', 'Estuary'), 'Biophysical', group)) %>% 
+  mutate(variable = factor(variable, levels = c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
+                                                'Drought',
+                                                'Subsidence (groundwater extraction)',  'Dams',
+                                                'Coastal squeeze','Sediment supply', 'Tidal range', 'Propagule establishment capacity',
+                                                'Delta', 'Lagoon', 'Open coast', 'Estuary'))) %>% 
+  mutate(group = factor(group, levels = c('Climate', 'Anthropogenic', 'Biophysical')))
 
-tmap_save(maps, paste0('outputs/maps/hindcast_map_', chosen_model_name, '.png'), width = 10, height = 5)
+b <- ggplot(sea_sum) +
+  geom_tile(aes(x = Sea_Change, y = variable, fill = val)) +
+  scale_fill_distiller(palette = 'Blues', direction = 1,  name = '') +
+  facet_grid(rows = vars(group), scales = 'free', space = 'free_y') +
+  xlab('') +
+  ylab('') +
+  #ggtitle('A) Seaward') +
+  theme_classic()
+b
 
+c <- b/a
+c
 
-
-
+ggsave('outputs/maps/map-characteristics.png', width = 5.3, height = 7.5)
