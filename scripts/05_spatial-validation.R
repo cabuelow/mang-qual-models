@@ -3,6 +3,7 @@
 library(tidyverse)
 library(caret)
 library(sf)
+library(scales)
 source('scripts/helpers/models_v2.R')
 
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
@@ -79,7 +80,7 @@ names(accuracy_list) <- c('accuracy.results', 'contingency.table')
 return(accuracy_list)
 }
 
-# individual classes
+# individual classes, net change
 land_validate <- filter(land, Land_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 sea_validate <- filter(sea, Sea_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 
@@ -89,15 +90,72 @@ calc_accuracy(land_validate$Land_Loss, land_validate$land_net_loss_obs)
 calc_accuracy(sea_validate$Sea_Gain, sea_validate$sea_net_gain_obs)
 calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_net_loss_obs)
 
-# where are we not predicting well for seaward losses and seaward ambiguous responses? what are we predicting instead?
+# individual classes, gross loss/gain
+land_validate <- filter(land, Land_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
+sea_validate <- filter(sea, Sea_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 
-sea_poor_loss <- typ %>% 
-  inner_join(filter(sea, Sea_Loss != sea_gross_loss))
+calc_accuracy(land_validate$Land_Gain, land_validate$land_gain_obs)
+calc_accuracy(land_validate$Land_Loss, land_validate$land_loss_obs)
 
-sea_poor_gain_loss <- typ %>% 
-  inner_join(filter(sea, Sea_Ambig != sea_gross_gain_loss))
+calc_accuracy(sea_validate$Sea_Gain, sea_validate$sea_gain_obs)
+calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)
 
-qtm(sea_poor_loss, dots.col = 'sea_change_c')
-qtm(sea_poor_gain_loss, dots.col = 'sea_change_c')
+# summarise characteristics of typologies with gains, losses, or ambiguity
 
+# land
+land_sum <- spatial_dat %>% 
+  select(Type, csqueeze, sed_supp, ant_slr, gwsub, storms, hist_drought, hist_ext_rain, 
+         Tidal_Class, prop_estab) %>% 
+  rowwise() %>% dplyr::mutate(geomorph = strsplit(Type, split="_")[[1]][1]) %>% 
+  pivot_wider(names_from = 'geomorph', values_from = 'geomorph') %>% 
+  mutate_at(vars(Delta:OpenCoast), ~ifelse(is.na(.), 0, 1)) %>% 
+  left_join(land, by = 'Type') %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Low', 1, .)) %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Medium', 2, .)) %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'High', 3, .)) %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'None', 0, .)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Micro', 1, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Meso', 2, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Macro', 3, Tidal_Class)) %>% 
+  mutate_at(vars(csqueeze:OpenCoast), ~rescale(as.integer(.), c(0,1))) %>% 
+  pivot_longer(csqueeze:OpenCoast, names_to = 'variable', values_to = 'val') %>% 
+  group_by(Land_Change, variable) %>% 
+  summarise(val = mean(val),
+            total_change_cat = n(),
+            percent_change_cat = (n()/nrow(spatial_dat))*100)
+  
+ggplot(land_sum) +
+  geom_tile(aes(x = Land_Change, y = variable, fill = val) ) +
+  scale_fill_distiller(palette = 'YlOrRd', direction = 1,  name = '') +
+  xlab('') +
+  ylab('') +
+  theme_classic()
 
+#sea
+sea_sum <- spatial_dat %>% 
+  select(Type, csqueeze, sed_supp, ant_slr, gwsub, storms, hist_drought, hist_ext_rain, 
+         Tidal_Class, prop_estab) %>% 
+  rowwise() %>% dplyr::mutate(geomorph = strsplit(Type, split="_")[[1]][1]) %>% 
+  pivot_wider(names_from = 'geomorph', values_from = 'geomorph') %>% 
+  mutate_at(vars(Delta:OpenCoast), ~ifelse(is.na(.), 0, 1)) %>% 
+  left_join(sea, by = 'Type') %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Low', 1, .)) %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Medium', 2, .)) %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'High', 3, .)) %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~ifelse(. == 'None', 0, .)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Micro', 1, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Meso', 2, Tidal_Class)) %>% 
+  mutate(Tidal_Class = ifelse(Tidal_Class == 'Macro', 3, Tidal_Class)) %>% 
+  mutate_at(vars(csqueeze:OpenCoast), ~rescale(as.integer(.), c(0,1))) %>% 
+  pivot_longer(csqueeze:OpenCoast, names_to = 'variable', values_to = 'val') %>% 
+  group_by(Sea_Change, variable) %>% 
+  summarise(val = mean(val),
+            total_change_cat = n(),
+            percent_change_cat = (n()/nrow(spatial_dat))*100)
+
+ggplot(sea_sum) +
+  geom_tile(aes(x = Sea_Change, y = variable, fill = val) ) +
+  scale_fill_distiller(palette = 'YlOrRd', direction = 1,  name = '') +
+  xlab('') +
+  ylab('') +
+  theme_classic()

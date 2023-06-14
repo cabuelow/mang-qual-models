@@ -1,6 +1,8 @@
 library(tidyverse)
 library(scales)
 library(patchwork)
+library(ggh4x)
+source('scripts/helpers/models_v2.R')
 
 # plot scenario outcomes
 
@@ -31,11 +33,12 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
             aes(tide, pressure, fill = Prob_gain_neutral)) +
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
-                       name = 'Probability of Loss (red) or Neutrality/Gain (blue)',
+                       name = 'Probability of Loss (red) or Gain/Neutrality (blue)',
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
-  facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 4) +
+  #facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 4) +
+  facet_nested(~factor(model_scenario) + factor(coastalsqueeze)) +
   #facet_wrap(~factor(model_scenario)) +
   theme_classic() +
   theme(legend.position = 'bottom',
@@ -51,7 +54,7 @@ b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
             aes(tide, pressure, fill = Prob_gain_neutral)) +
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
-                       name = 'Probability of Loss (red) or Neutrality/Gain (blue)', 
+                       name = 'Probability of Loss (red) or Gain/Neutrality (blue)', 
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
