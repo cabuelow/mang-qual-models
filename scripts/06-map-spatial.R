@@ -6,6 +6,9 @@ library(tidyverse)
 library(scales)
 library(cowplot)
 library(ggplotify)
+library(tmaptools)
+library(patchwork)
+source('scripts/helpers/models_v2.R')
 sf_use_s2(FALSE)
 tmap_mode('plot')
 
@@ -95,16 +98,17 @@ lmap <- tm_shape(world_mang) +
           legend.is.portrait = T) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
-            #legend.position = c(0.35, 0.6),
-            title.size = 0.8,
+            legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
-            legend.title.size = 0.9,
+            legend.title.size = 0.7,
+            legend.text.size = 0.6,
             main.title = 'B) Landward forecast',
-            main.title.size = 1,
+            main.title.size = 0.7,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8)
 lmap
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
@@ -118,21 +122,22 @@ smap <- tm_shape(world_mang) +
           legend.is.portrait = T) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
-            #legend.position = c(0.35, 0.6),
-            title.size = 0.8,
+            legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
-            legend.title.size = 0.9,
+            legend.title.size = 0.7,
+            legend.text.size = 0.6,
             main.title = 'A) Seaward forecast',
-            main.title.size = 1,
+            main.title.size = 0.7,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8)
 smap
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
 maps <- tmap_arrange(smap, lmap, ncol = 1)
 maps
 
-tmap_save(maps, paste0('outputs/maps/forecast_map_', chosen_model_name, '.png'), width = 6, height = 3.5)
+tmap_save(maps, paste0('outputs/maps/forecast_map_', chosen_model_name, '.png'), width = 6, height = 3)
 
 # summarise characteristics of typologies with gains, losses, or ambiguity
 
@@ -159,37 +164,40 @@ land_sum <- spatial_dat %>%
             percent_change_cat = (n()/nrow(filter(land, !is.na(Land_Change))))*100) %>% 
   mutate(variable = recode(variable, 'Tidal_Class' = 'Tidal range',
                            'sed_supp' = 'Sediment supply',
-                           'prop_estab' = 'Propagule establishment capacity',
+                           'prop_estab' = 'Propagule establishment',
                            'OpenCoast' = 'Open coast',
                            'fut_storms' = 'Intense storms',
                            'fut_slr' = 'Sea-level rise',
                            'fut_dams' = 'Dams',
-                           'fut_gwsub' = 'Subsidence (groundwater extraction)',
+                           'fut_gwsub' = 'Subsidence',
                            'fut_ext_rain' = 'Extreme rainfall',
                            'fut_drought' = 'Drought', 
                            'fut_csqueeze' = 'Coastal squeeze')) %>% 
   mutate(group = ifelse(variable %in% c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
                                         'Drought'), 'Climate', NA),
-         group = ifelse(variable %in% c('Subsidence (groundwater extraction)',  'Dams',
+         group = ifelse(variable %in% c('Subsidence',  'Dams',
                                         'Coastal squeeze','Sediment supply'), 'Anthropogenic', group),
-         group = ifelse(variable %in% c('Tidal range', 'Propagule establishment capacity',
+         group = ifelse(variable %in% c('Tidal range', 'Propagule establishment',
                                         'Delta', 'Lagoon', 'Open coast', 'Estuary'), 'Biophysical', group)) %>% 
   mutate(variable = factor(variable, levels = c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
                                                 'Drought',
-                                                'Subsidence (groundwater extraction)',  'Dams',
-                                                'Coastal squeeze','Sediment supply', 'Tidal range', 'Propagule establishment capacity',
+                                                'Subsidence',  'Dams',
+                                                'Coastal squeeze','Sediment supply', 'Tidal range', 'Propagule establishment',
                                                 'Delta', 'Lagoon', 'Open coast', 'Estuary'))) %>% 
   mutate(group = factor(group, levels = c('Climate', 'Anthropogenic', 'Biophysical')))
 
 a <- ggplot(land_sum) +
   geom_tile(aes(x = Land_Change, y = variable, fill = val) ) +
-  scale_fill_distiller(palette = 'Blues', direction = 1,  name = '') +
-  facet_grid(rows = vars(group), scales = 'free', space = 'free_y') +
+  scale_fill_distiller(palette = 'Greens', direction = 1,  name = '') +
+  facet_wrap(~group, scales = 'free') +
+  #facet_grid(cols = vars(group), scale = 'free', space = 'free') +
   xlab('') +
   ylab('') +
   #ggtitle('B) Landward') +
-  theme_classic()
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 20, vjust = 0.9))
 a
+ggsave('outputs/maps/landward-map-characteristics.png', width = 8.3, height = 2)
 
 #sea
 sea_sum <- spatial_dat %>% 
@@ -214,37 +222,40 @@ sea_sum <- spatial_dat %>%
             percent_change_cat = (n()/nrow(filter(sea, !is.na(Sea_Change))))*100) %>% 
   mutate(variable = recode(variable, 'Tidal_Class' = 'Tidal range',
                            'sed_supp' = 'Sediment supply',
-                           'prop_estab' = 'Propagule establishment capacity',
+                           'prop_estab' = 'Propagule establishment',
                            'OpenCoast' = 'Open coast',
                            'fut_storms' = 'Intense storms',
                            'fut_slr' = 'Sea-level rise',
                            'fut_dams' = 'Dams',
-                           'fut_gwsub' = 'Subsidence (groundwater extraction)',
+                           'fut_gwsub' = 'Subsidence',
                            'fut_ext_rain' = 'Extreme rainfall',
                            'fut_drought' = 'Drought', 
                            'fut_csqueeze' = 'Coastal squeeze')) %>% 
   mutate(group = ifelse(variable %in% c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
                                         'Drought'), 'Climate', NA),
-         group = ifelse(variable %in% c('Subsidence (groundwater extraction)',  'Dams',
+         group = ifelse(variable %in% c('Subsidence',  'Dams',
                                         'Coastal squeeze','Sediment supply'), 'Anthropogenic', group),
-         group = ifelse(variable %in% c('Tidal range', 'Propagule establishment capacity',
+         group = ifelse(variable %in% c('Tidal range', 'Propagule establishment',
                                         'Delta', 'Lagoon', 'Open coast', 'Estuary'), 'Biophysical', group)) %>% 
   mutate(variable = factor(variable, levels = c('Sea-level rise', 'Intense storms', 'Extreme rainfall',
                                                 'Drought',
-                                                'Subsidence (groundwater extraction)',  'Dams',
-                                                'Coastal squeeze','Sediment supply', 'Tidal range', 'Propagule establishment capacity',
+                                                'Subsidence',  'Dams',
+                                                'Coastal squeeze','Sediment supply', 'Tidal range', 'Propagule establishment',
                                                 'Delta', 'Lagoon', 'Open coast', 'Estuary'))) %>% 
   mutate(group = factor(group, levels = c('Climate', 'Anthropogenic', 'Biophysical')))
 
 b <- ggplot(sea_sum) +
   geom_tile(aes(x = Sea_Change, y = variable, fill = val)) +
-  scale_fill_distiller(palette = 'Blues', direction = 1,  name = '') +
-  facet_grid(rows = vars(group), scales = 'free', space = 'free_y') +
+  scale_fill_distiller(palette = 'Greens', direction = 1,  name = '') +
+  facet_wrap(~group, scales = 'free') +
+  #facet_grid(rows = vars(group), scales = 'free', space = 'free_y') +
   xlab('') +
   ylab('') +
   #ggtitle('A) Seaward') +
-  theme_classic()
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 20, vjust = 0.9))
 b
+ggsave('outputs/maps/seaward-map-characteristics.png', width = 8.3, height = 2)
 
 c <- b/a
 c
