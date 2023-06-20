@@ -89,13 +89,28 @@ world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
   tm_shape(filter(landward_forecast, is.na(Land_Change))) +
-  tm_dots('darkgrey') +
-  tm_shape(filter(landward_forecast, !is.na(Land_Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(landward_forecast, Land_Change == 'Gain' & !is.na(Land_Change))) +
   tm_dots('Land_Change', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
           alpha = 0.5, 
           title = '',
-          legend.is.portrait = T) +
+          legend.show = F, 
+          size = 0.025) +
+  tm_shape(filter(landward_forecast, Land_Change == 'Ambiguous' & !is.na(Land_Change))) +
+  tm_dots('Land_Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(landward_forecast, Land_Change == 'Loss' & !is.na(Land_Change))) +
+  tm_dots('Land_Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
@@ -106,20 +121,37 @@ lmap <- tm_shape(world_mang) +
             main.title.size = 0.7,
             frame = T,
             legend.bg.color = 'white',
-            legend.bg.alpha = 0.8)
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('lightgoldenrod','firebrick4','deepskyblue4'), 
+                labels =  c('Ambiguous', 'Loss', 'Gain'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
   tm_shape(filter(seaward_forecast, is.na(Sea_Change))) +
-  tm_dots('darkgrey') +
-  tm_shape(filter(seaward_forecast, !is.na(Sea_Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(seaward_forecast, Sea_Change == 'Gain' & !is.na(Sea_Change))) +
   tm_dots('Sea_Change', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
           alpha = 0.5, 
           title = '',
-          legend.is.portrait = T) +
+          legend.show = F, 
+          size = 0.025) +
+  tm_shape(filter(seaward_forecast, Sea_Change == 'Ambiguous' & !is.na(Sea_Change))) +
+  tm_dots('Sea_Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.025) +
+  tm_shape(filter(seaward_forecast, Sea_Change == 'Loss' & !is.na(Sea_Change))) +
+  tm_dots('Sea_Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
@@ -130,7 +162,9 @@ smap <- tm_shape(world_mang) +
             main.title.size = 0.7,
             frame = T,
             legend.bg.color = 'white',
-            legend.bg.alpha = 0.8)
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('lightgoldenrod','firebrick4','deepskyblue4'), 
+                labels =  c('Ambiguous', 'Loss', 'Gain'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
