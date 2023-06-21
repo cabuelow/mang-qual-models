@@ -131,6 +131,13 @@ smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
   tm_shape(filter(seaward_forecast, is.na(Sea_Change))) +
   tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(seaward_forecast, Sea_Change == 'Loss' & !is.na(Sea_Change))) +
+  tm_dots('Sea_Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
   tm_shape(filter(seaward_forecast, Sea_Change == 'Gain' & !is.na(Sea_Change))) +
   tm_dots('Sea_Change', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
@@ -145,13 +152,6 @@ smap <- tm_shape(world_mang) +
           title = '',
           legend.show = F, 
           size = 0.025) +
-  tm_shape(filter(seaward_forecast, Sea_Change == 'Loss' & !is.na(Sea_Change))) +
-  tm_dots('Sea_Change', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F,
-          size = 0.001) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
