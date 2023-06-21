@@ -29,14 +29,5 @@ Link to documents describing all spatial data processing:
 
 -   [X] Decide whether to map all typological units, or just those with extant forest (as of 2020)
         - Will use all units (extant or only historical loss) as areas with historical loss could be restored
-
--   [ ] Do sensitivity tests:
-    -   Extreme rainfall
-    -   Drought
-    -   Cyclones and sediment
-    -   Cyclones and the assumption that impacts are more certain on landward -make both uncertain
-    -   Inclusion of erosion in spatial model
-    -   Dam interaction strength
-    -   Also sensitivity of all the thresholds etc for mapping
--   [ ] What happens to maps when we include local factors
+-   [ ] What happens to maps when we include local factors, e.g., erosion, hydrodynamic energy, etc
 -   [ ] Maple/loop analyst, which loops drive ambiguity? o Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes
