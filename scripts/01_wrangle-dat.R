@@ -11,23 +11,40 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
 typ_area <- read.csv('outputs/processed-data/typology-area.csv')
 dat <- list() # list to store wrangled dat
 
+# do pressure classifications within a range for sensitivity analysis
+# mid-range in sensitvity ranges below is used for main results
+sens <- c(40, 50, 60)
+sens_fdrought <- c(3, 4, 5)
+sens_hdrought <- c(1, 1.5, 2)
+
+# loop through pressure classifications and save in master dataframe
+tmp <- list()
+for(i in 1:3){
+  
 #### coastal squeeze
 
 coast <- read.csv('outputs/processed-data/coastal-population.csv') %>% 
-  mutate_at(vars(sum.pop_size_lecz_2020:sum.pop_size_lecz_2100), ~./area_ha) %>% # divide by lecz area to get population density
-  mutate(sum.pop_size_lecz_2020 = ifelse(is.na(sum.pop_size_lecz_2020), max(.$sum.pop_size_lecz_2020, na.rm = T), sum.pop_size_lecz_2020),# assign max pop. density to units with 0 lecz area (indicates no space for mangroves to grow)
-         sum.pop_size_lecz_2040 = ifelse(is.na(sum.pop_size_lecz_2040), max(.$sum.pop_size_lecz_2040, na.rm = T), sum.pop_size_lecz_2040),
-         sum.pop_size_lecz_2060 = ifelse(is.na(sum.pop_size_lecz_2060), max(.$sum.pop_size_lecz_2060, na.rm = T), sum.pop_size_lecz_2060),
-         sum.pop_size_lecz_2100 = ifelse(is.na(sum.pop_size_lecz_2100), max(.$sum.pop_size_lecz_2100, na.rm = T), sum.pop_size_lecz_2100)) %>% 
-  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020) > quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.66), 'High', NA)) %>% 
-  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020) < quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.66) & log(sum.pop_size_lecz_2020) > quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.33), 'Medium', csqueeze)) %>% 
-  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2020) < quantile(log(.$sum.pop_size_lecz_2020[.$sum.pop_size_lecz_2020>0]), 0.33), 'Low', csqueeze)) %>% 
-  mutate(csqueeze = ifelse(sum.pop_size_lecz_2020 == 0, 'None', csqueeze)) %>% 
+  select(-sum.pop_size_lecz_2020) %>% 
+  mutate_at(vars(sum.pop_size_lecz_2000:sum.pop_size_lecz_2100), ~./area_ha) %>% # divide by lecz area to get population density
+  mutate(sum.pop_size_lecz_2000 = ifelse(area_ha == 0, max(.$sum.pop_size_lecz_2000, na.rm = T), sum.pop_size_lecz_2000),# assign max pop. density to units with 0 lecz area (indicates no space for mangroves to grow)
+         sum.pop_size_lecz_2040 = ifelse(area_ha == 0, max(.$sum.pop_size_lecz_2040, na.rm = T), sum.pop_size_lecz_2040),
+         sum.pop_size_lecz_2060 = ifelse(area_ha == 0, max(.$sum.pop_size_lecz_2060, na.rm = T), sum.pop_size_lecz_2060),
+         sum.pop_size_lecz_2100 = ifelse(area_ha == 0, max(.$sum.pop_size_lecz_2100, na.rm = T), sum.pop_size_lecz_2100)) %>% 
+  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.66), 'High', NA)) %>% 
+  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.66) & log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.33), 'Medium', csqueeze)) %>% 
+  mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.33), 'Low', csqueeze)) %>% 
+  mutate(csqueeze = ifelse(sum.pop_size_lecz_2000 == 0, 'None', csqueeze)) %>% 
   mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.66), 'High', NA)) %>% 
   mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.66) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Medium', fut_csqueeze)) %>% 
   mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Low', fut_csqueeze)) %>% 
   mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2100 == 0, 'None', fut_csqueeze)) %>% 
-  select(Type, csqueeze, fut_csqueeze)
+  select(Type, csqueeze, fut_csqueeze) %>% 
+  mutate(fut_csqueeze = ifelse(csqueeze == 'Low' & fut_csqueeze == 'None', 'Low', fut_csqueeze),
+         fut_csqueeze = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'None', 'Medium', fut_csqueeze),
+         fut_csqueeze = ifelse(csqueeze == 'High' & fut_csqueeze == 'None', 'High', fut_csqueeze),
+         fut_csqueeze = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'Low', 'Medium', fut_csqueeze),
+         fut_csqueeze = ifelse(csqueeze == 'High' & fut_csqueeze == 'Low', 'High', fut_csqueeze),
+         fut_csqueeze = ifelse(csqueeze == 'High' & fut_csqueeze == 'Medium', 'High', fut_csqueeze))
 
 # map to check
 
@@ -42,8 +59,8 @@ dat[[1]] <- coast # if happy add to dat list
 sed <- read.csv('outputs/processed-data/free-flowing-rivers.csv') %>%
   left_join(select(st_drop_geometry(typ), Type, Class), by = 'Type') %>% 
   mutate(SED_weighted_average = ifelse(Class != 'Delta', 100, SED_weighted_average)) %>%
-  mutate(sed_supp = ifelse(SED_weighted_average >= 50, 'Low', NA)) %>% 
-  mutate(sed_supp = ifelse(SED_weighted_average < 50, 'High', sed_supp)) %>% 
+  mutate(sed_supp = ifelse(SED_weighted_average >= sens[i], 'Low', NA)) %>% 
+  mutate(sed_supp = ifelse(SED_weighted_average < sens[i], 'High', sed_supp)) %>% 
   select(Type, sed_supp)
   
 # map to check
@@ -56,7 +73,7 @@ dat[[2]] <- sed # if happy add to dat list
 #### future dams
 
 dams <- read.csv('outputs/processed-data/future-dams.csv') %>% 
-  mutate(fut_dams = factor(ifelse(number_future_dams > 1, 1, 0))) %>%
+  mutate(fut_dams = factor(ifelse(number_future_dams >= 1, 1, 0))) %>%
   select(Type, fut_dams)
 
 # map to check
@@ -69,7 +86,7 @@ dat[[3]] <- dams # if happy add to dat list
 #### future sea level rise
 
 fslr <- read.csv('outputs/processed-data/future-slr.csv') %>% 
-  mutate(fut_slr = ifelse(slr_m_2081_2100 > quantile(.$slr_m_2081_2100, 0.5), 1, 0)) %>% 
+  mutate(fut_slr = ifelse(slr_m_2081_2100 > quantile(.$slr_m_2081_2100, sens[i]/100), 1, 0)) %>% 
   select(Type, fut_slr)
   
 # map to check
@@ -82,7 +99,7 @@ dat[[4]] <- fslr # if happy add to dat list
 #### antecedent sea level rise
 
 aslr <- read.csv('outputs/processed-data/antecedent-slr.csv') %>% 
-  mutate(ant_slr = ifelse(local_msl_trend > quantile(.$local_msl_trend, 0.5), 1, 0)) %>% 
+  mutate(ant_slr = ifelse(local_msl_trend > quantile(.$local_msl_trend, sens[i]/100), 1, 0)) %>% 
   select(Type, ant_slr)
 
 # map to check
@@ -95,7 +112,7 @@ dat[[5]] <- aslr # if happy add to dat list
 #### future subsidence from groundwater extraction
 
 fgw <- read.csv('outputs/processed-data/gw_subsid_2040.csv') %>% 
-  mutate(fut_gwsub = ifelse(mode >= 4, 1, 0)) %>% 
+  mutate(fut_gwsub = ifelse(mode >= sens_fdrought[i], 1, 0)) %>% 
   select(Type, fut_gwsub)
 
 # map to check
@@ -108,7 +125,7 @@ dat[[6]] <- fgw # if happy add to dat list
 #### current subsidence from groundwater extraction
 
 gw <- read.csv('outputs/processed-data/gw_subsid_2010.csv') %>% 
-  mutate(gwsub = ifelse(mode >= 4, 1, 0)) %>% 
+  mutate(gwsub = ifelse(mode >= sens_fdrought[i], 1, 0)) %>% 
   select(Type, gwsub)
 
 # map to check
@@ -121,7 +138,7 @@ dat[[7]] <- gw # if happy add to dat list
 #### future drought
 
 fdro <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
-  mutate(fut_drought = ifelse(mean.spi_change_percent_2081_2100 < -50, 1, 0)) %>% 
+  mutate(fut_drought = ifelse(mean.spi_change_percent_2081_2100 < -sens[i], 1, 0)) %>% 
   select(Type, fut_drought)
 
 # map to check
@@ -134,7 +151,7 @@ dat[[8]] <- fdro # if happy add to dat list
 #### future extreme rainfall
 
 frain <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
-  mutate(fut_ext_rain = ifelse(mean.spi_change_percent_2081_2100 > 50, 1, 0)) %>% 
+  mutate(fut_ext_rain = ifelse(mean.spi_change_percent_2081_2100 > sens[i], 1, 0)) %>% 
   select(Type, fut_ext_rain)
 
 # map to check
@@ -160,7 +177,7 @@ dat[[10]] <- cyc # if happy add to dat list
 #### historical drought
 
 hdro <- read.csv('outputs/processed-data/historical-drought.csv') %>% 
-  mutate(hist_drought = ifelse(min_spei_1996_2020 < -1.5, 1, 0)) %>% 
+  mutate(hist_drought = ifelse(min_spei_1996_2020 < -sens_hdrought[i], 1, 0)) %>% 
   select(Type, hist_drought)
 
 # map to check
@@ -173,7 +190,7 @@ dat[[11]] <- hdro # if happy add to dat list
 #### historical extreme rainfall
 
 hrain <- read.csv('outputs/processed-data/historical-drought.csv') %>% 
-  mutate(hist_ext_rain = ifelse(max_spei_1996_2020 > 1.5, 1, 0)) %>% 
+  mutate(hist_ext_rain = ifelse(max_spei_1996_2020 > sens_hdrought[i], 1, 0)) %>% 
   select(Type, hist_ext_rain)
 
 # map to check
@@ -205,7 +222,7 @@ fstorms <- lapply(fils, read.csv) %>%
   group_by(Type) %>% 
   summarise(cyclone_occurrences_10000yrs = median(cyclone_occurrences_10000yrs)) %>% 
   mutate(fut_storms = 1 - (1 - (cyclone_occurrences_10000yrs/10000))^(2050-2023)) %>% 
-  mutate(fut_storms = ifelse(fut_storms > 0.5, 1, 0)) %>% 
+  mutate(fut_storms = ifelse(fut_storms > sens[i]/100, 1, 0)) %>% 
   select(Type, fut_storms)
 
 # map to check
@@ -269,8 +286,11 @@ dat[[16]] <- sealand # if happy add to dat list
 
 # merge into final master database
 
-mast.dat <- Reduce(full_join, dat)
-head(mast.dat)
+tmp[[i]] <- data.frame(sensitivity = i, Reduce(full_join, dat))
+
+}
+
+mast.dat <- do.call(rbind, tmp)
 
 # save
 

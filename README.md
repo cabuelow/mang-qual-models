@@ -21,9 +21,11 @@ Link to documents describing all spatial data processing:
 
 6.  06_map-spatial.R: map spatial outcomes
 
-7.  helpers/models.R: a script that builds different conceptual models
+7.  07_plot-sensitivity.R: plot sensitivity analyses
 
-8.  helpers/helpers.R: a script with helper functions for simulating responses
+8.  helpers/models.R: a script that builds different models
+
+9.  helpers/helpers.R: a script with helper functions for simulating responses
 
 ##### TODO
 

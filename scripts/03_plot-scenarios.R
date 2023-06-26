@@ -6,14 +6,12 @@ source('scripts/helpers/models_v2.R')
 
 # plot scenario outcomes
 
-names(models) # names of available models
-model_name <- 'mangrove_model'
-pthfil <- paste0('outputs/simulation-outcomes/outcomes_', model_name, '.rds') # which outcomes to plot
-dat <- readRDS(pthfil) 
+dat <- readRDS('outputs/simulation-outcomes/outcomes.rds')
 
 # calculate proportion of stable model outcomes that have a positive, negative, or neutral landward/seaward mangrove response
 
 dat2 <- dat %>% 
+  filter(model == 'mangrove_model') %>% 
   filter(var %in% c('SeawardMang', 'LandwardMang') & 
            constraint_scenario %in% c('Macrotidal, High propagule establishment capacity, High coastal squeeze',
                                       'Microtidal, High propagule establishment capacity, High coastal squeeze',
@@ -45,9 +43,10 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
         legend.justification = 'left',
         #axis.text.y =  element_blank(),
         strip.text.x = element_text(size = 9),
+        title = element_text(size = 10),
         axis.title = element_blank()) +
   ggtitle('A) Seaward mangrove') +
-  guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
+  guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5))
 a
 
 b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Sediment Supply'), 
@@ -65,12 +64,13 @@ b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
         legend.justification = 'left',
         axis.text.y =  element_blank(),
         strip.text.x = element_text(size = 9),
+        title = element_text(size = 10),
         axis.title = element_blank()) +
   ggtitle('B) Landward mangrove') +
-  guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5,))
+  guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5))
 b
 
 c <- a+b+plot_layout(widths = c(2, 1))
 c 
-ggsave(paste0('outputs/heatmap_outputs/', model_name ,'_heatmap.png'), width = 11, height = 4)
+ggsave('outputs/heatmap_outputs/mangrove_model_heatmap.png', width = 11, height = 4)
 

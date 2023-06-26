@@ -1,4 +1,4 @@
-# calculate current population density (2020) and future pop density (SSP5, 2100) as proxy for 'coastal squeeze'
+# calculate current population density (2000, 2020) and future pop density (SSP5, 2100) as proxy for 'coastal squeeze'
 # in the lower elevation coastal zone (lecz) of typology catchments. Or where don't have catchments, use a 50 km buffer
 # rasters represent population count per cell - so will need to divide by lecz land area to get density
 
@@ -12,11 +12,14 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid.gpkg')
 catch_lecz <- st_read('data/BasinATLAS_Data_v10_shp/mangrove_catchment_lecz.shp')
 catch <- st_read('data/BasinATLAS_Data_v10_shp/Mangrove_catchment_basins_final_dissolve.shp') # note there are 8 catchments that don't have a lecz
 lecz <- st_read('data/lecz-v3/lecz-mask.gpkg')
+pop_2000 <- rast('data/gl_grumpv1_pcount_00_ascii_30/glup00ag.asc')
 pop_2020 <- rast('data/gridded-pop-world/gpw_v4_population_count_rev11_2020_30_sec.tif')
 pop_2040 <- rast('data/pop_SSP/DIVA_SSP5_2040.tif')
 pop_2060 <- rast('data/pop_SSP/DIVA_SSP5_2060.tif')
 pop_2100 <- rast('data/pop_SSP/DIVA_SSP5_2100.tif')
-pop <- c(pop_2020, pop_2040, pop_2060, pop_2100)
+# extents do not match for 2000 and rest of years so have to do separately
+pop <- c(pop_2020, pop_2040, pop_2060, pop_2100) # stack years with same extents
+names(pop_2000) <- 'pop_size_lecz_2000'
 names(pop) <- c('pop_size_lecz_2020', 'pop_size_lecz_2040', 'pop_size_lecz_2060', 'pop_size_lecz_2100')
 
 # buffer mangrove patches without a catchment by 50 km and intersect with lower elevation coastal zone
@@ -29,7 +32,8 @@ catch_lecz <- rbind(select(catch_lecz, Type, geometry), select(typ_buff, Type, g
 # calculate total population size in each typological units lecz, then divide by total area of the lecz
 
 results <- exact_extract(pop, catch_lecz, 'sum')
-results2 <- data.frame(Type = catch_lecz$Type, results)
+results2000 <- exact_extract(pop_2000, catch_lecz, 'sum')
+results2 <- data.frame(Type = catch_lecz$Type, sum.pop_size_lecz_2000 = results2000, results)
 
 # join
 

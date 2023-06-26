@@ -12,6 +12,7 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
 # wrangle historical SRS observations of mangrove loss and gain into categories of change (no change, loss, gain, loss and gain)
 
 spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
+  filter(sensitivity == 2) %>% 
   mutate(sea_gross_gain_loss = sea_gross_gain + sea_gross_loss,
         land_gross_gain_loss = land_gross_gain + land_gross_loss) %>% 
   mutate(sea_change_obs = ifelse(sea_gross_gain_loss == 2, 'Loss & Gain', NA),
@@ -38,7 +39,7 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
 names(models) # names of available models
 chosen_model_name <- 'mangrove_model'
 dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
-  filter(cast == 'hindcast') %>% 
+  filter(cast == 'hindcast' & senstivity == 2) %>% 
   mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
 
 # join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
@@ -159,10 +160,14 @@ a <- accuracy %>%
   mutate(cat = ifelse(accuracy_cat != 'overall_accuracy', paste0(class, '_', accuracy_cat), accuracy_cat)) %>% 
   mutate(cat = factor(cat, levels = c('overall_accuracy', 'Gain_commission_accuracy', 'Loss_commission_accuracy',
                                       'Gain_omission_accuracy', 'Loss_omission_accuracy'))) %>% 
+  filter(!is.na(accuracy)) %>% 
+  mutate(accuracy =  ifelse(cat == 'overall_accuracy', accuracy + 2, accuracy)) %>%  # here adding small number to avoid over plotting
   ggplot() +
-  geom_line(aes(x = ambig_threshold, y = accuracy, col = cat), linewidth = 1, alpha = 0.5) +
+  geom_line(aes(x = ambig_threshold, y = accuracy, col = cat),
+            linewidth = 1, alpha = 0.7) +
+  #coord_flip() +
   facet_wrap(~mangrove) +
-  ylim(c(0,100)) +
+  #ylim(c(0,100)) +
   ylab('Accuracy') +
   xlab('Ambiguity probability threshold (%)') +
   scale_color_manual(values = c("black",'darkslategray3', 'darkolivegreen3',
@@ -170,8 +175,8 @@ a <- accuracy %>%
                      labels = c('Overall accuracy', 'Gain commission accuracy',
                                 'Loss commission accuracy', 'Gain omission accuracy',
                                 'Loss omission accuracy')) +
-  geom_vline(xintercept = 75, linetype = 'dashed', alpha = 0.4) +
-  ggtitle('A) Net change') +
+  geom_vline(xintercept = 60, linetype = 'dashed', alpha = 0.4) +
+  ggtitle('B) Net change') +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = 'bottom',
@@ -194,8 +199,10 @@ b <- accuracy %>%
   mutate(cat = ifelse(accuracy_cat != 'overall_accuracy', paste0(class, '_', accuracy_cat), accuracy_cat)) %>%
   mutate(cat = factor(cat, levels = c('overall_accuracy', 'Loss_commission_accuracy', 'No Loss_commission_accuracy',
                                       'Loss_omission_accuracy', 'No Loss_omission_accuracy'))) %>% 
+  filter(!is.na(accuracy)) %>% 
+  mutate(accuracy =  ifelse(cat == 'overall_accuracy', accuracy - 2, accuracy)) %>%  # here adding small number to avoid over plotting
   ggplot() +
-  geom_line(aes(x = ambig_threshold, y = accuracy, col = cat), linewidth = 1, alpha = 0.5) +
+  geom_line(aes(x = ambig_threshold, y = accuracy, col = cat), linewidth = 1, alpha = 0.7) +
   facet_wrap(~mangrove) +
   ylim(c(0,100)) +
   ylab('') +
@@ -205,8 +212,8 @@ b <- accuracy %>%
                      labels = c('Overall accuracy', 'Loss commission accuracy',
                                 'No Loss commission accuracy', 'Loss omission accuracy',
                                 'No Loss omission accuracy')) +
-  geom_vline(xintercept = 75, linetype = 'dashed', alpha = 0.4) +
-  ggtitle('B) Gross losses') +
+  geom_vline(xintercept = 60, linetype = 'dashed', alpha = 0.4) +
+  ggtitle('C) Gross losses') +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = 'bottom',
@@ -229,8 +236,11 @@ c <- accuracy %>%
   mutate(cat = ifelse(accuracy_cat != 'overall_accuracy', paste0(class, '_', accuracy_cat), accuracy_cat)) %>% 
   mutate(cat = factor(cat, levels = c('overall_accuracy', 'Gain_commission_accuracy', 'No Gain_commission_accuracy',
                                       'Gain_omission_accuracy', 'No Gain_omission_accuracy'))) %>% 
+  filter(!is.na(accuracy)) %>% 
+  mutate(accuracy =  ifelse(cat == 'overall_accuracy', accuracy + 2, accuracy),
+         accuracy =  ifelse(cat == 'Gain_commission_accuracy', accuracy - 2, accuracy)) %>%  # here adding small number to avoid over plotting
   ggplot() +
-  geom_line(aes(x = ambig_threshold, y = accuracy, col = cat), linewidth = 1, alpha = 0.5) +
+  geom_line(aes(x = ambig_threshold, y = accuracy, col = cat), linewidth = 1, alpha = 0.7) +
   facet_wrap(~mangrove) +
   ylim(c(0,100)) +
   ylab('') +
@@ -240,8 +250,8 @@ c <- accuracy %>%
                      labels = c('Overall accuracy', 'Gain commission accuracy',
                                 'No Gain commission accuracy', 'Gain omission accuracy',
                                 'No Gain omission accuracy')) +
-  geom_vline(xintercept = 75, linetype = 'dashed', alpha = 0.4) +
-  ggtitle('C) Gross gains') +
+  geom_vline(xintercept = 60, linetype = 'dashed', alpha = 0.4) +
+  ggtitle('D) Gross gains') +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = 'bottom',

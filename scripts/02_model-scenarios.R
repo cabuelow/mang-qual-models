@@ -7,11 +7,14 @@ library(patchwork)
 source('scripts/helpers/models_v2.R')
 source('scripts/helpers/helpers_v2.R')
 
-# which model do you want to run?
+# loop through available model structures and store results in tmp files
+tmp <- list()
+tmp2 <- list()
 
-names(models) # names of available models
-chosen_model <- models$mangrove_model
-chosen_model_name <- 'mangrove_model'
+for(l in seq_along(models)){
+  
+chosen_model <- models[[l]]
+chosen_model_name <- names(models)[l]
   
 # set up scenario simulations
 
@@ -25,8 +28,8 @@ press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(C
                         c(SeaLevelRise=1, CoastalDev=1), c(SeaLevelRise=1, Erosion=1),
                         c(SeaLevelRise=1, Drought=1), c(SeaLevelRise=1, ExtremeRainfall=1))
 # define names of above scenarios for plot labelling later
-press.labels <- c('Sea-level rise', 'Cyclones', 'Groundwater extraction', 'Coastal development', 'Erosion',
-                  'Drought', 'Extreme rainfall', 'Sea-level rise & Cyclones', 'Sea-level rise & Groundwater extraction',
+press.labels <- c('Sea-level rise', 'Intense storms', 'Groundwater extraction', 'Coastal development', 'Erosion',
+                  'Drought', 'Extreme rainfall', 'Sea-level rise & Intense storms', 'Sea-level rise & Groundwater extraction',
                'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', 
                'Sea-level rise & Drought', 'Sea-level rise & Extreme rainfall')
 
@@ -99,11 +102,16 @@ for(k in seq_along(rel.edge.cons.scenarios)){
 )
 
 # save potential stability in each scenario (i.e. proportion of stable matrices out of total simulated)
-stability <- data.frame(constraint_scenario = names(rel.edge.cons.scenarios), do.call(rbind, stability.ls1))
-write.csv(stability, paste0('outputs/simulation-outcomes/stability_', chosen_model_name, '.csv'), row.names = F)
+tmp[[l]] <- data.frame(model = chosen_model_name, constraint_scenario = names(rel.edge.cons.scenarios), do.call(rbind, stability.ls1))
 
 # save outcomes in each scenario
-outcomes <- do.call(rbind, outcomes.ls1) %>% 
-  mutate(model_scenario = rep(names(rel.edge.cons.scenarios), each = c(numsims*length(node.labels(chosen_model))*length(press.scenarios)*length(edge.cons.scenarios))))
-saveRDS(outcomes, paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '.rds'))
+tmp2[[l]] <- do.call(rbind, outcomes.ls1) %>% 
+  mutate(model_scenario = rep(names(rel.edge.cons.scenarios), each = c(numsims*length(node.labels(chosen_model))*length(press.scenarios)*length(edge.cons.scenarios)))) %>% 
+  mutate(model = chosen_model_name)
+}
 
+stability <- do.call(rbind, tmp)
+outcomes <- do.call(rbind, tmp2)
+
+write.csv(stability, 'outputs/simulation-outcomes/stability.csv', row.names = F)
+saveRDS(outcomes, 'outputs/simulation-outcomes/outcomes.rds')
