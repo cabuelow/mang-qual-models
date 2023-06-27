@@ -1,6 +1,6 @@
 ### Qualitative hindcasts and forecasts of mangrove extent change
 
-This repository provides code for reproducing results and figures in Buelow et al. (*in prep*), 'Resolving ambiguous mangrove futures'.
+This repository provides code for reproducing results and figures in Buelow et al. (*in prep*), 'Forecasting mangrove futures under climate change'.
 
 Link to documents describing all spatial data processing:
 
