@@ -123,7 +123,7 @@ for(k in 1:3){
           filter(vals == 1) %>% 
           mutate(press = recode(press, 'csqueeze_1' = 'CoastalDev', 'ant_slr' = "SeaLevelRise", 'gwsub' = "GroundSubsid", 
                                 'hist_drought' = 'Drought', 'hist_ext_rain' = 'ExtremeRainfall', 'storms' = 'Cyclones'))
-        
+
         if(nrow(datselect) == 0){ # if there are no perturbations, go to next typology
           next
         }
