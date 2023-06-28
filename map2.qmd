@@ -193,7 +193,7 @@ Hindcasts of seaward mangrove extent change are mapped in the left pane, forecas
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(filter(typ_hind, !is.na(Land_hindcast)), zcol = 'Land_hindcast', layer.name = 'Seaward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_fore, !is.na(Sea_forecast)), zcol = 'Sea_forecast', layer.name = 'Seaward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(typ_hind, !is.na(Land_hindcast)), zcol = 'Sea_hindcast', layer.name = 'Seaward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_fore, !is.na(Sea_forecast)), zcol = 'Sea_forecast', layer.name = 'Seaward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 ```
 
 Hindcasts of **seaward mangrove losses** have an overall accuracy of `r round(calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)$accuracy.results[1,2])`% (commission accuracy = `r round(calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)$accuracy.results[1,4])`% and omission accuracy = `r round(calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)$accuracy.results[1,3])`%).
