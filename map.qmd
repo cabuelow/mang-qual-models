@@ -21,12 +21,12 @@ library(mapview)
 library(sf)
 library(tidyverse)
 
-dat <- read.csv('outputs/master-dat.csv')
+dat <- read.csv('outputs/master-dat.csv') %>% filter(sensitivity == 2)
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_dams:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
   mutate_at(vars(csqueeze:fut_storms), as.factor) %>% 
-  mutate_at(vars(csqueeze:sed_supp), ~factor(., levels = c('High', 'Medium', 'Low')))
+  mutate_at(vars(csqueeze:sed_supp), ~factor(., levels = c('High', 'Medium', 'Low', 'None')))
 ```
 
 This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5)).
@@ -79,7 +79,7 @@ mapview(typ, zcol = 'csqueeze', layer.name = 'Coastal development', cex = 0.9, l
 
 **Future coastal development**
 
-[Projected human population size](https://figshare.com/s/9a94ae958d6a45684382) by the year 2100 (SSP5; raster of 1km resolution) (Merkens et al., 2016) located within 10m elevation above mean sea level (lower elevation coastal zone; (CIESIN, 2021)) was used as a proxy for the future development of coastal infrastructure that reduces space available for mangroves to migrate landward with climate change. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no lower elevation coastal zone within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as ‘high’, ‘medium’ or ‘low’ coastal squeeze using terciles on logged values, or as ‘none’ if population density was 0. If the future coastal development in a typological unit was was projected to be lower than historical (i.e., a unit classified as ‘medium’ coastal development was projected to have ‘low’ coastal development), it was set to the historical category, assuming that any coastal development limiting landward migration of mangroves historically will not be removed in the future.
+[Projected human population size](https://figshare.com/s/9a94ae958d6a45684382) by the year 2100 (SSP5; raster of 1km resolution) (Merkens et al., 2016) located within 10m elevation above mean sea level (lower elevation coastal zone; (CIESIN, 2021)) was used as a proxy for the future development of coastal infrastructure that reduces space available for mangroves to migrate landward with climate change. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no lower elevation coastal zone within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles on logged values, or as 'none' if population density was 0. If the future coastal development in a typological unit was was projected to be lower than historical (i.e., a unit classified as 'medium' coastal development was projected to have 'low' coastal development), it was set to the historical category, assuming that any coastal development limiting landward migration of mangroves historically will not be removed in the future.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}

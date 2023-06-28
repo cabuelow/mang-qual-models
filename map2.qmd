@@ -33,17 +33,20 @@ names(accuracy_list) <- c('accuracy.results', 'contingency.table')
 return(accuracy_list)
 }
 
-dat <- read.csv('outputs/master-dat.csv') %>% select(Type:prop_estab)
+dat <- read.csv('outputs/master-dat.csv') %>% filter(sensitivity == 2) %>% select(Type:prop_estab)
 dat2 <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') %>% 
+  filter(senstivity == 2) %>%
   mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
 land <- read.csv('outputs/validation/land-validation-results.csv') %>% 
+  filter(ambig_threshold == 60) %>% 
   mutate(Land_hindcast = Land_Change)
 sea <- read.csv('outputs/validation/sea-validation-results.csv') %>% 
+    filter(ambig_threshold == 60) %>% 
     mutate(Sea_hindcast = Sea_Change)
 land_validate <- filter(land, Land_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 sea_validate <- filter(sea, Sea_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
 
-threshold <- 75
+threshold <- 60
 landfor <- dat2 %>% 
   filter(cast == 'forecast' & var == 'LandwardMang') %>% 
   pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
@@ -64,7 +67,7 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
   left_join(dat) %>% 
   mutate_at(vars(fut_dams:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
   mutate_at(vars(csqueeze:fut_storms), as.factor) %>% 
-  mutate_at(vars(csqueeze:sed_supp), ~factor(., levels = c('High', 'Medium', 'Low')))
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~factor(., levels = c('High', 'Medium', 'Low')))
   
 typ_hind <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
   left_join(land) %>% 
@@ -96,6 +99,8 @@ Conceptual diagram of the network model that makes qualitative predictions of ma
 
 Historical subsidence from groundwater extraction (2010) is mapped in the left pane, future subsidence from groundwater extraction (2040) on the right.
 
+mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.9, lwd = 0) \| mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.9, lwd = 0)
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.9, lwd = 0)
 ```
@@ -116,13 +121,13 @@ Sediment supply is mapped in the left pane, future dams either planned or under 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'sed_supp', layer.name = 'Sediment supply', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(typ, zcol = 'fut_dams', layer.name = 'Future dams upstream', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(typ, !is.na(sed_supp)), zcol = 'sed_supp', layer.name = 'Sediment supply', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ, !is.na(fut_dams)), zcol = 'fut_dams', layer.name = 'Future dams upstream', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 
 ```
 
 **Sediment supply**
 
-Catchments representing all land and river networks associated with a mangrove typological unit were created by identifying basins from the HydroSHEDS database that either directly intersect with a unit or are associated with rivers upstream of a unit (Linke et al., 2019). Basins associated with each unit were then dissolved to create a single catchment for each mangrove typological unit. The [free-flowing river network (FFRN)(Grill et al., 2019)](https://figshare.com/articles/dataset/Mapping_the_world_s_free-flowing_rivers_data_set_and_technical_documentation/7688801) was intersected with each mangrove catchment, and the coastal outlets of each unique river network was identified. The sediment trapping index provided in the FFRN represents the proportion of sediment trapped upstream in the catchment by anthropogenic barriers and was used as an estimate of land-based sediment supply to each typological unit. Where multiple rivers intersected with a typological unit, an average of the sediment trapping index values was taken, weighted by the rivers average long-term (1971-2000) naturalised discharge (m3s-1). Where the FFRN did not intersect with a mangrove catchment, the typological unit was given a value of 0, indicating sediment is not trapped by anthropogenic barriers in that catchment. Processing followed steps taken by Worthington et al. (*under review*) and Hagger et al. 2022. All typological units other than deltaic (i.e., lagoonal, estuarine and open coast) were considered to have low sediment supply. Deltaic units with a sediment trapping index >50% were classified as having low sediment supply; if it was <50% the deltaic unit was classified as having high sediment supply. All non-deltaic units were classified as having low sediment supply. 
+Catchments representing all land and river networks associated with a mangrove typological unit were created by identifying basins from the HydroSHEDS database that either directly intersect with a unit or are associated with rivers upstream of a unit (Linke et al., 2019). Basins associated with each unit were then dissolved to create a single catchment for each mangrove typological unit. The [free-flowing river network (FFRN)(Grill et al., 2019)](https://figshare.com/articles/dataset/Mapping_the_world_s_free-flowing_rivers_data_set_and_technical_documentation/7688801) was intersected with each mangrove catchment, and the coastal outlets of each unique river network was identified. The sediment trapping index provided in the FFRN represents the proportion of sediment trapped upstream in the catchment by anthropogenic barriers and was used as an estimate of land-based sediment supply to each typological unit. Where multiple rivers intersected with a typological unit, an average of the sediment trapping index values was taken, weighted by the rivers average long-term (1971-2000) naturalised discharge (m3s-1). Where the FFRN did not intersect with a mangrove catchment, the typological unit was given a value of 0, indicating sediment is not trapped by anthropogenic barriers in that catchment. Processing followed steps taken by Worthington et al. (*under review*) and Hagger et al. 2022. All typological units other than deltaic (i.e., lagoonal, estuarine and open coast) were considered to have low sediment supply. Deltaic units with a sediment trapping index \>50% were classified as having low sediment supply; if it was \<50% the deltaic unit was classified as having high sediment supply. All non-deltaic units were classified as having low sediment supply.
 
 **Future dams**
 
@@ -156,7 +161,7 @@ Historical satellite remote sensing observations of seaward mangrove loss or gai
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(typ_hind, zcol = 'sea_change_obs', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(typ_hind, zcol = 'land_change_obs', layer.name = 'Landward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(typ_hind, !is.na(sea_change_obs)), zcol = 'sea_change_obs', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_hind, !is.na(land_change_obs)), zcol = 'land_change_obs', layer.name = 'Landward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 
 ```
 
@@ -170,7 +175,7 @@ Hindcasts of landward mangrove extent change are mapped in the left pane, foreca
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(typ_hind, zcol = 'Land_hindcast', layer.name = 'Landward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(typ_fore, zcol = 'Land_forecast', layer.name = 'Landward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(typ_hind, !is.na(Land_hindcast)), zcol = 'Land_hindcast', layer.name = 'Landward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_fore, !is.na(Land_forecast)), zcol = 'Land_forecast', layer.name = 'Landward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 
 ```
 
@@ -188,7 +193,7 @@ Hindcasts of seaward mangrove extent change are mapped in the left pane, forecas
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(typ_hind, zcol = 'Sea_hindcast', layer.name = 'Seaward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(typ_fore, zcol = 'Sea_forecast', layer.name = 'Seaward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(typ_hind, !is.na(Land_hindcast)), zcol = 'Land_hindcast', layer.name = 'Seaward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_fore, !is.na(Sea_forecast)), zcol = 'Sea_forecast', layer.name = 'Seaward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 ```
 
 Hindcasts of **seaward mangrove losses** have an overall accuracy of `r round(calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)$accuracy.results[1,2])`% (commission accuracy = `r round(calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)$accuracy.results[1,4])`% and omission accuracy = `r round(calc_accuracy(sea_validate$Sea_Loss, sea_validate$sea_loss_obs)$accuracy.results[1,3])`%).

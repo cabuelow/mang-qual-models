@@ -427,3 +427,4 @@ c <- b/a
 c
 
 ggsave('outputs/maps/map-characteristics.png', width = 5.3, height = 7.5)
+
