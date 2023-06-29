@@ -47,7 +47,6 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
         axis.title = element_blank()) +
   ggtitle('A) Seaward mangrove') +
   guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5))
-a
 
 b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Sediment Supply'), 
             aes(tide, pressure, fill = Prob_gain_neutral)) +

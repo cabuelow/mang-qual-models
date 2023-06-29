@@ -122,13 +122,13 @@ lmap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.35,
-            main.title = 'E) Landward hindcast',
+            main.title = 'B) Landward hindcast',
             main.title.size = 0.45,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain'), border.alpha = 0, size = 0.3)
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
@@ -169,7 +169,7 @@ tm_layout(legend.outside = F,
           legend.bg.color = 'white',
           legend.bg.alpha = 0.8) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain'), border.alpha = 0, size = 0.3)
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
@@ -253,7 +253,7 @@ lmap <- tm_shape(world_mang) +
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain'), border.alpha = 0, size = 0.3)
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
@@ -294,7 +294,7 @@ smap <- tm_shape(world_mang) +
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain'), border.alpha = 0, size = 0.3)
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
@@ -353,7 +353,7 @@ land_sum <- spatial_dat %>%
 
 a <- ggplot(land_sum) +
   geom_tile(aes(x = Land_Change, y = variable, fill = val) ) +
-  scale_fill_distiller(palette = 'Greens', direction = 1,  name = '') +
+  scale_fill_distiller(palette = 'PuBuGn', direction = 1,  name = '') +
   facet_wrap(~group, scales = 'free') +
   #facet_grid(cols = vars(group), scale = 'free', space = 'free') +
   xlab('') +
@@ -362,7 +362,7 @@ a <- ggplot(land_sum) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 20, vjust = 0.9))
 a
-ggsave('outputs/maps/landward-map-characteristics.png', width = 9, height = 2)
+ggsave('outputs/maps/landward-map-characteristics.png', width = 8, height = 2)
 
 #sea
 sea_sum <- spatial_dat %>% 

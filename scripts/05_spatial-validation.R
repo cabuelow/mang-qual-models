@@ -176,7 +176,7 @@ a <- accuracy %>%
                                 'Loss commission accuracy', 'Gain omission accuracy',
                                 'Loss omission accuracy')) +
   geom_vline(xintercept = 60, linetype = 'dashed', alpha = 0.4) +
-  ggtitle('B) Net change') +
+  ggtitle('C) Net change') +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = 'bottom',
@@ -213,7 +213,7 @@ b <- accuracy %>%
                                 'No Loss commission accuracy', 'Loss omission accuracy',
                                 'No Loss omission accuracy')) +
   geom_vline(xintercept = 60, linetype = 'dashed', alpha = 0.4) +
-  ggtitle('C) Gross losses') +
+  ggtitle('D) Gross losses') +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = 'bottom',
@@ -251,7 +251,7 @@ c <- accuracy %>%
                                 'No Gain commission accuracy', 'Gain omission accuracy',
                                 'No Gain omission accuracy')) +
   geom_vline(xintercept = 60, linetype = 'dashed', alpha = 0.4) +
-  ggtitle('D) Gross gains') +
+  ggtitle('E) Gross gains') +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = 'bottom',
