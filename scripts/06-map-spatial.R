@@ -10,7 +10,6 @@ library(tmaptools)
 library(patchwork)
 source('scripts/helpers/models_v2.R')
 sf_use_s2(FALSE)
-tmap_mode('plot')
 
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
 world <- data("World")
@@ -76,6 +75,28 @@ sea <- dat_hindcast %>%
          Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
   inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
   select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs, sea_net_change_obs)
+
+# summarise the number of units hindcast to be each change class
+
+landsummary <- land %>%
+  right_join(select(spatial_dat, Type)) %>% 
+  mutate(Land_Change = ifelse(is.na(Land_Change), 'No pressures', Land_Change)) %>% 
+  mutate(num = 1) %>% 
+  group_by(Land_Change) %>% 
+  summarise(percent_total = (sum(num)/length(unique(spatial_dat$Type)))*100,
+            number_units = sum(num))
+sum(landsummary$percent_total) # should equal 100
+write.csv(landsummary, 'outputs/summary-stats/land-hindcast.csv', row.names = F)
+
+seasummary <- sea %>%
+  right_join(select(spatial_dat, Type)) %>% 
+  mutate(Sea_Change = ifelse(is.na(Sea_Change), 'No pressures', Sea_Change)) %>% 
+  mutate(num = 1) %>% 
+  group_by(Sea_Change) %>% 
+  summarise(percent_total = (sum(num)/length(unique(spatial_dat$Type)))*100,
+            number_units = sum(num))
+sum(seasummary$percent_total) # should equal 100
+write.csv(seasummary, 'outputs/summary-stats/sea-hindcast.csv', row.names = F)
 
 # join to spatial typologies for plotting
 
@@ -201,6 +222,28 @@ sea <- dat_forecast %>%
          Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
   inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
   select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs, sea_net_change_obs)
+
+# summarise the number of units forecast to be each change class
+
+landsummary <- land %>%
+  right_join(select(spatial_dat, Type)) %>% 
+  mutate(Land_Change = ifelse(is.na(Land_Change), 'No pressures', Land_Change)) %>% 
+  mutate(num = 1) %>% 
+  group_by(Land_Change) %>% 
+  summarise(percent_total = (sum(num)/length(unique(spatial_dat$Type)))*100,
+            number_units = sum(num))
+sum(landsummary$percent_total) # should equal 100
+write.csv(landsummary, 'outputs/summary-stats/land-forecast.csv', row.names = F)
+
+seasummary <- sea %>%
+  right_join(select(spatial_dat, Type)) %>% 
+  mutate(Sea_Change = ifelse(is.na(Sea_Change), 'No pressures', Sea_Change)) %>% 
+  mutate(num = 1) %>% 
+  group_by(Sea_Change) %>% 
+  summarise(percent_total = (sum(num)/length(unique(spatial_dat$Type)))*100,
+            number_units = sum(num))
+sum(seasummary$percent_total) # should equal 100
+write.csv(seasummary, 'outputs/summary-stats/sea-forecast.csv', row.names = F)
 
 # join to spatial typologies for plotting
 
@@ -355,12 +398,12 @@ a <- ggplot(land_sum) +
   geom_tile(aes(x = Land_Change, y = variable, fill = val) ) +
   scale_fill_distiller(palette = 'PuBuGn', direction = 1,  name = '') +
   facet_wrap(~group, scales = 'free') +
-  #facet_grid(cols = vars(group), scale = 'free', space = 'free') +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 1)) +
   xlab('') +
   ylab('') +
   #ggtitle('B) Landward') +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 20, vjust = 0.9))
+  theme(axis.text.x = element_text(angle = 20, hjust = 0.9))
 a
 ggsave('outputs/maps/landward-map-characteristics.png', width = 8, height = 2)
 
@@ -427,4 +470,5 @@ c <- b/a
 c
 
 ggsave('outputs/maps/map-characteristics.png', width = 5.3, height = 7.5)
+
 
