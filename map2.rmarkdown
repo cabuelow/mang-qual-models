@@ -1,0 +1,206 @@
+---
+title: "Mapping historical and future climatic and anthropogenic impacts to mangroves (Part 2)"
+format:
+  html:
+    embed-resources: true
+theme: minty
+toc: false
+#toc-location: left
+#toc-title: Content
+#toc-depth: 4
+#published-title: Date
+#date: 2022-10-23
+editor: visual
+project:
+  type: website
+  output-dir: docs
+---
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results=FALSE}
+library(mapview)
+library(sf)
+library(tidyverse)
+library(caret)
+
+calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference vector
+cont.table <- confusionMatrix(factor(x), factor(x2))$table # contingency table
+commission <- diag(cont.table)/rowSums(cont.table)*100
+omission <- diag(cont.table)/colSums(cont.table)*100
+overall.accuracy <- sum(diag(cont.table))/sum(cont.table)*100
+class.df <- data.frame(class = levels(factor(x2)), overall_accuracy = overall.accuracy, omission_accuracy = omission, commission_accuracy = commission)
+accuracy_list <- list(class.df, cont.table)
+names(accuracy_list) <- c('accuracy.results', 'contingency.table')
+return(accuracy_list)
+}
+
+dat <- read.csv('outputs/master-dat.csv') %>% filter(sensitivity == 2) %>% select(Type:prop_estab)
+dat2 <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') %>% 
+  filter(senstivity == 2) %>%
+  mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
+land <- read.csv('outputs/validation/land-validation-results.csv') %>% 
+  filter(ambig_threshold == 60) %>% 
+  mutate(Land_hindcast = Land_Change)
+sea <- read.csv('outputs/validation/sea-validation-results.csv') %>% 
+    filter(ambig_threshold == 60) %>% 
+    mutate(Sea_hindcast = Sea_Change)
+land_validate <- filter(land, Land_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
+sea_validate <- filter(sea, Sea_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
+
+threshold <- 60
+landfor <- dat2 %>% 
+  filter(cast == 'forecast' & var == 'LandwardMang') %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  mutate(Land_forecast = ifelse(LandwardMang > threshold, 'Gain', NA),
+         Land_forecast = ifelse(LandwardMang <= threshold & LandwardMang >= -threshold, 'Ambiguous', Land_forecast),
+         Land_forecast = ifelse(LandwardMang < -threshold, 'Loss', Land_forecast)) %>% 
+  select(Type, Land_forecast)
+
+seafor <- dat2 %>% 
+  filter(cast == 'forecast' & var == 'SeawardMang') %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  mutate(Sea_forecast = ifelse(SeawardMang > threshold, 'Gain', NA),
+         Sea_forecast = ifelse(SeawardMang <= threshold & SeawardMang >= -threshold, 'Ambiguous', Sea_forecast),
+         Sea_forecast = ifelse(SeawardMang < -threshold, 'Loss', Sea_forecast)) %>% 
+  select(Type, Sea_forecast)
+
+typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+  left_join(dat) %>% 
+  mutate_at(vars(fut_dams:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
+  mutate_at(vars(csqueeze:fut_storms), as.factor) %>% 
+  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~factor(., levels = c('High', 'Medium', 'Low')))
+  
+typ_hind <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+  left_join(land) %>% 
+  left_join(sea) 
+
+typ_fore <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+  left_join(landfor) %>% 
+  left_join(seafor)
+```
+
+
+This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5)).
+
+Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
+
+Due to memory limitations, only **subsidence**, **sediment supply**, **future dams**, **tidal range**, **propagule establishment capacity**, **historical observations of landward and seaward mangrove extent change**, and **hindcasts and forecasts of landward and seaward extent change** are found on this page.
+
+Go [here to see part 1](https://mangrove-climate-risk-mapping.netlify.app/), which provides information on sea-level rise, coastal development, drought, extreme rainfall, intense storms, and subsidence.
+
+::: {.callout-tip icon="false" collapse="true"}
+### Network model of mangrove landward migration and seaward progradation
+
+Conceptual diagram of the network model that makes qualitative predictions of mangrove landward migration and seaward progradation (Figure 1). Details can be found in Buelow et al. (*in prep*).
+
+![Figure 1. Mangrove network model](images/network.png)
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Subsidence from groundwater extraction {#subsidence}
+
+Historical subsidence from groundwater extraction (2010) is mapped in the left pane, future subsidence from groundwater extraction (2040) on the right.
+
+mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.9, lwd = 0) \| mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.9, lwd = 0)
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
+mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.9, lwd = 0)
+```
+
+
+**Historical subsidence**
+
+[The probability of subsidence from groundwater extraction in 2010](https://figshare.com/articles/dataset/Global_Subsidence_Maps/13312070/1) was estimated for each mangrove typological unit from a raster (1km resolution) with pixels categorised according to 6 probability categories: 1 = very low, 2 = low, 3 = medium-low, 4 = medium-high, 5 = high, and 6 = very high (Herrera-Garcia et al., 2021). The mode of raster pixel values intersecting each typological unit to obtained. Typological units that did not directly intersect with the raster were buffered by 10 kilometres to obtain mode probability of subsidence. All remaining typological units without a value for subsidence probability were assigned 1 for 'very low' probability of subsidence. Subsidence was considered present in a unit if probability was ≥ 'medium-high'.
+
+**Future subsidence**
+
+Same as above for **Historical subsidence** except a raster with projected probability of subsidence by 2040 was used.
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Sediment supply and future dams {#sediment-supply-and-future-dams}
+
+Sediment supply is mapped in the left pane, future dams either planned or under construction upstream of a typological unit on the right.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
+
+mapview(filter(typ, !is.na(sed_supp)), zcol = 'sed_supp', layer.name = 'Sediment supply', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ, !is.na(fut_dams)), zcol = 'fut_dams', layer.name = 'Future dams upstream', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+
+```
+
+
+**Sediment supply**
+
+Catchments representing all land and river networks associated with a mangrove typological unit were created by identifying basins from the HydroSHEDS database that either directly intersect with a unit or are associated with rivers upstream of a unit (Linke et al., 2019). Basins associated with each unit were then dissolved to create a single catchment for each mangrove typological unit. The [free-flowing river network (FFRN)(Grill et al., 2019)](https://figshare.com/articles/dataset/Mapping_the_world_s_free-flowing_rivers_data_set_and_technical_documentation/7688801) was intersected with each mangrove catchment, and the coastal outlets of each unique river network was identified. The sediment trapping index provided in the FFRN represents the proportion of sediment trapped upstream in the catchment by anthropogenic barriers and was used as an estimate of land-based sediment supply to each typological unit. Where multiple rivers intersected with a typological unit, an average of the sediment trapping index values was taken, weighted by the rivers average long-term (1971-2000) naturalised discharge (m3s-1). Where the FFRN did not intersect with a mangrove catchment, the typological unit was given a value of 0, indicating sediment is not trapped by anthropogenic barriers in that catchment. Processing followed steps taken by Worthington et al. (*under review*) and Hagger et al. 2022. All typological units other than deltaic (i.e., lagoonal, estuarine and open coast) were considered to have low sediment supply. Deltaic units with a sediment trapping index \>50% were classified as having low sediment supply; if it was \<50% the deltaic unit was classified as having high sediment supply. All non-deltaic units were classified as having low sediment supply.
+
+**Future dams**
+
+River networks from the HydroRivers database (Lehner & Grill, 2013) that drain into mangrove typological units were identified and buffered by 10 kilometres. The number of dams either [planned or under construction in the future (Zarfl et al., 2015)](https://www.globaldamwatch.org/fhred) that intersected with each unit's buffered river network was calculated and converted to future dam presence-absence. Mangrove typological units without river networks received a value of 0.
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Tidal range and propaule establishment capacity {#tidal-range}
+
+Tidal range (macro, meso or micro) is mapped in the left pane, propagule establishment capacity on the right.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
+
+mapview(typ, zcol = 'Tidal_Class', layer.name = 'Tidal range', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'prop_estab', layer.name = 'Propagule establishment capacity', cex = 0.9, lwd = 0)
+
+```
+
+
+**Tidal range**
+
+Tidal range was estimated for each mangrove typological unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). Typological units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and typological units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (*under review*).
+
+**Progpagule establishment capacity**
+
+Propagule establishment capacity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having 'high', 'medium', or 'low' establishment capacity using terciles, where large average distance values corresponded to low establishment capacity and vice versa.
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Historical observations of mangrove loss and gain {#historical-mangrove-loss-and-gain}
+
+Historical satellite remote sensing observations of seaward mangrove loss or gain (1996-2020) is mapped in the left pane, landward loss or gain on the right.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
+
+mapview(filter(typ_hind, !is.na(sea_change_obs)), zcol = 'sea_change_obs', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_hind, !is.na(land_change_obs)), zcol = 'land_change_obs', layer.name = 'Landward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+
+```
+
+
+Areas of mangrove loss or gain were identified in each interval of the Global Mangrove Watch 1996-2020 time series [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU) and merged into one layer representing gross loss, and one layer representing gross gains of mangroves from 1996-2020. The gross loss and gross gain layers were then intersected with boundaries representing oceanic exclusive economic zones [(Flanders Marine Institute, 2019)](https://www.marineregions.org/) to classify areas of loss or gain as 'seaward'. Remaining areas of loss or gain were classified as 'landward'.
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Hindcasts and forecasts of landward mangrove extent change {#landhind-forecast}
+
+Hindcasts of landward mangrove extent change are mapped in the left pane, forecasts on the right.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
+
+mapview(filter(typ_hind, !is.na(Land_hindcast)), zcol = 'Land_hindcast', layer.name = 'Landward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_fore, !is.na(Land_forecast)), zcol = 'Land_forecast', layer.name = 'Landward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+
+```
+
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Hindcasts and forecasts of seaward mangrove extent change {#seahind-forecast}
+
+Hindcasts of seaward mangrove extent change are mapped in the left pane, forecasts on the right.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
+
+mapview(filter(typ_hind, !is.na(Land_hindcast)), zcol = 'Sea_hindcast', layer.name = 'Seaward hindcast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ_fore, !is.na(Sea_forecast)), zcol = 'Sea_forecast', layer.name = 'Seaward forecast', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas', col.regions = c("yellow", "yellow"))
+```
+
+:::
+
