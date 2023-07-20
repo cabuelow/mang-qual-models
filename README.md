@@ -29,7 +29,13 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
+ - Validation
+  1. Remove locations where commodities & erosion are major drivers of loss (agriculture/aquaculture) - we can't validate that
+  2. Grid search - ambiguity prob. threshold vs. pressure threshold - develop some criteria for picking the optimal on this grid, e.g., maximizing producer's accuracy - then try forecasts
+  3. Model calibration/fitting - use the subset of the 10000 models that match observed responses. Then have the range of parameter values for each interaction strength in the model to make forecasts
+    - Challenging part is need to match the range of interaction strength parameter ranges associated with a given set of stressors combinations to what we see in forecasts
+  4. Global k-fold x-validation with random removal - e.g., 5-fold
+  
+ 
 -   [X] Decide whether to map all typological units, or just those with extant forest (as of 2020)
         - Will use all units (extant or only historical loss) as areas with historical loss could be restored
--   [ ] What happens to maps when we include local factors, e.g., erosion, hydrodynamic energy, etc
--   [ ] Maple/loop analyst, which loops drive ambiguity? o Although Ward (2021) says symbolic analysis is powerful for identifying feedbacks, and is difficult to carry out for models with more than five nodes
