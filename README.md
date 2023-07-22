@@ -31,7 +31,7 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
-- Double check calculation of historical net change is correct in all units
+- Double check calculation of historical net change is correct in all units - are there really that many places with gain?
 - Consider removing slr and subsidence and other longterm threats from validation
 
  - Validation
