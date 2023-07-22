@@ -105,7 +105,9 @@ accuracy %>%
 
 ggsave('outputs/validation/accuracy-heatmap.png', width = 10, height = 4.5)
 
-# plot accuracy results
+# identify optimal thresholds for best overall accuracy
+
+accuracy %>% filter(Overall_accuracy == max(accuracy$Overall_accuracy))
 
 # End here
 
