@@ -19,34 +19,22 @@ world <- data("World")
 names(models) # names of available models
 chosen_model_name <- 'mangrove_model'
 dat_hindcast <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
-  filter(cast == 'hindcast' & senstivity == 2) %>% 
-  mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
+  filter(cast == 'hindcast' & pressure_def == 1) %>% 
+  mutate(Prob_change = ifelse(Prob_gain > 50, Prob_gain, Prob_loss))
 dat_forecast <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
-  filter(cast == 'forecast' & senstivity == 2) %>% 
-  mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
+  filter(cast == 'forecast' & pressure_def == 1) %>% 
+  mutate(Prob_change = ifelse(Prob_gain > 50, Prob_gain, Prob_loss))
 
 # wrangle historical SRS observations of mangrove loss and gain into categories of change (no change, loss, gain, loss and gain)
 
 spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
-  filter(sensitivity == 2) %>% 
+  filter(pressure_def == 1) %>% 
   mutate(sea_gross_gain_loss = sea_gross_gain + sea_gross_loss,
          land_gross_gain_loss = land_gross_gain + land_gross_loss) %>% 
-  mutate(sea_change_obs = ifelse(sea_gross_gain_loss == 2, 'Loss & Gain', NA),
-         sea_change_obs = ifelse(sea_gross_gain_loss != 2 & sea_gross_gain ==1, 'Gain', sea_change_obs),
-         sea_change_obs = ifelse(sea_gross_gain_loss != 2 & sea_gross_loss ==1, 'Loss', sea_change_obs),
-         sea_change_obs = ifelse(sea_gross_gain_loss == 0, 'Gain', sea_change_obs), # here treating neutrality as gain, as in network model
-         land_change_obs = ifelse(land_gross_gain_loss == 2, 'Loss & Gain', NA),
-         land_change_obs = ifelse(land_gross_gain_loss != 2 & land_gross_gain ==1, 'Gain', land_change_obs),
-         land_change_obs = ifelse(land_gross_gain_loss != 2 & land_gross_loss ==1, 'Loss', land_change_obs),
-         land_change_obs = ifelse(land_gross_gain_loss == 0, 'Gain', land_change_obs)) %>%  # here treating neutrality as gain, as in network model 
   mutate(sea_gain_obs = ifelse(sea_gross_gain == 1, 'Gain', 'No Gain'),
          sea_loss_obs = ifelse(sea_gross_loss == 1, 'Loss', 'No Loss'),
          land_gain_obs = ifelse(land_gross_gain == 1, 'Gain', 'No Gain'),
          land_loss_obs = ifelse(land_gross_loss == 1, 'Loss', 'No Loss'),
-         sea_net_gain_obs = ifelse(sea_net_gain == 1, 'Gain', 'No Gain'),
-         sea_net_loss_obs = ifelse(sea_net_loss == 1, 'Loss', 'No Loss'),
-         land_net_gain_obs = ifelse(land_net_gain == 1, 'Gain', 'No Gain'),
-         land_net_loss_obs = ifelse(land_net_loss == 1, 'Loss', 'No Loss'),
          land_net_change_obs = ifelse(land_net_gain == 1, 'Gain', 'Loss'),
          sea_net_change_obs = ifelse(sea_net_gain == 1, 'Gain', 'Loss'))
 
@@ -55,26 +43,26 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
 thresh <- 60 # set threshold
 
 land <- dat_hindcast %>% 
-  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain), names_from = 'var', values_from = 'Prob_change') %>% 
   mutate(Land_Gain = ifelse(LandwardMang > thresh, 'Gain', 'No Gain'),
          Land_Ambig = ifelse(LandwardMang <= thresh & LandwardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
          Land_Loss = ifelse(LandwardMang < -thresh, 'Loss', 'No Loss')) %>% 
   mutate(Land_Change = ifelse(Land_Gain == 'Gain', 'Gain', NA),
          Land_Change = ifelse(Land_Ambig == 'Ambiguous', 'Ambiguous', Land_Change),
          Land_Change = ifelse(Land_Loss == 'Loss', 'Loss', Land_Change)) %>% 
-  inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
-  select(Type, Land_Gain:Land_Change, land_change_obs, land_gain_obs, land_loss_obs, land_net_gain_obs, land_net_loss_obs, land_net_change_obs) 
+  inner_join(select(spatial_dat, Type, pressure_def, sea_gain_obs:sea_net_change_obs), by = c('Type', 'pressure_def')) %>% 
+  select(Type, pressure_def, Land_Gain:Land_Change, land_gain_obs, land_loss_obs, land_net_change_obs)
 
 sea <- dat_hindcast %>% 
-  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain), names_from = 'var', values_from = 'Prob_change') %>% 
   mutate(Sea_Gain = ifelse(SeawardMang > thresh, 'Gain', 'No Gain'),
          Sea_Ambig = ifelse(SeawardMang <= thresh & SeawardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
          Sea_Loss = ifelse(SeawardMang < -thresh, 'Loss', 'No Loss')) %>% 
   mutate(Sea_Change = ifelse(Sea_Gain == 'Gain', 'Gain', NA),
          Sea_Change = ifelse(Sea_Ambig == 'Ambiguous', 'Ambiguous', Sea_Change),
          Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
-  inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
-  select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs, sea_net_change_obs)
+  inner_join(select(spatial_dat, Type, pressure_def, sea_gain_obs:sea_net_change_obs), by = c('Type', 'pressure_def')) %>% 
+  select(Type, pressure_def, Sea_Gain:Sea_Change, sea_gain_obs, sea_loss_obs, sea_net_change_obs)
 
 # summarise the number of units hindcast to be each change class
 
@@ -164,13 +152,13 @@ smap <- tm_shape(world_mang) +
           title = '',
           legend.show = F,
           size = 0.001) +
-  tm_shape(filter(seaward_hindcast, Sea_Change == 'Gain' & !is.na(Sea_Change))) +
-  tm_dots('Sea_Change', 
-         palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
-        alpha = 0.5, 
-       title = '',
-      legend.show = F, 
-     size = 0.025) +
+  #tm_shape(filter(seaward_hindcast, Sea_Change == 'Gain' & !is.na(Sea_Change))) +
+  #tm_dots('Sea_Change', 
+   #      palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+    #    alpha = 0.5, 
+     #  title = '',
+      #legend.show = F, 
+     #size = 0.025) +
   tm_shape(filter(seaward_hindcast, Sea_Change == 'Ambiguous' & !is.na(Sea_Change))) +
   tm_dots('Sea_Change', 
          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
@@ -202,26 +190,26 @@ tmap_save(maps, paste0('outputs/maps/hindcast_map_', chosen_model_name, '.png'),
 # join to forecast outcomes and classify forecasts according to ambiguity threshold
 
 land <- dat_forecast %>% 
-  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain), names_from = 'var', values_from = 'Prob_change') %>% 
   mutate(Land_Gain = ifelse(LandwardMang > thresh, 'Gain', 'No Gain'),
          Land_Ambig = ifelse(LandwardMang <= thresh & LandwardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
          Land_Loss = ifelse(LandwardMang < -thresh, 'Loss', 'No Loss')) %>% 
   mutate(Land_Change = ifelse(Land_Gain == 'Gain', 'Gain', NA),
          Land_Change = ifelse(Land_Ambig == 'Ambiguous', 'Ambiguous', Land_Change),
          Land_Change = ifelse(Land_Loss == 'Loss', 'Loss', Land_Change)) %>% 
-  inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
-  select(Type, Land_Gain:Land_Change, land_change_obs, land_gain_obs, land_loss_obs, land_net_gain_obs, land_net_loss_obs, land_net_change_obs) 
+  inner_join(select(spatial_dat, Type, pressure_def, sea_gain_obs:sea_net_change_obs), by = c('Type', 'pressure_def')) %>% 
+  select(Type, pressure_def, Land_Gain:Land_Change, land_gain_obs, land_loss_obs, land_net_change_obs)
 
 sea <- dat_forecast %>% 
-  pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
+  pivot_wider(id_cols = -c(Prob_loss, Prob_gain), names_from = 'var', values_from = 'Prob_change') %>% 
   mutate(Sea_Gain = ifelse(SeawardMang > thresh, 'Gain', 'No Gain'),
          Sea_Ambig = ifelse(SeawardMang <= thresh & SeawardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
          Sea_Loss = ifelse(SeawardMang < -thresh, 'Loss', 'No Loss')) %>% 
   mutate(Sea_Change = ifelse(Sea_Gain == 'Gain', 'Gain', NA),
          Sea_Change = ifelse(Sea_Ambig == 'Ambiguous', 'Ambiguous', Sea_Change),
          Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
-  inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
-  select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs, sea_net_change_obs)
+  inner_join(select(spatial_dat, Type, pressure_def, sea_gain_obs:sea_net_change_obs), by = c('Type', 'pressure_def')) %>% 
+  select(Type, pressure_def, Sea_Gain:Sea_Change, sea_gain_obs, sea_loss_obs, sea_net_change_obs)
 
 # summarise the number of units forecast to be each change class
 
@@ -350,7 +338,7 @@ tmap_save(maps, paste0('outputs/maps/forecast_map_', chosen_model_name, '.png'),
 
 # land
 land_sum <- spatial_dat %>% 
-  filter(sensitivity == 2) %>% 
+  filter(pressure_def == 1) %>% 
   select(Type, fut_csqueeze, sed_supp, fut_slr, fut_dams, fut_gwsub, fut_storms, fut_drought, fut_ext_rain, 
          Tidal_Class, prop_estab) %>% 
   rowwise() %>% dplyr::mutate(geomorph = strsplit(Type, split="_")[[1]][1]) %>% 
