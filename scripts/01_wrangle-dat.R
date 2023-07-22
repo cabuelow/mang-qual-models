@@ -13,16 +13,16 @@ dat <- list() # list to store wrangled dat
 
 # do pressure classifications within a range for sensitivity analysis
 # mid-range in sensitvity ranges below is used for main results
-sens <- c(40, 50, 60)
-sens_fdrought <- c(3, 4, 5)
-sens_hdrought <- c(1, 1.5, 2)
+sens <- c(30, 40, 50, 60, 70)
+sens_fdrought <- c(2, 3, 4, 5, 6)
+sens_hdrought <- c(0.5, 1, 1.5, 2, 2.5)
 
 # loop through pressure classifications and save in master dataframe
 tmp <- list()
-for(i in 1:3){
+for(i in seq_along(sens)){
   
 #### coastal squeeze
-
+# TODO: replace below ifelses with casewhens where possible
 coast <- read.csv('outputs/processed-data/coastal-population.csv') %>% 
   select(-sum.pop_size_lecz_2020) %>% 
   mutate_at(vars(sum.pop_size_lecz_2000:sum.pop_size_lecz_2100), ~./area_ha) %>% # divide by lecz area to get population density
@@ -255,6 +255,56 @@ dat[[15]] <- propest # if happy add to dat list
 
 #### landward vs. seaward loss
 
+land <- read.csv('data/typologies/gmw_v3_change_96_20_land_typologies.csv') %>% 
+  group_by(chng_type, Type) %>% 
+  summarise(area_ha = sum(area_ha)) %>% 
+  pivot_wider(names_from = 'chng_type', values_from = 'area_ha') %>% 
+  mutate(gain = ifelse(is.na(gain), 0, gain),
+         loss = ifelse(is.na(loss), 0, loss)) %>% 
+  mutate(land_net_change_ha = gain - loss) %>% 
+  select(Type, land_net_change_ha)
+  
+sea <- read.csv('data/typologies/gmw_v3_change_96_20_sea_typologies.csv') %>% 
+  group_by(chng_type, Type) %>% 
+  summarise(area_ha = sum(area_ha)) %>% 
+  pivot_wider(names_from = 'chng_type', values_from = 'area_ha') %>% 
+  mutate(gain = ifelse(is.na(gain), 0, gain),
+         loss = ifelse(is.na(loss), 0, loss)) %>% 
+  mutate(sea_net_change_ha = gain - loss) %>% 
+  select(Type, sea_net_change_ha)
+
+# map to check
+
+typ2 <- typ %>% 
+  left_join(land) %>% 
+  left_join(sea) %>% 
+  mutate(sea_net_change = case_when(sea_net_change_ha > 0 ~ 'Gain',
+                                    sea_net_change_ha < 0 ~ 'Loss',
+                                    is.na(sea_net_change_ha) ~ 'Neutral'),
+         land_net_change = case_when(land_net_change_ha > 0 ~ 'Gain',
+                                    land_net_change_ha < 0 ~ 'Loss',
+                                    is.na(land_net_change_ha) ~ 'Neutral')) %>% 
+  select(Type, sea_net_change:land_net_change)
+
+qtm(typ2, dots.col = 'sea_net_change') 
+qtm(typ2, dots.col = 'land_net_change') 
+dat[[16]] <- st_drop_geometry(typ2) # if happy add to dat list
+
+# merge into final master database
+
+tmp[[i]] <- data.frame(pressure_def = i, Reduce(full_join, dat))
+
+}
+
+mast.dat <- do.call(rbind, tmp)
+
+# save
+
+write.csv(mast.dat, 'outputs/master-dat.csv', row.names = F)
+
+
+# End here
+
 sealand <- read.csv('outputs/processed-data/sea-land-extent-change.csv') %>% 
   mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(is.na(.), 0, .)) %>% # NAs are where there was no loss or gain
   #mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(. < 100, 0, .)) %>% # only consider areas of loss or gain > 1km2 (100ha)
@@ -269,30 +319,4 @@ sealand <- read.csv('outputs/processed-data/sea-land-extent-change.csv') %>%
          land_net_gain = ifelse(land_net > 0, 1, 0),
          land_net_loss = ifelse(land_net < 0, 1, 0)) %>%
   select(Type, sea_gross_gain:land_net_loss)
-
-# map to check
-
-typ2 <- typ %>% 
-  left_join(sealand)
-qtm(typ2, dots.col = 'sea_gross_gain') 
-qtm(typ2, dots.col = 'sea_net_gain') 
-qtm(typ2, dots.col = 'sea_gross_loss') 
-qtm(typ2, dots.col = 'sea_net_loss') 
-qtm(typ2, dots.col = 'land_gross_gain')
-qtm(typ2, dots.col = 'land_net_gain') 
-qtm(typ2, dots.col = 'land_gross_gain')
-qtm(typ2, dots.col = 'land_net_gain') 
-dat[[16]] <- sealand # if happy add to dat list
-
-# merge into final master database
-
-tmp[[i]] <- data.frame(sensitivity = i, Reduce(full_join, dat))
-
-}
-
-mast.dat <- do.call(rbind, tmp)
-
-# save
-
-write.csv(mast.dat, 'outputs/master-dat.csv', row.names = F)
 
