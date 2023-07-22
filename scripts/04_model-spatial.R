@@ -3,6 +3,8 @@
 library(QPress)
 library(tidyverse)
 library(scales)
+library(foreach)
+library(doParallel)
 source('scripts/helpers/models_v2.R')
 source('scripts/helpers/helpers_v2.R')
 
@@ -11,23 +13,26 @@ source('scripts/helpers/helpers_v2.R')
 names(models) # names of available models
 chosen_model <- models$mangrove_model
 chosen_model_name <- 'mangrove_model'
+dat <- read.csv('outputs/master-dat.csv')
 
 # set simulation parameters
 
 set.seed(123) # set random number generator to make results reproducible
 numsims <- 1000 # number of model simulations to run
 
-# loop over sensitivity thresholds for pressure definition
-# takes 4.1 hours to run with 1000 sims
+# loop over pressure definition thresholds
+# takes 2.25 hours to run with 1000 sims
 
-results <- list() # list for storing results
+cl <- makeCluster(6)
+registerDoParallel(cl)
 system.time(
-for(k in 1:3){
+results <- foreach(k = seq_along(unique(dat$pressure_def)), 
+                   .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar% {
   
   # read in and wrangle spatial data
   
-  spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
-    filter(sensitivity == k) %>% 
+  spatial_dat <- dat %>% 
+    filter(pressure_def == k) %>% 
     mutate(csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
            csqueeze_1 = ifelse(csqueeze == 'None', 0, 1), 
            fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
@@ -109,7 +114,8 @@ for(k in 1:3){
         out <- sim$stableoutcome %>% 
           filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
           group_by(var) %>% 
-          summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
+          summarise(Prob_gain = (sum(outcome>0)/n())*100,
+                    Prob_neutral = (sum(outcome==0)/n())*100,
                     Prob_loss = (sum(outcome<0)/n())*-100)
         
         out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
@@ -168,7 +174,8 @@ for(k in 1:3){
         out <- sim$stableoutcome %>% 
           filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
           group_by(var) %>% 
-          summarise(Prob_gain_neutral = ((sum(outcome>0) + sum(outcome==0))/n())*100,
+          summarise(Prob_gain = (sum(outcome>0)/n())*100,
+                    Prob_neutral = (sum(outcome==0)/n())*100,
                     Prob_loss = (sum(outcome<0)/n())*-100)
         
         out$Type <- rep(spatial_dat[i, 'Type'], nrow(out))
@@ -179,13 +186,10 @@ for(k in 1:3){
     allout <- do.call(rbind, tmp2)
     tmp[[j]] <- allout
   }
-  
-  results[[k]] <- data.frame(sensitivity = k, do.call(rbind, tmp))
-  
+  data.frame(pressure_def = k, do.call(rbind, tmp))
 }
 )
+stopCluster(cl)
 
-results.final <- do.call(rbind, results)
-
-write.csv(results.final, paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv'), row.names = F)
+write.csv(results, paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv'), row.names = F)
 
