@@ -9,9 +9,6 @@ library(ggh4x)
 source('scripts/helpers/models_v2.R')
 
 drivers <- read.csv('data/typologies/SLR_Data.csv')
-
-# wrangle historical SRS observations of mangrove loss and gain into categories of change
-
 spatial_dat <- read.csv('outputs/master-dat.csv')
 
 # which model outcomes to validate? Get outcomes for that model
@@ -19,8 +16,7 @@ spatial_dat <- read.csv('outputs/master-dat.csv')
 names(models) # names of available models
 chosen_model_name <- 'mangrove_model'
 dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
-  filter(cast == 'hindcast')# %>% 
-  #mutate(Prob_change = ifelse(Prob_gain > 50, Prob_gain, Prob_loss))
+  filter(cast == 'hindcast')
 
 # join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
 
@@ -47,16 +43,16 @@ write.csv(class, 'outputs/validation/validation-results.csv', row.names = F)
 # function
 calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference vector
 cont.table <- confusionMatrix(factor(x), factor(x2))$table # contingency table
-commission <- diag(cont.table)/rowSums(cont.table)*100
-omission <- diag(cont.table)/colSums(cont.table)*100
+users <- diag(cont.table)/rowSums(cont.table)*100
+producers <- diag(cont.table)/colSums(cont.table)*100
 overall.accuracy <- sum(diag(cont.table))/sum(cont.table)*100
-class.df <- data.frame(class = levels(factor(x2)), Overall_accuracy = overall.accuracy, Producers_accuracy = omission, Users_accuracy = commission)
+class.df <- data.frame(class = levels(factor(x2)), Overall_accuracy = overall.accuracy, Producers_accuracy = producers, Users_accuracy = users)
 accuracy_list <- list(class.df, cont.table)
 names(accuracy_list) <- c('accuracy.results', 'contingency.table')
 return(accuracy_list)
 }
 
-# remove ambiguous responses and units where commodities and erosion are dominant drivers of loss, can't validate with our model
+# split into land vs. sea and remove ambiguous responses and units where commodities and erosion are dominant drivers of loss, can't validate with our model
 land_validate <- class %>% 
   left_join(drivers, by = 'Type') %>% 
   filter(Change_LandwardMang != 'Ambiguous' & Commodities < 0.1 & Erosion < 0.1) 
@@ -64,7 +60,7 @@ sea_validate <- class %>%
   left_join(drivers, by = 'Type') %>% 
   filter(Change_SeawardMang != 'Ambiguous' & Commodities < 0.1 & Erosion < 0.1) 
 
-# net change validation
+# net change hindcast accuracy across different pressure and ambiguity thresholds
 tmp2 <- list()
 for(j in seq_along(unique(dat$pressure_def))){
   land <- land_validate %>% filter(pressure_def == j)
@@ -91,7 +87,7 @@ for(i in seq_along(threshold)){
 accuracy <- do.call(rbind, tmp2) %>%  mutate(mangrove = factor(mangrove, levels = c('Seaward', 'Landward')))
 write.csv(accuracy, 'outputs/validation/accuracy-threshold-vary.csv', row.names = F)
 
-# heatmap of overall accuracy for combinations of pressure definition and ambiguity thresholds
+# heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
 
 accuracy %>% 
   filter(validation == 'net') %>% 
