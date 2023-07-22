@@ -12,6 +12,7 @@ Link to documents describing all spatial data processing:
 ##### TODO
 
 -   [ ] Consider removing slr and subsidence and other longterm threats from validation
+-   [ ] If going to exclude areas with loss from commodities and erosion, update drivers data with CB estimates
 
 #### Scripts
 
