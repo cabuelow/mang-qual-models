@@ -5,84 +5,41 @@ library(caret)
 library(sf)
 library(scales)
 library(patchwork)
+library(ggh4x)
 source('scripts/helpers/models_v2.R')
 
-typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
+drivers <- read.csv('data/typologies/SLR_Data.csv')
 
-# wrangle historical SRS observations of mangrove loss and gain into categories of change (no change, loss, gain, loss and gain)
+# wrangle historical SRS observations of mangrove loss and gain into categories of change
 
-spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
-  filter(sensitivity == 2) %>% 
-  mutate(sea_gross_gain_loss = sea_gross_gain + sea_gross_loss,
-        land_gross_gain_loss = land_gross_gain + land_gross_loss) %>% 
-  mutate(sea_change_obs = ifelse(sea_gross_gain_loss == 2, 'Loss & Gain', NA),
-         sea_change_obs = ifelse(sea_gross_gain_loss != 2 & sea_gross_gain ==1, 'Gain', sea_change_obs),
-         sea_change_obs = ifelse(sea_gross_gain_loss != 2 & sea_gross_loss ==1, 'Loss', sea_change_obs),
-         sea_change_obs = ifelse(sea_gross_gain_loss == 0, 'Gain', sea_change_obs), # here treating neutrality as gain, as in network model
-         land_change_obs = ifelse(land_gross_gain_loss == 2, 'Loss & Gain', NA),
-         land_change_obs = ifelse(land_gross_gain_loss != 2 & land_gross_gain ==1, 'Gain', land_change_obs),
-         land_change_obs = ifelse(land_gross_gain_loss != 2 & land_gross_loss ==1, 'Loss', land_change_obs),
-         land_change_obs = ifelse(land_gross_gain_loss == 0, 'Gain', land_change_obs)) %>%  # here treating neutrality as gain, as in network model 
-  mutate(sea_gain_obs = ifelse(sea_gross_gain == 1, 'Gain', 'No Gain'),
-         sea_loss_obs = ifelse(sea_gross_loss == 1, 'Loss', 'No Loss'),
-         land_gain_obs = ifelse(land_gross_gain == 1, 'Gain', 'No Gain'),
-         land_loss_obs = ifelse(land_gross_loss == 1, 'Loss', 'No Loss'),
-         sea_net_gain_obs = ifelse(sea_net_gain == 1, 'Gain', 'No Gain'),
-         sea_net_loss_obs = ifelse(sea_net_loss == 1, 'Loss', 'No Loss'),
-         land_net_gain_obs = ifelse(land_net_gain == 1, 'Gain', 'No Gain'),
-         land_net_loss_obs = ifelse(land_net_loss == 1, 'Loss', 'No Loss'),
-         land_net_change_obs = ifelse(land_net_gain == 1, 'Gain', 'Loss'),
-         sea_net_change_obs = ifelse(sea_net_gain == 1, 'Gain', 'Loss'))
+spatial_dat <- read.csv('outputs/master-dat.csv')
 
 # which model outcomes to validate? Get outcomes for that model
 
 names(models) # names of available models
 chosen_model_name <- 'mangrove_model'
 dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
-  filter(cast == 'hindcast' & senstivity == 2) %>% 
-  mutate(Prob_change = ifelse(Prob_gain_neutral > 50, Prob_gain_neutral, Prob_loss))
+  filter(cast == 'hindcast')# %>% 
+  #mutate(Prob_change = ifelse(Prob_gain > 50, Prob_gain, Prob_loss))
 
 # join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
 
-threshold <- seq(60, 90, by = 5) # threshold for defining when a prediction is ambiguous or not
+threshold <- seq(60, 90, by = 5) # range of thresholds for defining when a prediction is ambiguous or not
 
-# land
 tmp <- list()
 for(i in seq_along(threshold)){
   thresh <- threshold[i]
   tmp[[i]] <- dat %>% 
-    pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
-    mutate(Land_Gain = ifelse(LandwardMang > thresh, 'Gain', 'No Gain'),
-           Land_Ambig = ifelse(LandwardMang <= thresh & LandwardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
-           Land_Loss = ifelse(LandwardMang < -thresh, 'Loss', 'No Loss')) %>% 
-    mutate(Land_Change = ifelse(Land_Gain == 'Gain', 'Gain', NA),
-           Land_Change = ifelse(Land_Ambig == 'Ambiguous', 'Ambiguous', Land_Change),
-           Land_Change = ifelse(Land_Loss == 'Loss', 'Loss', Land_Change)) %>% 
-    inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
-    select(Type, Land_Gain:Land_Change, land_change_obs, land_gain_obs, land_loss_obs, land_net_gain_obs, land_net_loss_obs, land_net_change_obs) %>% 
+    mutate(Change = case_when(Prob_gain > thresh ~ 'Gain',
+                                   Prob_loss < -thresh ~ 'Loss',
+                                   Prob_neutral > thresh ~ 'Neutral',
+                              .default = 'Ambiguous')) %>%
+    pivot_wider(id_cols = c('Type', 'cast', 'pressure_def'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
+    inner_join(select(spatial_dat, Type, pressure_def, land_net_change, sea_net_change), by = c('Type', 'pressure_def')) %>% 
     mutate(ambig_threshold = thresh)
 }
-land <- do.call(rbind, tmp)
-write.csv(land, 'outputs/validation/land-validation-results.csv', row.names = F)
-
-# sea
-tmp <- list()
-for(i in seq_along(threshold)){
-  thresh <- threshold[i]
-  tmp[[i]] <- dat %>% 
-    pivot_wider(id_cols = -c(Prob_loss, Prob_gain_neutral), names_from = 'var', values_from = 'Prob_change') %>% 
-    mutate(Sea_Gain = ifelse(SeawardMang > thresh, 'Gain', 'No Gain'),
-           Sea_Ambig = ifelse(SeawardMang <= thresh & SeawardMang >= -thresh, 'Ambiguous', 'Not Ambiguous'),
-           Sea_Loss = ifelse(SeawardMang < -thresh, 'Loss', 'No Loss')) %>% 
-    mutate(Sea_Change = ifelse(Sea_Gain == 'Gain', 'Gain', NA),
-           Sea_Change = ifelse(Sea_Ambig == 'Ambiguous', 'Ambiguous', Sea_Change),
-           Sea_Change = ifelse(Sea_Loss == 'Loss', 'Loss', Sea_Change)) %>% 
-    inner_join(select(spatial_dat, Type, sea_change_obs:sea_net_change_obs), by = 'Type') %>% 
-    select(Type, Sea_Gain:Sea_Change, sea_change_obs, sea_gain_obs, sea_loss_obs, sea_net_gain_obs, sea_net_loss_obs, sea_net_change_obs) %>% 
-    mutate(ambig_threshold = thresh)
-}
-sea <- do.call(rbind, tmp)
-write.csv(sea, 'outputs/validation/sea-validation-results.csv', row.names = F)
+class <- do.call(rbind, tmp)
+write.csv(class, 'outputs/validation/validation-results.csv', row.names = F)
 
 # calculate overall prediction/classification accuracy
 # and commission (users accuracy) and omission (producers accuracy) for each class
@@ -93,67 +50,72 @@ cont.table <- confusionMatrix(factor(x), factor(x2))$table # contingency table
 commission <- diag(cont.table)/rowSums(cont.table)*100
 omission <- diag(cont.table)/colSums(cont.table)*100
 overall.accuracy <- sum(diag(cont.table))/sum(cont.table)*100
-class.df <- data.frame(class = levels(factor(x2)), overall_accuracy = overall.accuracy, omission_accuracy = omission, commission_accuracy = commission)
+class.df <- data.frame(class = levels(factor(x2)), Overall_accuracy = overall.accuracy, Producers_accuracy = omission, Users_accuracy = commission)
 accuracy_list <- list(class.df, cont.table)
 names(accuracy_list) <- c('accuracy.results', 'contingency.table')
 return(accuracy_list)
 }
 
-# remove ambiguous responses
-land_validate <- filter(land, Land_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
-sea_validate <- filter(sea, Sea_Ambig != 'Ambiguous') # get rid of ambiguous responses, can't validate
+# remove ambiguous responses and units where commodities and erosion are dominant drivers of loss, can't validate with our model
+land_validate <- class %>% 
+  left_join(drivers, by = 'Type') %>% 
+  filter(Change_LandwardMang != 'Ambiguous' & Commodities < 0.1 & Erosion < 0.1) 
+sea_validate <- class %>%
+  left_join(drivers, by = 'Type') %>% 
+  filter(Change_SeawardMang != 'Ambiguous' & Commodities < 0.1 & Erosion < 0.1) 
 
 # net change validation
-tmp <- list()
+tmp2 <- list()
+for(j in seq_along(unique(dat$pressure_def))){
+  land <- land_validate %>% filter(pressure_def == j)
+  sea <- sea_validate %>% filter(pressure_def == j)
+  tmp <- list()
 for(i in seq_along(threshold)){
   thresh <- threshold[i]
-  landval <- land_validate %>% filter(ambig_threshold == thresh)
-  seaval <- sea_validate %>% filter(ambig_threshold == thresh)
+  landval <- land %>% filter(ambig_threshold == thresh)
+  seaval <- sea %>% filter(ambig_threshold == thresh)
   results <- data.frame(validation = 'net',
                         mangrove = 'Landward',
+                        pressure_def = j,
                         ambig_threshold = thresh, 
-                        calc_accuracy(landval$Land_Change, landval$land_net_change_obs)$accuracy.results)
+                        calc_accuracy(landval$Change_LandwardMang, landval$land_net_change)$accuracy.results)
   results2 <- data.frame(validation = 'net',
                         mangrove = 'Seaward',
+                        pressure_def = j,
                         ambig_threshold = thresh, 
-                        calc_accuracy(seaval$Sea_Change, seaval$sea_net_change_obs)$accuracy.results)
+                        calc_accuracy(seaval$Change_SeawardMang, seaval$sea_net_change)$accuracy.results)
   tmp[[i]] <- rbind(results, results2)
 }
-net_val <- do.call(rbind, tmp)
-
-# gross gains/losses validation
-tmp <- list()
-for(i in seq_along(threshold)){
-  thresh <- threshold[i]
-  landval <- land_validate %>% filter(ambig_threshold == thresh)
-  seaval <- sea_validate %>% filter(ambig_threshold == thresh)
-  results <- data.frame(validation = 'gross',
-                        mangrove = 'Landward',
-                        ambig_threshold = thresh, 
-                        calc_accuracy(landval$Land_Gain, landval$land_gain_obs)$accuracy.results)
-  results2 <- data.frame(validation = 'gross',
-                        mangrove = 'Landward',
-                        ambig_threshold = thresh, 
-                        calc_accuracy(landval$Land_Loss, landval$land_loss_obs)$accuracy.results)
-  results3 <- data.frame(validation = 'gross',
-                         mangrove = 'Seaward',
-                         ambig_threshold = thresh, 
-                         calc_accuracy(seaval$Sea_Gain, seaval$sea_gain_obs)$accuracy.results)
-  results4 <- data.frame(validation = 'gross',
-                         mangrove = 'Seaward',
-                         ambig_threshold = thresh, 
-                         calc_accuracy(seaval$Sea_Loss, seaval$sea_loss_obs)$accuracy.results)
-  tmp[[i]] <- rbind(results, results2, results3, results4)
+  tmp2[[j]] <- do.call(rbind, tmp)
 }
-gross_val <- do.call(rbind, tmp)
-accuracy <- rbind(net_val, gross_val) %>% mutate(mangrove = factor(mangrove, levels = c('Seaward', 'Landward')))
+accuracy <- do.call(rbind, tmp2) %>%  mutate(mangrove = factor(mangrove, levels = c('Seaward', 'Landward')))
 write.csv(accuracy, 'outputs/validation/accuracy-threshold-vary.csv', row.names = F)
+
+# heatmap of overall accuracy for combinations of pressure definition and ambiguity thresholds
+
+accuracy %>% 
+  filter(validation == 'net') %>% 
+  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
+  mutate(class = ifelse(metric == 'Overall_accuracy', 'Loss & Gain', class)) %>% 
+  distinct() %>% 
+  ggplot() +
+  aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
+  geom_tile() +
+  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+  facet_nested_wrap(~factor(mangrove) + factor(class) + factor(metric), nrow = 2) +
+  ylab('Pressure definition') +
+  xlab('Ambiguity probability threshold') +
+  theme_classic()
+
+ggsave('outputs/validation/accuracy-heatmap.png', width = 10, height = 4.5)
 
 # plot accuracy results
 
+# End here
+
 # net
 a <- accuracy %>% 
-  filter(validation == 'net') %>% 
+  filter(validation == 'net' & pressure_def == 1) %>% 
   pivot_longer(cols = c(overall_accuracy:commission_accuracy), names_to = 'accuracy_cat', values_to = 'accuracy') %>% 
   mutate(remove = ifelse(accuracy_cat == 'overall_accuracy' & class == 'Loss', 1, 0)) %>% 
   filter(remove == 0) %>% 
@@ -261,4 +223,40 @@ c
 
 a+b+c
 ggsave('outputs/validation/accuracy-plot.png', width = 11, height = 4)
+
+# gross gains/losses validation
+tmp2 <- list()
+for(j in seq_along(unique(dat$pressure_def))){
+  land <- land_validate %>% filter(pressure_def == j)
+  sea <- sea_validate %>% filter(pressure_def == j)
+  tmp <- list()
+  for(i in seq_along(threshold)){
+    thresh <- threshold[i]
+    landval <- land %>% filter(ambig_threshold == thresh)
+    seaval <- sea %>% filter(ambig_threshold == thresh)
+    results <- data.frame(validation = 'gross_gain',
+                          mangrove = 'Landward',
+                          pressure_def = j,
+                          ambig_threshold = thresh, 
+                          calc_accuracy(landval$Land_Gain, landval$land_gain_obs)$accuracy.results)
+    results2 <- data.frame(validation = 'gross_loss',
+                           mangrove = 'Landward',
+                           pressure_def = j,
+                           ambig_threshold = thresh, 
+                           calc_accuracy(landval$Land_Loss, landval$land_loss_obs)$accuracy.results)
+    results3 <- data.frame(validation = 'gross_gain',
+                           mangrove = 'Seaward',
+                           pressure_def = j,
+                           ambig_threshold = thresh, 
+                           calc_accuracy(seaval$Sea_Gain, seaval$sea_gain_obs)$accuracy.results)
+    results4 <- data.frame(validation = 'gross_loss',
+                           mangrove = 'Seaward',
+                           pressure_def = j,
+                           ambig_threshold = thresh, 
+                           calc_accuracy(seaval$Sea_Loss, seaval$sea_loss_obs)$accuracy.results)
+    tmp[[i]] <- rbind(results, results2, results3, results4)
+  }
+  tmp2[[j]] <- do.call(rbind, tmp)
+}
+gross_val <- do.call(rbind, tmp2)
 
