@@ -9,13 +9,20 @@ library(ggh4x)
 source('scripts/helpers/models_v2.R')
 
 drivers <- read.csv('data/typologies/SLR_Data.csv')
-spatial_dat <- read.csv('outputs/master-dat.csv')
+spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
+  mutate(land_net_change = case_when(land_net_change == 'Gain' ~ 'Gain_neutrality',
+                                    land_net_change == 'Neutral' ~ 'Gain_neutrality',
+                                    .default = land_net_change)) %>% 
+  mutate(sea_net_change = case_when(sea_net_change == 'Gain' ~ 'Gain_neutrality',
+                                    sea_net_change == 'Neutral' ~ 'Gain_neutrality',
+                                    .default = sea_net_change))
 
 # which model outcomes to validate? Get outcomes for that model
 
 names(models) # names of available models
 chosen_model_name <- 'mangrove_model'
 dat <- read.csv(paste0('outputs/simulation-outcomes/outcomes_', chosen_model_name, '_spatial.csv')) %>% 
+  mutate(Prob_gain_neutrality = Prob_gain + Prob_neutral) %>% 
   filter(cast == 'hindcast')
 
 # join outcomes to typologies and compare probability of loss/gain with historical gross loss/gain (1996-2020)
@@ -26,9 +33,9 @@ tmp <- list()
 for(i in seq_along(threshold)){
   thresh <- threshold[i]
   tmp[[i]] <- dat %>% 
-    mutate(Change = case_when(Prob_gain > thresh ~ 'Gain',
+    mutate(Change = case_when(Prob_gain_neutrality > thresh ~ 'Gain_neutrality',
                                    Prob_loss < -thresh ~ 'Loss',
-                                   Prob_neutral > thresh ~ 'Neutral',
+                                   #Prob_neutral > thresh ~ 'Neutral',
                               .default = 'Ambiguous')) %>%
     pivot_wider(id_cols = c('Type', 'cast', 'pressure_def'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
     inner_join(select(spatial_dat, Type, pressure_def, land_net_change, sea_net_change), by = c('Type', 'pressure_def')) %>% 
@@ -92,7 +99,7 @@ write.csv(accuracy, 'outputs/validation/accuracy-threshold-vary.csv', row.names 
 accuracy %>% 
   filter(validation == 'net') %>% 
   pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
-  mutate(class = ifelse(metric == 'Overall_accuracy', 'Loss & Gain', class)) %>% 
+  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
   distinct() %>% 
   ggplot() +
   aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
@@ -107,7 +114,8 @@ ggsave('outputs/validation/accuracy-heatmap.png', width = 10, height = 4.5)
 
 # identify optimal thresholds for best overall accuracy
 
-accuracy %>% filter(Overall_accuracy == max(accuracy$Overall_accuracy))
+accuracy %>% filter(mangrove == 'Landward', Overall_accuracy == max(filter(., mangrove == 'Landward')$Overall_accuracy))
+accuracy %>% filter(mangrove == 'Seaward', Overall_accuracy == max(filter(., mangrove == 'Seaward')$Overall_accuracy))
 
 # End here
 
