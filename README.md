@@ -13,7 +13,6 @@ Link to documents describing all spatial data processing:
 
 -   [ ] Consider removing slr and subsidence and other longterm threats from validation
 -   [ ] If going to exclude areas with loss from commodities and erosion, update drivers data with CB estimates
-- [ ] When making predictions with test data, not doing h, m, l edge constraints, needs some troubleshooting
 
 #### Scripts
 
