@@ -44,20 +44,7 @@ for(i in seq_along(threshold)){
 class <- do.call(rbind, tmp)
 write.csv(class, 'outputs/validation/validation-results.csv', row.names = F)
 
-# calculate overall prediction/classification accuracy
-# and commission (users accuracy) and omission (producers accuracy) for each class
-
-# function
-calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference vector
-cont.table <- confusionMatrix(factor(x), factor(x2))$table # contingency table
-users <- diag(cont.table)/rowSums(cont.table)*100
-producers <- diag(cont.table)/colSums(cont.table)*100
-overall.accuracy <- sum(diag(cont.table))/sum(cont.table)*100
-class.df <- data.frame(class = levels(factor(x2)), Overall_accuracy = overall.accuracy, Producers_accuracy = producers, Users_accuracy = users)
-accuracy_list <- list(class.df, cont.table)
-names(accuracy_list) <- c('accuracy.results', 'contingency.table')
-return(accuracy_list)
-}
+# calculate prediction/classification accuracy
 
 # split into land vs. sea and remove ambiguous responses and units where commodities and erosion are dominant drivers of loss, can't validate with our model
 land_validate <- class %>% 
