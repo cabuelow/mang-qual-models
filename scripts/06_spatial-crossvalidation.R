@@ -59,7 +59,7 @@ names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply
 
 kfold <- 5 # number of folds
 shuffled_dat <- spatial_dat[sample(1:nrow(spatial_dat)),] %>% 
-  mutate(k = rep(1:5, each = nrow(spatial_dat)/kfold))
+  mutate(k = rep(1:kfold, each = nrow(spatial_dat)/kfold))
 
 # loop through each fold and train/test model
 
@@ -147,7 +147,7 @@ results <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyv
 
 stopCluster(cl)
 write.csv(results, paste0('outputs/validation/training_weights_', chosen_model_name, '_spatial.csv'), row.names = F)
-results <- read.csv(paste0('outputs/validation/training_weights_', chosen_model_name, '_spatial.csv'))
+#results <- read.csv(paste0('outputs/validation/training_weights_', chosen_model_name, '_spatial.csv'))
 
 # identify pressure combinations that are invalid - i.e., model cannot predict for - make these ambiguous?
 
@@ -298,11 +298,11 @@ sea_validate <- class %>%
   #left_join(drivers, by = 'Type') %>% 
   filter(Change_SeawardMang != 'Ambiguous') #& Commodities < 0.1 & Erosion < 0.1) 
 
-# net change hindcast accuracy across different pressure and ambiguity thresholds
-#tmp2 <- list()
-#for(j in seq_along(unique(dat$pressure_def))){
-  #land <- land_validate %>% filter(pressure_def == j)
-  #sea <- sea_validate %>% filter(pressure_def == j)
+# net change hindcast accuracy
+tmp2 <- list()
+for(j in seq_along(unique(class$kfold))){
+  land <- land_validate %>% filter(kfold == j)
+  sea <- sea_validate %>% filter(kfold == j)
 tmp <- list()
 for(i in seq_along(threshold)){
     thresh <- threshold[i]
@@ -310,17 +310,18 @@ for(i in seq_along(threshold)){
     seaval <- sea_validate %>% filter(ambig_threshold == thresh)
     results <- data.frame(validation = 'net',
                           mangrove = 'Landward',
-                          pressure_def = j,
                           ambig_threshold = thresh, 
                           calc_accuracy(landval$Change_LandwardMang, landval$land_net_change)$accuracy.results)
     results2 <- data.frame(validation = 'net',
                            mangrove = 'Seaward',
-                           pressure_def = j,
                            ambig_threshold = thresh, 
                            calc_accuracy(seaval$Change_SeawardMang, seaval$sea_net_change)$accuracy.results)
     tmp[[i]] <- rbind(results, results2)
 }
-accuracy <- do.call(rbind, tmp) %>%  mutate(mangrove = factor(mangrove, levels = c('Seaward', 'Landward')))
+tmp2[[j]] <- data.frame(kfold = j, do.call(rbind, tmp))
+}
+
+accuracy <- do.call(rbind, tmp2) %>%  mutate(mangrove = factor(mangrove, levels = c('Seaward', 'Landward')))
 write.csv(accuracy, 'outputs/validation/cross-val-accuracy.csv', row.names = F)
 
 # heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
@@ -334,8 +335,8 @@ accuracy %>%
   aes(x = ambig_threshold, y = mangrove, fill = accuracy) +
   geom_tile() +
   scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
-  facet_nested_wrap(~factor(class) + factor(metric), nrow = 2) +
-  ylab('Pressure definition') +
+  facet_nested_wrap(~factor(kfold) + factor(class) + factor(metric), nrow = 5) +
+  ylab('') +
   xlab('Ambiguity probability threshold') +
   theme_classic()
 
