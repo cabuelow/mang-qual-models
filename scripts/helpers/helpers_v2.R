@@ -208,14 +208,20 @@ community.sampler_con3 <- function (constrainedigraph, required.groups = c(0), f
   upper <- weights.ordered$weight_upp
   
   ## set up constraints for high, medium, low, only if within range of valid params
-  #if(all(lower[which(edges$Class == 'H' & edges$Type == 'P')] < 0.66667)){lower[which(edges$Class == 'H' & edges$Type == 'P')] <- 0.66667} 
-  #if(all(upper[which(edges$Class == 'H' & edges$Type == 'N')] > -0.66667)){upper[which(edges$Class == 'H' & edges$Type == 'N')] <- -0.66667}
-  #if(all(lower[which(edges$Class == 'M' & edges$Type == 'P')] < 0.33334)){lower[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.33334}
-  #if(all(upper[which(edges$Class == 'M' & edges$Type == 'P')] > 0.66666)){upper[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.66666}
-  #if(all(lower[which(edges$Class == 'M' & edges$Type == 'N')] > -0.66666)){lower[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.66666}
-  #if(all(upper[which(edges$Class == 'M' & edges$Type == 'N')] < -0.33334)){upper[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.33334}
-  #if(all(upper[which(edges$Class == 'L' & edges$Type == 'P')] > 0.33333)){upper[which(edges$Class == 'L' & edges$Type == 'P')] <- 0.33333}
-  #if(all(lower[which(edges$Class == 'L' & edges$Type == 'N')] < -0.33333)){lower[which(edges$Class == 'L' & edges$Type == 'N')] <- -0.33333}
+  ind <- which(edges$Class == 'H' & edges$Type == 'P')
+  if(all(lower[ind] < 0.66667 & upper[ind] > 0.66667)){lower[ind] <- 0.66667}else{lower[ind] <- 0.66667; upper[ind] <- 0.66667} 
+  ind <- which(edges$Class == 'H' & edges$Type == 'N')
+  if(all(upper[ind] > -0.66667 & lower[ind] < -0.66667)){upper[ind] <- -0.66667}else{lower[ind] <- -0.66667; upper[ind] <- -0.66667}
+  ind <- which(edges$Class == 'M' & edges$Type == 'P')
+  if(all(lower[ind] < 0.33334 | lower[ind] > 0.33334)){lower[ind] <- 0.33334}
+  if(all(upper[ind] > 0.66666 | upper[ind] < 0.66666)){upper[ind] <- 0.66666}
+  ind <- which(edges$Class == 'M' & edges$Type == 'N')
+  if(all(lower[ind] > -0.66666 | lower[ind] < -0.66666)){lower[ind] <- -0.66666}
+  if(all(upper[ind] < -0.33334 | upper[ind] > -0.33334)){upper[ind] <- -0.33334}
+  ind <- which(edges$Class == 'L' & edges$Type == 'P')
+  if(all(upper[ind] > 0.33333 & lower[ind] < 0.33333)){upper[ind] <- 0.33333}else{upper[ind] <- 0.33334; lower[ind] <- 0.33333} 
+  ind <- which(edges$Class == 'L' & edges$Type == 'N')
+  if(all(lower[ind] < -0.33333 & upper[ind] > -0.33333)){lower[ind] <- -0.33333}else{lower[ind] <- -0.33334; upper[ind] <- -0.33333}
   k.edges <- as.vector(unclass(edges$To) + (unclass(edges$From) - 
                                               1) * n.nodes)
   uncertain <- which(!(edges$Group %in% required.groups))
