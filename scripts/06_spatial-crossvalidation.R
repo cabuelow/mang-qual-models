@@ -5,6 +5,8 @@ library(tidyverse)
 library(scales)
 library(foreach)
 library(doParallel)
+library(caret)
+library(ggh4x)
 source('scripts/helpers/models_v2.R')
 source('scripts/helpers/helpers_v2.R')
 
@@ -16,7 +18,7 @@ chosen_model_name <- 'mangrove_model'
 spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
   mutate(land_net_change_obs = ifelse(land_net_change == 'Gain', 1, -1),
          sea_net_change_obs = ifelse(sea_net_change == 'Gain', 1, -1)) %>% 
-  filter(pressure_def == 3) %>% 
+  filter(pressure_def == 4) %>% 
   mutate(csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
          csqueeze_1 = ifelse(csqueeze == 'None', 0, 1), 
          fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
@@ -24,12 +26,22 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
          sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
          fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
          prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
-         Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L'))
+         Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L')) %>% 
+  mutate(land_net_change = case_when(land_net_change == 'Gain' ~ 'Gain_neutrality',
+                                     land_net_change == 'Neutral' ~ 'Gain_neutrality',
+                                     .default = land_net_change)) %>% 
+  mutate(sea_net_change = case_when(sea_net_change == 'Gain' ~ 'Gain_neutrality',
+                                    sea_net_change == 'Neutral' ~ 'Gain_neutrality',
+                                    .default = sea_net_change))
+drivers <- read.csv('data/typologies/SLR_Data.csv')
 
 # set simulation parameters
 
 set.seed(123) # set random number generator to make results reproducible
-numsims <- 100 # number of model simulations to run
+numsims <- 100 # number of model simulations to run - takes 43 mins to do 100 in parallel
+#TODO: to run 1000 sims takes up too much memory on laptop - any way to reduce results size?
+# 7.4 GB results file from just 100 sims, if we bump up to 1000 wil by >70 GBs
+# 1000 will take ~7.5 hrs to run in parallel
 
 # define relative edge constraints - which edge interaction strengths are greater than other
 # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
@@ -54,16 +66,13 @@ shuffled_dat <- spatial_dat[sample(1:nrow(spatial_dat)),] %>%
 cl <- makeCluster(5)
 registerDoParallel(cl)
 
-#tmpout <- list()
-#tmpweights <- list()
 system.time(
 results <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar% {
   
   train_dat <- shuffled_dat %>% filter(k != i)
   
   # loop through training sites, simulate and validate against observations, only keeping predictions that are valid
-  tmpout2 <- list()
-  tmpweights2 <- list()
+  tmpweights <- list() # list for storing weights
   for(j in 1:nrow(train_dat)){
     
     datselect <- select(train_dat[j,], csqueeze_1, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
@@ -117,34 +126,217 @@ results <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyv
                             monitor = monitor.scenario,
                             spatial = 'Y')
     
-    tmpout2[[j]] <- sim$stableoutcome %>% 
+    outcomes <- sim$stableoutcome %>% 
       filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
       group_by(valid, pressures, var) %>% 
       summarise(Prob_gain = (sum(outcome>0)/n())*100,
                 Prob_neutral = (sum(outcome==0)/n())*100,
                 Prob_loss = (sum(outcome<0)/n())*-100) %>% 
-      mutate(Type = train_dat[j, 'Type'],
-             cast = 'training',
-             kfold = i)
+      pivot_wider(id_cols = c('pressures'), names_from = 'var', values_from = c('Prob_gain', 'Prob_neutral', 'Prob_loss'))
     
-    tmpweights2[[j]] <- sim$stableweights %>% 
+    tmpweights[[j]] <- data.frame(sim$stableweights %>% 
       mutate(Type = train_dat[j, 'Type'],
              cast = 'training',
-             kfold = i)
+             kfold = i, 
+             ), outcomes[,-1], 
+      pivot_wider(datmonitor, names_from = 'monitor', values_from = 'vals', names_prefix = 'Observed_'))
   }
-  #tmpout[[i]] <- do.call(rbind, tmpout2)
-  data.frame(do.call(rbind, tmpweights2))
+  data.frame(do.call(rbind, tmpweights))
 }
 )
 
 stopCluster(cl)
 write.csv(results, paste0('outputs/validation/training_weights_', chosen_model_name, '_spatial.csv'), row.names = F)
+results <- read.csv(paste0('outputs/validation/training_weights_', chosen_model_name, '_spatial.csv'))
 
-# identify scenarios and locations that are invalid - i.e., model cannot predict for
+# identify pressure combinations that are invalid - i.e., model cannot predict for - make these ambiguous?
 
-# loop through the test folds and make hindcasts using weight ranges from relevant valid pressure scenarios
-# quantify accuracy of outcomes
+nrow(filter(results, valid == 'valid'))/nrow(results) # what percentage of simulations are valid
+invalid <- results %>% filter(valid == 'invalid') %>% 
+  select(Type, pressures, Prob_gain_LandwardMang:Observed_SeawardMang) %>% 
+  distinct()
+length(unique(invalid$pressures)) # number of unique invalid pressure combinations
+length(unique(invalid$Type)) # number of unique units with invalid predictions
 
+# summarise interaction strength mean and 95% confidence interval under valid pressure and observed outcome combinations
 
+param_sum <- results %>% 
+  filter(valid == 'valid') %>% 
+  group_by(pressures, param, Observed_LandwardMang, Observed_SeawardMang) %>% 
+  summarise(weight_mean = mean(weight),
+            weight_sd = sd(weight),
+            weight_se = (sd(weight)/sqrt(n()))*1.96) %>% 
+  mutate(Observed = case_when(Observed_LandwardMang == -1 & Observed_SeawardMang == -1 ~ 'Loss',
+                   Observed_LandwardMang == 1 & Observed_SeawardMang == 1 ~ 'Gain',
+                   Observed_LandwardMang == -1 & Observed_SeawardMang == 1 ~ 'Landward Loss & Seaward Gain',
+                   Observed_LandwardMang == 1 & Observed_SeawardMang == -1 ~ 'Landward Gain & Seaward Loss'))
 
+ggplot(param_sum) +
+  geom_point(aes(x = weight_mean, y = pressures, col = Observed)) +
+  geom_segment(aes(xend = weight_mean + weight_sd, x = weight_mean - weight_sd, y = pressures, yend = pressures, col = Observed), alpha = 0.5) +
+  facet_wrap(~param, nrow = 3) +
+  geom_vline(xintercept = 0, lty = 'dashed') +
+  ylab('') +
+  xlab('') +
+  theme_classic()
 
+ggsave('outputs/validation/valid-parameter-weights.png', width = 30, height = 10)
+
+# loop through the test sites and make hindcasts using weight ranges from relevant valid pressure scenarios
+
+cl <- makeCluster(5)
+registerDoParallel(cl)
+
+system.time(
+results2 <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar% {
+    
+test_dat <- shuffled_dat %>% filter(k == i)
+params <- results %>% # here am summarising over all valid simulations, regardless of observed outcome
+  filter(valid == 'valid' & kfold != i) %>% # only use weights from training data 
+  group_by(pressures, param) %>% 
+  summarise(weight_mean = mean(weight),
+            weight_upp = mean(weight) + sd(weight),
+            weight_low = mean(weight) - sd(weight)) %>% 
+  mutate(weight_upp = ifelse(weight_mean < 0 & weight_upp > 0, 0, weight_upp),
+         weight_low = ifelse(weight_mean > 0 & weight_low < 0, 0, weight_low))
+
+# loop through training sites, simulate and validate against observations, only keeping predictions that are valid
+tmp <- list() # list for storing outcomes
+for(j in 1:nrow(test_dat)){
+  
+  datselect <- dplyr::select(test_dat[j,], csqueeze_1, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
+    pivot_longer(csqueeze_1:storms, names_to = 'press', values_to = 'vals') %>% 
+    filter(vals == 1) %>% 
+    mutate(press = recode(press, 'csqueeze_1' = 'CoastalDev', 'ant_slr' = "SeaLevelRise", 'gwsub' = "GroundSubsid", 
+                          'hist_drought' = 'Drought', 'hist_ext_rain' = 'ExtremeRainfall', 'storms' = 'Cyclones'))
+  if(nrow(datselect) == 0){ # if there are no perturbations, go to next
+    next
+  }
+  press.scenario <- rep(1, nrow(datselect))
+  names(press.scenario) <- datselect$press
+  validweights <- params %>% 
+    filter(pressures == paste0(names(press.scenario), collapse = '_'))
+  if(nrow(validweights) == 0){ # if there are no valid weights for this combination of pressures, go to next
+    next
+  }
+  
+  # edge constraint scenarios
+  
+  if(test_dat[j,]$csqueeze == 'None'){
+    datselect2 <- dplyr::select(test_dat[j,], Tidal_Class, prop_estab) %>% 
+      pivot_longer(Tidal_Class:prop_estab, names_to = 'press', values_to = 'vals') 
+    from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp')
+    to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang')
+    con.scenario <- c(datselect2$vals, datselect2$vals[2])
+  }else{
+    datselect2 <- dplyr::select(test_dat[j,], Tidal_Class, prop_estab, csqueeze) %>% 
+      pivot_longer(Tidal_Class:csqueeze, names_to = 'press', values_to = 'vals') 
+    from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp', 'SeaLevelRise')
+    to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang', 'LandwardMang')
+    con.scenario <- c(datselect2$vals, datselect2$vals[2], datselect2$vals[3])
+    con.scenario <- c(datselect2$vals[c(1,2)], datselect2$vals[2], datselect2$vals[3])
+  }
+  
+  # select model for sediment supply
+  
+  if(test_dat[j,]$sed_supp == 'H'){
+    model <- rel.edge.cons.scenarios[[1]]
+  }else{
+    model <- rel.edge.cons.scenarios[[2]]
+  }
+  
+  # simulate outcomes
+  
+  sim <- system.sim_press2(numsims, constrainedigraph = model, 
+                                from = from_vec,
+                                to = to_vec,
+                                class = con.scenario,
+                                perturb = press.scenario,
+                                weights = validweights,
+                                spatial = 'Y')
+  
+  tmp[[j]] <- sim$stableoutcome %>% 
+    filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
+    group_by(var) %>% 
+    summarise(Prob_gain = (sum(outcome>0)/n())*100,
+              Prob_neutral = (sum(outcome==0)/n())*100,
+              Prob_loss = (sum(outcome<0)/n())*-100) %>% 
+    mutate(Type = test_dat[j, 'Type'],
+           kfold = i)
+}
+data.frame(do.call(rbind, tmp))
+  }
+)
+
+stopCluster(cl)
+write.csv(results2, paste0('outputs/validation/test_outcomes_', chosen_model_name, '_spatial.csv'), row.names = F)
+
+# classify outcomes and quanitfy accuracy
+
+threshold <- seq(60, 90, by = 5) # range of thresholds for defining when a prediction is ambiguous or not
+
+tmp <- list()
+for(i in seq_along(threshold)){
+  thresh <- threshold[i]
+  tmp[[i]] <- results2 %>% 
+    mutate(Prob_gain_neutrality = Prob_gain + Prob_loss) %>% 
+    mutate(Change = case_when(Prob_gain_neutrality > thresh ~ 'Gain_neutrality',
+                              Prob_loss < -thresh ~ 'Loss',
+                              .default = 'Ambiguous')) %>%
+    pivot_wider(id_cols = c('Type', 'kfold'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
+    inner_join(dplyr::select(spatial_dat, Type, pressure_def, land_net_change, sea_net_change), by = c('Type')) %>% 
+    mutate(ambig_threshold = thresh)
+}
+class <- do.call(rbind, tmp)
+write.csv(class, 'outputs/validation/validation-results.csv', row.names = F)
+
+# split into land vs. sea and remove ambiguous responses and units where commodities and erosion are dominant drivers of loss, can't validate with our model
+land_validate <- class %>% 
+  #left_join(drivers, by = 'Type') %>% 
+  filter(Change_LandwardMang != 'Ambiguous') #& Commodities < 0.1 & Erosion < 0.1) 
+sea_validate <- class %>%
+  #left_join(drivers, by = 'Type') %>% 
+  filter(Change_SeawardMang != 'Ambiguous') #& Commodities < 0.1 & Erosion < 0.1) 
+
+# net change hindcast accuracy across different pressure and ambiguity thresholds
+#tmp2 <- list()
+#for(j in seq_along(unique(dat$pressure_def))){
+  #land <- land_validate %>% filter(pressure_def == j)
+  #sea <- sea_validate %>% filter(pressure_def == j)
+tmp <- list()
+for(i in seq_along(threshold)){
+    thresh <- threshold[i]
+    landval <- land_validate %>% filter(ambig_threshold == thresh)
+    seaval <- sea_validate %>% filter(ambig_threshold == thresh)
+    results <- data.frame(validation = 'net',
+                          mangrove = 'Landward',
+                          pressure_def = j,
+                          ambig_threshold = thresh, 
+                          calc_accuracy(landval$Change_LandwardMang, landval$land_net_change)$accuracy.results)
+    results2 <- data.frame(validation = 'net',
+                           mangrove = 'Seaward',
+                           pressure_def = j,
+                           ambig_threshold = thresh, 
+                           calc_accuracy(seaval$Change_SeawardMang, seaval$sea_net_change)$accuracy.results)
+    tmp[[i]] <- rbind(results, results2)
+}
+accuracy <- do.call(rbind, tmp) %>%  mutate(mangrove = factor(mangrove, levels = c('Seaward', 'Landward')))
+write.csv(accuracy, 'outputs/validation/cross-val-accuracy.csv', row.names = F)
+
+# heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
+
+accuracy %>% 
+  filter(validation == 'net') %>% 
+  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
+  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
+  distinct() %>% 
+  ggplot() +
+  aes(x = ambig_threshold, y = mangrove, fill = accuracy) +
+  geom_tile() +
+  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+  facet_nested_wrap(~factor(class) + factor(metric), nrow = 2) +
+  ylab('Pressure definition') +
+  xlab('Ambiguity probability threshold') +
+  theme_classic()
+
+ggsave('outputs/validation/cross-validation-accuracy-heatmap.png', width = 10, height = 4.5)
