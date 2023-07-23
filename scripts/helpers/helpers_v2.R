@@ -208,14 +208,14 @@ community.sampler_con3 <- function (constrainedigraph, required.groups = c(0), f
   upper <- weights.ordered$weight_upp
   
   ## set up constraints for high, medium, low, only if within range of valid params
-  if(all(lower[which(edges$Class == 'H' & edges$Type == 'P')] < 0.66667)){lower[which(edges$Class == 'H' & edges$Type == 'P')] <- 0.66667} 
-  if(all(upper[which(edges$Class == 'H' & edges$Type == 'N')] > -0.66667)){upper[which(edges$Class == 'H' & edges$Type == 'N')] <- -0.66667}
-  if(all(lower[which(edges$Class == 'M' & edges$Type == 'P')] < 0.33334)){lower[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.33334}
-  if(all(upper[which(edges$Class == 'M' & edges$Type == 'P')] > 0.66666)){upper[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.66666}
-  if(all(lower[which(edges$Class == 'M' & edges$Type == 'N')] < -0.66666)){lower[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.66666}
-  if(all(upper[which(edges$Class == 'M' & edges$Type == 'N')] > -0.33334)){upper[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.33334}
-  if(all(upper[which(edges$Class == 'L' & edges$Type == 'P')] > 0.33333)){upper[which(edges$Class == 'L' & edges$Type == 'P')] <- 0.33333}
-  if(all(lower[which(edges$Class == 'L' & edges$Type == 'N')] < -0.33333)){lower[which(edges$Class == 'L' & edges$Type == 'N')] <- -0.33333}
+  #if(all(lower[which(edges$Class == 'H' & edges$Type == 'P')] < 0.66667)){lower[which(edges$Class == 'H' & edges$Type == 'P')] <- 0.66667} 
+  #if(all(upper[which(edges$Class == 'H' & edges$Type == 'N')] > -0.66667)){upper[which(edges$Class == 'H' & edges$Type == 'N')] <- -0.66667}
+  #if(all(lower[which(edges$Class == 'M' & edges$Type == 'P')] < 0.33334)){lower[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.33334}
+  #if(all(upper[which(edges$Class == 'M' & edges$Type == 'P')] > 0.66666)){upper[which(edges$Class == 'M' & edges$Type == 'P')] <- 0.66666}
+  #if(all(lower[which(edges$Class == 'M' & edges$Type == 'N')] > -0.66666)){lower[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.66666}
+  #if(all(upper[which(edges$Class == 'M' & edges$Type == 'N')] < -0.33334)){upper[which(edges$Class == 'M' & edges$Type == 'N')] <- -0.33334}
+  #if(all(upper[which(edges$Class == 'L' & edges$Type == 'P')] > 0.33333)){upper[which(edges$Class == 'L' & edges$Type == 'P')] <- 0.33333}
+  #if(all(lower[which(edges$Class == 'L' & edges$Type == 'N')] < -0.33333)){lower[which(edges$Class == 'L' & edges$Type == 'N')] <- -0.33333}
   k.edges <- as.vector(unclass(edges$To) + (unclass(edges$From) - 
                                               1) * n.nodes)
   uncertain <- which(!(edges$Group %in% required.groups))
@@ -361,4 +361,16 @@ constraint.order <- function(w,bounds) {
     if(k!=1) w[bs[c(1,k)]] <- w[bs[c(k,1)]]
   }
   w
+}
+
+# function
+calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference vector
+  cont.table <- confusionMatrix(factor(x), factor(x2))$table # contingency table
+  users <- diag(cont.table)/rowSums(cont.table)*100
+  producers <- diag(cont.table)/colSums(cont.table)*100
+  overall.accuracy <- sum(diag(cont.table))/sum(cont.table)*100
+  class.df <- data.frame(class = levels(factor(x2)), Overall_accuracy = overall.accuracy, Producers_accuracy = producers, Users_accuracy = users)
+  accuracy_list <- list(class.df, cont.table)
+  names(accuracy_list) <- c('accuracy.results', 'contingency.table')
+  return(accuracy_list)
 }
