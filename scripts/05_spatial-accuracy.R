@@ -78,12 +78,14 @@ for(i in seq_along(threshold)){
 }
   tmp2[[j]] <- do.call(rbind, tmp)
 }
-accuracy <- do.call(rbind, tmp2) %>%  mutate(mangrove = factor(mangrove, levels = c('Seaward', 'Landward')))
+accuracy <- do.call(rbind, tmp2)
 write.csv(accuracy, 'outputs/validation/accuracy-threshold-vary.csv', row.names = F)
 
 # heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
 
 accuracy %>% 
+  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
+  mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
   filter(validation == 'net') %>% 
   pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
   mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 

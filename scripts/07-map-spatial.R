@@ -123,17 +123,78 @@ seasummary <- sea %>%
 sum(seasummary$percent_total) # should equal 100
 write.csv(seasummary, 'outputs/summary-stats/sea.csv', row.names = F)
 
+# map matches and mismatches between hindcast and observations
 # join to spatial typologies for plotting
 
 landward_hindcast <- typ_points %>% 
   left_join(filter(land, cast == 'hindcast'), by = 'Type') %>% 
+  mutate(match = case_when(Change == land_net_change ~ 'Match', 
+                           Change == 'Ambiguous' ~ 'Ambiguous',
+                           .default = 'Mismatch')) %>% 
   st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
 seaward_hindcast <- typ_points %>% 
   left_join(filter(sea, cast == 'hindcast'), by = 'Type') %>% 
+  mutate(match = case_when(Change == sea_net_change ~ 'Match', 
+                           Change == 'Ambiguous' ~ 'Ambiguous',
+                           .default = 'Mismatch')) %>% 
   st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
 world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
+
+# map 
+
+lmap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  tm_shape(filter(landward_hindcast, is.na(Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(landward_hindcast, !is.na(Change))) +
+  tm_dots('match', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Mismatch' = 'orangered4', 'Match' = 'palegreen4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'B) Landward hindcast',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('orangered4', 'lightgoldenrod', 'palegreen4'), 
+                labels =  c('Mismatch','Ambiguous', 'Match'), border.alpha = 0, size = 0.3)
+lmap
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match', chosen_model_name, '.png'), width = 5, height = 3)
+
+smap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  tm_shape(filter(seaward_hindcast, is.na(Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(seaward_hindcast, !is.na(Change))) +
+  tm_dots('match', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Mismatch' = 'orangered4', 'Match' = 'palegreen4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'A) Seaward hindcast',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('orangered4', 'lightgoldenrod', 'palegreen4'), 
+                labels =  c('Mismatch','Ambiguous', 'Match'), border.alpha = 0, size = 0.3)
+smap
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match', chosen_model_name, '.png'), width = 5, height = 3)
 
 # map hindcasts
 
@@ -321,13 +382,13 @@ smap <- tm_shape(world_mang) +
           title = '',
           legend.show = F,
           size = 0.001) +
-  #tm_shape(filter(seaward_forecast, Sea_Change == 'Gain_neutrality' & !is.na(Sea_Change))) +
-  #tm_dots('Sea_Change', 
-   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
-    #      alpha = 0.5, 
-     #     title = '',
-      #    legend.show = F, 
-       #   size = 0.025) +
+ # tm_shape(filter(seaward_forecast, Change == 'Gain_neutrality' & !is.na(Change))) +
+#  tm_dots('Change', 
+ #         palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+  #        alpha = 0.5, 
+   #       title = '',
+    #      legend.show = F, 
+     #     size = 0.025) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
@@ -382,7 +443,7 @@ lmap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.35,
-            main.title = 'B) Landward forecast',
+            main.title = 'C) Landward forecast',
             main.title.size = 0.45,
             frame = T,
             legend.bg.color = 'white',
@@ -410,8 +471,8 @@ smap <- tm_shape(world_mang) +
           title = '',
           legend.show = F,
           size = 0.001) +
-  #tm_shape(filter(seaward_forecast_cal, Sea_Change == 'Gain_neutrality' & !is.na(Sea_Change))) +
-  #tm_dots('Sea_Change', 
+  #tm_shape(filter(seaward_forecast_cal, Change == 'Gain_neutrality' & !is.na(Change))) +
+  #tm_dots('Change', 
    #      palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
     #    alpha = 0.5, 
      #  title = '',
@@ -501,7 +562,7 @@ smap <- tm_shape(world_mang) +
           size = 0.001) +
   tm_shape(filter(seaward_forecast_sed, Change == 'Gain_neutrality' & !is.na(Change))) +
   tm_dots('Change', 
-        palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+        palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
       alpha = 0.5, 
     title = '',
   legend.show = F, 
@@ -560,7 +621,7 @@ lmap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.35,
-            main.title = 'B) Landward forecast',
+            main.title = 'D) Landward forecast with management or conservation',
             main.title.size = 0.45,
             frame = T,
             legend.bg.color = 'white',
@@ -574,13 +635,20 @@ smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
   tm_shape(filter(seaward_forecast_prop, is.na(Change))) +
   tm_dots('darkgrey', size = 0.001) +
-  tm_shape(filter(seaward_forecast_prop, Change == 'Ambiguous' & !is.na(Change))) +
+  tm_shape(filter(seaward_forecast_prop, Change == 'Gain_neutrality' & !is.na(Change))) +
   tm_dots('Change', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
           alpha = 0.5, 
           title = '',
           legend.show = F, 
           size = 0.025) +
+  tm_shape(filter(seaward_forecast_prop, Change == 'Ambiguous' & !is.na(Change))) +
+  tm_dots('Change', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
   tm_shape(filter(seaward_forecast_prop, Change == 'Loss' & !is.na(Change))) +
   tm_dots('Change', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
@@ -588,20 +656,13 @@ smap <- tm_shape(world_mang) +
           title = '',
           legend.show = F,
           size = 0.001) +
-  tm_shape(filter(seaward_forecast_prop, Change == 'Gain_neutrality' & !is.na(Change))) +
-  tm_dots('Change', 
-        palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
-      alpha = 0.5, 
-    title = '',
-  legend.show = F, 
-  size = 0.025) +
   tm_layout(legend.outside = F,
             #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.35,
-            main.title = 'A) Seaward forecast',
+            main.title = 'B) Seaward forecast with management or conservation',
             main.title.size = 0.45,
             frame = T,
             legend.bg.color = 'white',
@@ -615,6 +676,9 @@ maps <- tmap_arrange(smap, lmap, ncol = 1)
 maps
 
 tmap_save(maps, paste0('outputs/maps/forecast_map_', chosen_model_name, '_calibrated.png'), width = 6, height = 3)
+
+# End here
+
 # summarise characteristics of typologies with gains, losses, or ambiguity
 
 # land
@@ -625,7 +689,7 @@ land_sum <- spatial_dat %>%
   rowwise() %>% dplyr::mutate(geomorph = strsplit(Type, split="_")[[1]][1]) %>% 
   pivot_wider(names_from = 'geomorph', values_from = 'geomorph') %>% 
   mutate_at(vars(Delta:OpenCoast), ~ifelse(is.na(.), 0, 1)) %>% 
-  inner_join(filter(land, cast == 'forecast' & !is.na(Change)), by = 'Type') %>% 
+  inner_join(filter(landcal, !is.na(Change)), by = 'Type') %>% 
   mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Low', 1, .)) %>% 
   mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'Medium', 2, .)) %>% 
   mutate_at(vars(fut_csqueeze:sed_supp, prop_estab), ~ifelse(. == 'High', 3, .)) %>% 
@@ -636,7 +700,7 @@ land_sum <- spatial_dat %>%
   mutate_at(vars(fut_csqueeze:OpenCoast), ~rescale(as.integer(.), c(0,1))) %>% 
   pivot_longer(fut_csqueeze:OpenCoast, names_to = 'variable', values_to = 'val') %>% 
   group_by(Change, variable) %>% 
-  summarise(val = mean(val),
+  summarise(val = sum(val)/n(),
             total_change_cat = n(),
             percent_change_cat = (n()/nrow(filter(land, !is.na(Change))))*100) %>% 
   mutate(variable = recode(variable, 'Tidal_Class' = 'Tidal range',
