@@ -53,11 +53,11 @@ dat_press2 <- dat_press %>%
   filter(cast == 'forecast') %>% 
   mutate(Prob_gain_neutral = Prob_gain + Prob_neutral) %>% 
   pivot_wider(id_cols = c(var, Type), names_from = 'pressure_def', values_from = 'Prob_gain_neutral', names_prefix = 'press_') %>% 
-  mutate(Pressure_1_4 = abs(press_1-press_4),
-         Pressure_2_4 = abs(press_2-press_4),
-         Pressure_3_4 = abs(press_3-press_4),
-         Pressure_5_4 = abs(press_5-press_4)) %>% 
-  pivot_longer(cols = c(Pressure_1_4, Pressure_2_4, Pressure_3_4, Pressure_5_4), names_to = 'sensitivity', values_to = 'change') %>% 
+  mutate(`1_4` = abs(press_1-press_4),
+         `2_4` = abs(press_2-press_4),
+         `3_4` = abs(press_3-press_4),
+         `5_4` = abs(press_5-press_4)) %>% 
+  pivot_longer(cols = c(`1_4`, `2_4`, `3_4`, `5_4`), names_to = 'sensitivity', values_to = 'change') %>% 
   mutate(var = recode(var, 'LandwardMang' = 'A) Landward mangrove', 'SeawardMang' = 'B) Seaward mangrove'))
 
 ggplot(dat_press2) +
