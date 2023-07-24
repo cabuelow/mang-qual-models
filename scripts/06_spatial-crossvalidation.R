@@ -426,3 +426,155 @@ for(i in 1:nrow(spatial_dat)){
 
 forecast <- data.frame(do.call(rbind, tmp))
 write.csv(forecast, paste0('outputs/validation/calibrated_forecast', chosen_model_name, '_spatial.csv'), row.names = F)
+
+# forecast with calibrated paramater weights and restoration (increased sediment or increased propagules)
+
+params <- train_results %>% # here am summarising over all valid simulations, regardless of observed outcome
+  filter(valid == 'valid') %>% # only use weights from training data 
+  mutate(Geomorphology = sub("\\_.*", "", Type)) %>% 
+  group_by(Geomorphology, pressures, param) %>% 
+  summarise(weight_mean = mean(weight),
+            weight_upp = mean(weight) + sd(weight),
+            weight_low = mean(weight) - sd(weight)) %>% 
+  mutate(weight_upp = ifelse(weight_mean < 0 & weight_upp > 0, 0, weight_upp),
+         weight_low = ifelse(weight_mean > 0 & weight_low < 0, 0, weight_low))
+
+# forecast with increased sediment
+
+tmp <- list() # list for storing outcomes
+for(i in 1:nrow(spatial_dat)){
+  
+  datselect <- select(spatial_dat[i,], fut_csqueeze_1, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>% 
+    pivot_longer(fut_csqueeze_1:fut_storms, names_to = 'press', values_to = 'vals') %>% 
+    filter(vals == 1) %>% 
+    mutate(press = recode(press, 'fut_csqueeze_1' = 'CoastalDev', 'fut_slr' = "SeaLevelRise", 'fut_gwsub' = "GroundSubsid", 
+                          'fut_drought' = 'Drought', 'fut_ext_rain' = 'ExtremeRainfall', 'fut_storms' = 'Cyclones')) %>% 
+    rbind(data.frame(press = 'Sediment', vals = 1))
+  if(nrow(datselect) == 0){ # if there are no perturbations, go to next
+    next
+  }
+  press.scenario <- rep(1, nrow(datselect))
+  names(press.scenario) <- datselect$press
+  validweights <- params %>% 
+    filter(pressures == paste0(names(press.scenario[-length(press.scenario)]), collapse = '_') & Geomorphology == spatial_dat[i,]$Geomorphology)
+  if(nrow(validweights) == 0){ # if there are no valid weights for this combination of pressures, go to next
+    next
+  }
+  
+  # edge constraint scenarios
+  
+  if(spatial_dat[i,]$fut_csqueeze == 'None'){
+    datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab) %>% 
+      pivot_longer(Tidal_Class:prop_estab, names_to = 'press', values_to = 'vals') 
+    from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp')
+    to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang')
+    con.scenario <- c(datselect2$vals, datselect2$vals[2])
+  }else{
+    datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab, fut_csqueeze) %>% 
+      pivot_longer(Tidal_Class:fut_csqueeze, names_to = 'press', values_to = 'vals') 
+    from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp', 'SeaLevelRise')
+    to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang', 'LandwardMang')
+    con.scenario <- c(datselect2$vals[c(1,2)], datselect2$vals[2], datselect2$vals[3])
+  }
+  
+  # select model for sediment supply
+  
+  if(spatial_dat[i,]$fut_dams == 'L'){
+    model <- rel.edge.cons.scenarios[[2]]
+  }else if(spatial_dat[i,]$sed_supp == 'H'){
+    model <- rel.edge.cons.scenarios[[1]]
+  }else{
+    model <- rel.edge.cons.scenarios[[2]]
+  }
+  
+  # simulate outcomes
+  
+  sim <- system.sim_press2(numsims, constrainedigraph = model, 
+                           from = from_vec,
+                           to = to_vec,
+                           class = con.scenario,
+                           perturb = press.scenario,
+                           weights = validweights,
+                           spatial = 'Y')
+  
+  tmp[[i]] <- sim$stableoutcome %>% 
+    filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
+    group_by(var) %>% 
+    summarise(Prob_gain = (sum(outcome>0)/n())*100,
+              Prob_neutral = (sum(outcome==0)/n())*100,
+              Prob_loss = (sum(outcome<0)/n())*-100) %>% 
+    mutate(Type = spatial_dat[i, 'Type'])
+}
+
+forecast_restore <- data.frame(do.call(rbind, tmp))
+write.csv(forecast_restore, paste0('outputs/validation/calibrated_forecast', chosen_model_name, '_spatial_sedrestore.csv'), row.names = F)
+
+# forecast with increased propagules
+
+tmp <- list() # list for storing outcomes
+for(i in 1:nrow(spatial_dat)){
+  
+  datselect <- select(spatial_dat[i,], fut_csqueeze_1, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>% 
+    pivot_longer(fut_csqueeze_1:fut_storms, names_to = 'press', values_to = 'vals') %>% 
+    filter(vals == 1) %>% 
+    mutate(press = recode(press, 'fut_csqueeze_1' = 'CoastalDev', 'fut_slr' = "SeaLevelRise", 'fut_gwsub' = "GroundSubsid", 
+                          'fut_drought' = 'Drought', 'fut_ext_rain' = 'ExtremeRainfall', 'fut_storms' = 'Cyclones')) %>% 
+    rbind(data.frame(press = c('LandwardAvailableProp', 'SeawardAvailableProp'), vals = 1))
+  if(nrow(datselect) == 0){ # if there are no perturbations, go to next
+    next
+  }
+  press.scenario <- rep(1, nrow(datselect))
+  names(press.scenario) <- datselect$press
+  validweights <- params %>% 
+    filter(pressures == paste0(names(press.scenario[-c(length(press.scenario)-1, length(press.scenario))]), collapse = '_') & Geomorphology == spatial_dat[i,]$Geomorphology)
+  if(nrow(validweights) == 0){ # if there are no valid weights for this combination of pressures, go to next
+    next
+  }
+  
+  # edge constraint scenarios
+  
+  if(spatial_dat[i,]$fut_csqueeze == 'None'){
+    datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab) %>% 
+      pivot_longer(Tidal_Class:prop_estab, names_to = 'press', values_to = 'vals') 
+    from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp')
+    to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang')
+    con.scenario <- c(datselect2$vals, datselect2$vals[2])
+  }else{
+    datselect2 <- select(spatial_dat[i,], Tidal_Class, prop_estab, fut_csqueeze) %>% 
+      pivot_longer(Tidal_Class:fut_csqueeze, names_to = 'press', values_to = 'vals') 
+    from_vec <- c('SeaLevelRise', 'LandwardAvailableProp', 'SeawardAvailableProp', 'SeaLevelRise')
+    to_vec <- c('SeawardMang', 'LandwardMang', 'SeawardMang', 'LandwardMang')
+    con.scenario <- c(datselect2$vals[c(1,2)], datselect2$vals[2], datselect2$vals[3])
+  }
+  
+  # select model for sediment supply
+  
+  if(spatial_dat[i,]$fut_dams == 'L'){
+    model <- rel.edge.cons.scenarios[[2]]
+  }else if(spatial_dat[i,]$sed_supp == 'H'){
+    model <- rel.edge.cons.scenarios[[1]]
+  }else{
+    model <- rel.edge.cons.scenarios[[2]]
+  }
+  
+  # simulate outcomes
+  
+  sim <- system.sim_press2(numsims, constrainedigraph = model, 
+                           from = from_vec,
+                           to = to_vec,
+                           class = con.scenario,
+                           perturb = press.scenario,
+                           weights = validweights,
+                           spatial = 'Y')
+  
+  tmp[[i]] <- sim$stableoutcome %>% 
+    filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
+    group_by(var) %>% 
+    summarise(Prob_gain = (sum(outcome>0)/n())*100,
+              Prob_neutral = (sum(outcome==0)/n())*100,
+              Prob_loss = (sum(outcome<0)/n())*-100) %>% 
+    mutate(Type = spatial_dat[i, 'Type'])
+}
+
+forecast_restoreprop <- data.frame(do.call(rbind, tmp))
+write.csv(forecast_restoreprop, paste0('outputs/validation/calibrated_forecast', chosen_model_name, '_spatial_proprestore.csv'), row.names = F)
