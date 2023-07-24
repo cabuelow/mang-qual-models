@@ -7,6 +7,7 @@ library(scales)
 library(patchwork)
 library(ggh4x)
 source('scripts/helpers/models_v2.R')
+source('scripts/helpers/helpers_v2.R')
 
 drivers <- read.csv('data/typologies/SLR_Data.csv')
 spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
@@ -35,7 +36,6 @@ for(i in seq_along(threshold)){
   tmp[[i]] <- dat %>% 
     mutate(Change = case_when(Prob_gain_neutrality > thresh ~ 'Gain_neutrality',
                                    Prob_loss < -thresh ~ 'Loss',
-                                   #Prob_neutral > thresh ~ 'Neutral',
                               .default = 'Ambiguous')) %>%
     pivot_wider(id_cols = c('Type', 'cast', 'pressure_def'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
     inner_join(select(spatial_dat, Type, pressure_def, land_net_change, sea_net_change), by = c('Type', 'pressure_def')) %>% 
