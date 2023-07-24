@@ -47,14 +47,17 @@ ggplot(filter(dat2, tide == 'Macrotidal' & model_scenario == 'High Sediment Supp
 ggsave('outputs/sensitivity/sensitivity_structural-model-assumptions.png', height = 3, width = 8)
 
 ##### sensitivity to pressure definition ######
-# sensitivity = 2 is the baseline
+# pressure definition = 4 is the baseline
 
 dat_press2 <- dat_press %>% 
   filter(cast == 'forecast') %>% 
-  pivot_wider(id_cols = c(var, Type), names_from = 'senstivity', values_from = 'Prob_gain_neutral', names_prefix = 'sens_') %>% 
-  mutate(Low = abs(sens_1-sens_2),
-         High = abs(sens_3-sens_2)) %>% 
-  pivot_longer(cols = c(Low, High), names_to = 'sensitivity', values_to = 'change') %>% 
+  mutate(Prob_gain_neutral = Prob_gain + Prob_neutral) %>% 
+  pivot_wider(id_cols = c(var, Type), names_from = 'pressure_def', values_from = 'Prob_gain_neutral', names_prefix = 'press_') %>% 
+  mutate(Pressure_1_4 = abs(press_1-press_4),
+         Pressure_2_4 = abs(press_2-press_4),
+         Pressure_3_4 = abs(press_3-press_4),
+         Pressure_5_4 = abs(press_5-press_4)) %>% 
+  pivot_longer(cols = c(Pressure_1_4, Pressure_2_4, Pressure_3_4, Pressure_5_4), names_to = 'sensitivity', values_to = 'change') %>% 
   mutate(var = recode(var, 'LandwardMang' = 'A) Landward mangrove', 'SeawardMang' = 'B) Seaward mangrove'))
 
 ggplot(dat_press2) +
