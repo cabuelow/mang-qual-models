@@ -415,14 +415,13 @@ for(i in 1:nrow(spatial_dat)){
                            weights = validweights,
                            spatial = 'Y')
   
-  tmp[[j]] <- sim$stableoutcome %>% 
+  tmp[[i]] <- sim$stableoutcome %>% 
     filter(var %in% c('SeawardMang', 'LandwardMang')) %>% 
     group_by(var) %>% 
     summarise(Prob_gain = (sum(outcome>0)/n())*100,
               Prob_neutral = (sum(outcome==0)/n())*100,
               Prob_loss = (sum(outcome<0)/n())*-100) %>% 
-    mutate(Type = spatial_dat[j, 'Type'],
-           kfold = i)
+    mutate(Type = spatial_dat[i, 'Type'])
 }
 
 forecast <- data.frame(do.call(rbind, tmp))
