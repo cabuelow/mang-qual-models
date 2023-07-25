@@ -64,7 +64,7 @@ shuffled_dat <- spatial_dat %>%
 # use training folds to obtain hindcasts for range of pressure and ambiguity threshold definitions
 cl <- makeCluster(6)
 registerDoParallel(cl)
-system.time(
+system.time( # takes 1.16 hours to do 100 sims
 train_press <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar%{
   tmp <- list() # temp list for storing results
   for(j in seq_along(unique(shuffled_dat$pressure_def))){ # loop over pressure definitions
@@ -98,8 +98,8 @@ for(i in seq_along(threshold)){
     mutate(Change = case_when(Prob_gain_neutrality > thresh ~ 'Gain_neutrality',
                               Prob_loss < -thresh ~ 'Loss',
                               .default = 'Ambiguous')) %>%
-    pivot_wider(id_cols = c('Type', 'k', 'pressure_def'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
-    left_join(select(shuffled_dat, Type, k, pressure_def, land_net_change, sea_net_change)) %>% 
+    pivot_wider(id_cols = c('Type', 'k', 'pressure_def', 'k_press'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
+    inner_join(select(shuffled_dat, Type, pressure_def, land_net_change, sea_net_change)) %>% 
     mutate(ambig_threshold = thresh)
 }
 class <- do.call(rbind, tmp)
@@ -160,16 +160,16 @@ accuracy %>%
   xlab('Ambiguity probability threshold') +
   theme_classic()
 
-ggsave('outputs/validation/accuracy-heatmap_kfold.png', width = 10, height = 4.5)
+ggsave('outputs/validation/accuracy-heatmap_kfold.png', width = 12, height = 9)
 
 # use optimal thresholds and training set to make hindcasts and obtain valid interaction coefficients by comparing to historical observations
 # pressure definition is based on optimal for landward above, taking average from across training fold and rounding down if needed
 
-optimal_press <- round(mean(filter(accuracy, mangrove == 'Landward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Landward' & k != i)$Overall_accuracy))$pressure_def))
 cl <- makeCluster(6)
 registerDoParallel(cl)
-system.time(
+system.time( # takes 43 mins to run 100 sims
   train_params <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar%{
+      optimal_press <- round(mean(filter(accuracy, mangrove == 'Landward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Landward' & k != i)$Overall_accuracy))$pressure_def))
       train_dat <- shuffled_dat %>% filter(k != i & pressure_def == optimal_press)
       tmp <- list()
       for(k in 1:nrow(train_dat)){ #TODO: not sure why apply won't work here over rows instead of forloop
@@ -183,15 +183,16 @@ write.csv(train_params, paste0('outputs/validation/training_weights_', chosen_mo
 
 # use calibrated interaction coefficients and test fold to make independent hindcasts and quantify accuracy
 # select valid interaction coefficients based on geomorphology and pressure presence
+# use optimal pressure threshold identified from training data
 
 cl <- makeCluster(5)
 registerDoParallel(cl)
-system.time(
+system.time( # takes 9 mins to run with 100 sims
   test_results <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar% {
-    
+    optimal_press <- round(mean(filter(accuracy, mangrove == 'Landward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Landward' & k != i)$Overall_accuracy))$pressure_def))
     test_dat <- shuffled_dat %>% filter(k == i, pressure_def == optimal_press)
     params <- train_params %>% # here am summarising over all valid simulations, regardless of observed outcome
-      filter(valid == 'valid' & kfold != i) %>% # only use weights from training data 
+      filter(valid == 'valid' & k != i) %>% # only use weights from training data 
       mutate(Geomorphology = sub("\\_.*", "", Type)) %>% 
       group_by(Geomorphology, pressures, param) %>% 
       summarise(weight_mean = mean(weight),
@@ -211,20 +212,21 @@ system.time(
 stopCluster(cl)
 write.csv(test_results, paste0('outputs/validation/test_outcomes_', chosen_model_name, '_spatial.csv'), row.names = F)
 
-# classify outcomes and quanitfy accuracy
-
-threshold <- seq(60, 90, by = 5) # range of thresholds for defining when a prediction is ambiguous or not
+# classify outcomes according to optimal ambiguity threshold identified in training data and quantify accuracy
 
 tmp <- list()
-for(i in seq_along(threshold)){
-  thresh <- threshold[i]
+for(i in seq_along(kfold)){
+  opt_thresh_sea <- round(mean(filter(accuracy, mangrove == 'Seaward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Seaward' & k != i)$Overall_accuracy))$ambig_threshold))
+  opt_thresh_land <- round(mean(filter(accuracy, mangrove == 'Landward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Landward' & k != i)$Overall_accuracy))$ambig_threshold))
   tmp[[i]] <- test_results %>% 
     mutate(Prob_gain_neutrality = Prob_gain + Prob_loss) %>% 
-    mutate(Change = case_when(Prob_gain_neutrality > thresh ~ 'Gain_neutrality',
-                              Prob_loss < -thresh ~ 'Loss',
+    mutate(Change = case_when(Prob_gain_neutrality > opt_thresh_sea & mangrove == 'Seaward' ~ 'Gain_neutrality',
+                              Prob_gain_neutrality > opt_thresh_land & mangrove == 'Landward' ~ 'Gain_neutrality',
+                              Prob_loss < -opt_thresh_sea & mangrove == 'Seaward' ~ 'Loss',
+                              Prob_loss < -opt_thresh_land & mangrove == 'Landward' ~ 'Loss',
                               .default = 'Ambiguous')) %>%
-    pivot_wider(id_cols = c('Type', 'kfold'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
-    inner_join(dplyr::select(spatial_dat, Type, pressure_def, land_net_change, sea_net_change), by = c('Type')) %>% 
+    pivot_wider(id_cols = c('Type', 'k'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
+    inner_join(dplyr::select(shuffled_dat, Type, pressure_def, land_net_change, sea_net_change)) %>% 
     mutate(ambig_threshold = thresh)
 }
 test_class <- do.call(rbind, tmp)
