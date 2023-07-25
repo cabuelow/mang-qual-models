@@ -2,7 +2,7 @@
 # randomly shuffle and split mangrove typological units into training and test folds
 # loop through splits and use training data to calibrate model
 # calibration is 2 steps, a. threshold calibration, b. parameter calibration
-# then make hindcasts using test data and calibrated thresholds/parameters
+# then make hindcasts using test data and calibrated thresholds/parameters and quanitfy accuracy
 
 library(QPress)
 library(tidyverse)
@@ -54,7 +54,7 @@ names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply
 
 # set up training vs. test folds
 
-nsim <- 2 # number of sims
+nsim <- 100 # number of sims
 kfold <- 5 # number of folds
 shuffled_dat <- spatial_dat %>% 
   left_join(data.frame(Type = spatial_dat[1:length(unique(spatial_dat$Type)),]$Type[sample(1:length(unique(spatial_dat$Type)))],
@@ -64,7 +64,6 @@ shuffled_dat <- spatial_dat %>%
 # use training folds to obtain hindcasts for range of pressure and ambiguity threshold definitions
 cl <- makeCluster(6)
 registerDoParallel(cl)
-
 system.time(
 train_press <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar%{
   tmp <- list() # temp list for storing results
