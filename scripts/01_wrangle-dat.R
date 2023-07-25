@@ -302,21 +302,4 @@ mast.dat <- do.call(rbind, tmp)
 
 write.csv(mast.dat, 'outputs/master-dat.csv', row.names = F)
 
-
 # End here
-
-sealand <- read.csv('outputs/processed-data/sea-land-extent-change.csv') %>% 
-  mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(is.na(.), 0, .)) %>% # NAs are where there was no loss or gain
-  #mutate_at(vars(sea_gain_ha:land_loss_ha), ~ifelse(. < 100, 0, .)) %>% # only consider areas of loss or gain > 1km2 (100ha)
-  mutate(sea_net = sea_gain_ha - sea_loss_ha,
-         land_net = land_gain_ha - land_loss_ha) %>% 
-  mutate(sea_gross_gain = ifelse(sea_gain_ha > 0, 1, 0),
-         sea_gross_loss = ifelse(sea_loss_ha > 0, 1, 0),
-         land_gross_gain = ifelse(land_gain_ha > 0, 1, 0),
-         land_gross_loss = ifelse(land_loss_ha > 0, 1, 0),
-         sea_net_gain = ifelse(sea_net > 0, 1, 0),
-         sea_net_loss = ifelse(sea_net < 0, 1, 0),
-         land_net_gain = ifelse(land_net > 0, 1, 0),
-         land_net_loss = ifelse(land_net < 0, 1, 0)) %>%
-  select(Type, sea_gross_gain:land_net_loss)
-
