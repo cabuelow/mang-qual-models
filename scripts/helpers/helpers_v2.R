@@ -369,14 +369,3 @@ constraint.order <- function(w,bounds) {
   w
 }
 
-# function
-calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference vector
-  cont.table <- confusionMatrix(factor(x), factor(x2))$table # contingency table
-  users <- diag(cont.table)/rowSums(cont.table)*100
-  producers <- diag(cont.table)/colSums(cont.table)*100
-  overall.accuracy <- sum(diag(cont.table))/sum(cont.table)*100
-  class.df <- data.frame(class = levels(factor(x2)), Overall_accuracy = overall.accuracy, Producers_accuracy = producers, Users_accuracy = users)
-  accuracy_list <- list(class.df, cont.table)
-  names(accuracy_list) <- c('accuracy.results', 'contingency.table')
-  return(accuracy_list)
-}

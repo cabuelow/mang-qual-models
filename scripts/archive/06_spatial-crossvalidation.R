@@ -204,7 +204,7 @@ params <- train_results %>% # here am summarising over all valid simulations, re
   mutate(weight_upp = ifelse(weight_mean < 0 & weight_upp > 0, 0, weight_upp),
          weight_low = ifelse(weight_mean > 0 & weight_low < 0, 0, weight_low))
 
-# loop through training sites, simulate and validate against observations, only keeping predictions that are valid
+# loop through test sites
 tmp <- list() # list for storing outcomes
 for(j in 1:nrow(test_dat)){
   

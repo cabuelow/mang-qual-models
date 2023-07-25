@@ -11,7 +11,6 @@ Link to documents describing all spatial data processing:
 
 ##### TODO
 
--   [ ] Consider removing slr and subsidence and other longterm threats from validation
 -   [ ] If going to exclude areas with loss from commodities and erosion, update drivers data with CB estimates
 
 #### Scripts
@@ -22,17 +21,17 @@ Link to documents describing all spatial data processing:
 
 3.  03_plot-scenarios.R: plot the scenario results
 
-4.  04_model-spatial.R: map forecasts and hindcasts to mangrove typologies under different pressure definition thresholds
+4.  04_spatial-model-hindcast-validation.R: make spatial hindcasts, calibrate and cross-validate
 
-5.  05_spatial-accuracy.R: compare hindcasts to historical observations of mangrove loss and gain across pressure and ambiguity thresholds and quantify accuracy
+5.  05_spatial-model-forecast.R: make calibrated forecasts
 
-6.  06_spatial-crossvalidation.R: 5-fold crossvalidation training models to historical observations of mangrove change and testing on unseen data
+6.  06_map-spatial.R: map the hindcasts and forecasts
 
-7.  07_map-spatial.R: map spatial hindcasts and forecasts
+7.  07_plot-sensitivity.R: plot sensitivity analyses
 
-8.  07_plot-sensitivity.R: plot sensitivity analyses
+8.  helpers/models.R: a script that builds different models
 
-9.  helpers/models.R: a script that builds different models
+9.  helpers/helpers.R: a script with helper functions for simulating models
 
-10. helpers/helpers.R: a script with helper functions for simulating responses
+10. helpers/spatial-helpers.R: a script with helper functions for simulating models spatially
 
