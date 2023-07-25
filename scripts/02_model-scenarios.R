@@ -4,8 +4,8 @@
 library(QPress)
 library(tidyverse)
 library(patchwork)
-source('scripts/helpers/models_v2.R')
-source('scripts/helpers/helpers_v2.R')
+source('scripts/helpers/models.R')
+source('scripts/helpers/helpers.R')
 
 # loop through available model structures and store results in tmp files
 tmp <- list()

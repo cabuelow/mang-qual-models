@@ -8,7 +8,7 @@ library(cowplot)
 library(ggplotify)
 library(tmaptools)
 library(patchwork)
-source('scripts/helpers/models_v2.R')
+source('scripts/helpers/models.R')
 sf_use_s2(FALSE)
 
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')

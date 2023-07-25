@@ -1,3 +1,4 @@
+# hindcast cross validation
 # randomly shuffle and split mangrove typological units into training and test folds
 # loop through splits and use training data to calibrate model
 # calibration is 2 steps, a. threshold calibration, b. parameter calibration
@@ -6,11 +7,13 @@
 library(QPress)
 library(tidyverse)
 library(scales)
+library(caret)
+library(ggh4x)
 library(foreach)
 library(doParallel)
-source('scripts/helpers/models_v2.R')
-source('scripts/helpers/helpers_v2.R')
-source('scripts/helpers/validation.R')
+source('scripts/helpers/models.R')
+source('scripts/helpers/helpers.R')
+source('scripts/helpers/spatial-helpers.R')
 set.seed(123) # set random number generator to make results reproducible
 
 # read in spatial data (mangrove typological units)
@@ -18,7 +21,6 @@ set.seed(123) # set random number generator to make results reproducible
 spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
   mutate(land_net_change_obs = ifelse(land_net_change == 'Gain', 1, -1),
          sea_net_change_obs = ifelse(sea_net_change == 'Gain', 1, -1)) %>% 
-  filter(pressure_def == 4) %>% 
   mutate(csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
          csqueeze_1 = ifelse(csqueeze == 'None', 0, 1), 
          fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
@@ -52,19 +54,139 @@ names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply
 
 # set up training vs. test folds
 
+nsim <- 2 # number of sims
 kfold <- 5 # number of folds
-shuffled_dat <- spatial_dat[sample(1:nrow(spatial_dat)),] %>% 
-  mutate(k = rep(1:kfold, each = nrow(spatial_dat)/kfold))
-
-# loop through each fold
+shuffled_dat <- spatial_dat %>% 
+  left_join(data.frame(Type = spatial_dat[1:length(unique(spatial_dat$Type)),]$Type[sample(1:length(unique(spatial_dat$Type)))],
+                           k = rep(1:kfold, each = length(unique(spatial_dat$Type))/kfold)), by = 'Type') %>% 
+  mutate(k_press = paste0(.$k, '_', .$pressure_def))
 
 # use training folds to obtain hindcasts for range of pressure and ambiguity threshold definitions
+cl <- makeCluster(6)
+registerDoParallel(cl)
 
-# quantify accuracy of hindcasts and identify optimal thresholds
+system.time(
+train_press <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar%{
+  tmp <- list() # temp list for storing results
+  for(j in seq_along(unique(shuffled_dat$pressure_def))){ # loop over pressure definitions
+    train_dat <- shuffled_dat %>% filter(k != i & pressure_def == j)
+    tmp2 <- list()
+    for(k in 1:nrow(train_dat)){ #TODO: not sure why apply won't work here over rows instead of forloop
+      tmp2[[k]] <- cast(train_dat[k,], numsims = nsim, type = 'hindcast')
+    }
+    tmp[[j]] <- data.frame(k = i, pressure_def = j, do.call(rbind, tmp2))
+  }
+  do.call(rbind, tmp)
+}
+)
+stopCluster(cl)
+write.csv(train_press, paste0('outputs/validation/hindcast-pressure-outcomes_', chosen_model_name, '.csv'), row.names = F)
+
+# quantify accuracy of hindcasts across range of pressure and ambiguity defnitions and identify optimal thresholds
+
+train_press <- train_press %>%
+  mutate(Prob_gain_neutrality = Prob_gain + Prob_neutral)
+
+threshold <- seq(60, 90, by = 5) # range of thresholds for defining when a prediction is ambiguous or not
+
+# classify outcomes - gain, loss, ambiguous - for each ambiguity threshold
+
+tmp <- list()
+for(i in seq_along(threshold)){
+  thresh <- threshold[i]
+  tmp[[i]] <- train_press %>% 
+    mutate(k_press = paste0(.$k, '_', .$pressure_def)) %>% 
+    mutate(Change = case_when(Prob_gain_neutrality > thresh ~ 'Gain_neutrality',
+                              Prob_loss < -thresh ~ 'Loss',
+                              .default = 'Ambiguous')) %>%
+    pivot_wider(id_cols = c('Type', 'k', 'pressure_def'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
+    left_join(select(shuffled_dat, Type, k, pressure_def, land_net_change, sea_net_change)) %>% 
+    mutate(ambig_threshold = thresh)
+}
+class <- do.call(rbind, tmp)
+
+# split into land vs. sea and remove ambiguous responses and units where commodities and erosion are dominant drivers of loss, can't validate with our model
+
+land_validate <- class %>% 
+  left_join(drivers, by = 'Type') %>% 
+  filter(Change_LandwardMang != 'Ambiguous' & Commodities < 0.1 & Erosion < 0.1) 
+sea_validate <- class %>%
+  left_join(drivers, by = 'Type') %>% 
+  filter(Change_SeawardMang != 'Ambiguous' & Commodities < 0.1 & Erosion < 0.1) 
+
+# net change hindcast accuracy across different pressure and ambiguity thresholds
+iter <- unique(shuffled_dat$k_press)
+tmp2 <- list()
+for(j in seq_along(unique(shuffled_dat$k_press))){
+  land <- land_validate %>% filter(k_press == iter[j])
+  sea <- sea_validate %>% filter(k_press == iter[j])
+  tmp <- list()
+  for(i in seq_along(threshold)){
+    thresh <- threshold[i]
+    landval <- land %>% filter(ambig_threshold == thresh)
+    seaval <- sea %>% filter(ambig_threshold == thresh)
+    results <- data.frame(validation = 'net',
+                          mangrove = 'Landward',
+                          k = landval[1,'k'],
+                          pressure_def = landval[1,'pressure_def'],
+                          ambig_threshold = thresh, 
+                          calc_accuracy(landval$Change_LandwardMang, landval$land_net_change)$accuracy.results)
+    results2 <- data.frame(validation = 'net',
+                           mangrove = 'Seaward',
+                           k = seaval[1,'k'],
+                           pressure_def = seaval[1,'pressure_def'],
+                           ambig_threshold = thresh, 
+                           calc_accuracy(seaval$Change_SeawardMang, seaval$sea_net_change)$accuracy.results)
+    tmp[[i]] <- rbind(results, results2)
+  }
+  tmp2[[j]] <- do.call(rbind, tmp)
+}
+accuracy <- do.call(rbind, tmp2)
+write.csv(accuracy, 'outputs/validation/hindcast-accuracy_pressure-ambiguity_kfold.csv', row.names = F)
+
+# heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
+
+accuracy %>% 
+  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
+  mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
+  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
+  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
+  distinct() %>% 
+  ggplot() +
+  aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
+  geom_tile() +
+  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+  facet_nested_wrap(~factor(k) + factor(mangrove) + factor(class) + factor(metric), nrow = 5) +
+  ylab('Pressure definition') +
+  xlab('Ambiguity probability threshold') +
+  theme_classic()
+
+ggsave('outputs/validation/accuracy-heatmap_kfold.png', width = 10, height = 4.5)
+
+# identify optimal thresholds for best overall accuracy - calculate average across the folds?
+
+accuracy %>% filter(mangrove == 'Landward', Overall_accuracy == max(filter(., mangrove == 'Landward')$Overall_accuracy))
+accuracy %>% filter(mangrove == 'Seaward', Overall_accuracy == max(filter(., mangrove == 'Seaward')$Overall_accuracy))
 
 # use optimal thresholds and training set to make hindcasts and obtain valid interaction coefficients by comparing to historical observations
 
+cl <- makeCluster(6)
+registerDoParallel(cl)
+system.time(
+  train_params <- foreach(i = 1:kfold, .combine = rbind, .packages = c('QPress', 'tidyverse', 'scales')) %dopar%{
+    tmp <- list() # temp list for storing results
+    for(j in seq_along(unique(shuffled_dat$pressure_def))){ # loop over pressure definitions
+      train_dat <- shuffled_dat %>% filter(k != i & pressure_def == j)
+      tmp2 <- list()
+      for(k in 1:nrow(train_dat)){ #TODO: not sure why apply won't work here over rows instead of forloop
+        tmp2[[k]] <- train(train_dat[k,], numsims = nsim)
+      }
+      tmp[[j]] <- data.frame(k = i, pressure_def = j, do.call(rbind, tmp2))
+    }
+    do.call(rbind, tmp)
+  }
+)
+stopCluster(cl)
+write.csv(train_params, paste0('outputs/validation/training_weights_', chosen_model_name, '.csv'), row.names = F)
+
 # use calibrated interaction coefficients and test fold to make independent hindcasts and quantify accuracy
-
-
-
