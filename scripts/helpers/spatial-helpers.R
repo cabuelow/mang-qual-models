@@ -265,7 +265,7 @@ test <- function(x, numsims, params){ # params is calibrated parameters
     summarise(Prob_gain = (sum(outcome>0)/n())*100,
               Prob_neutral = (sum(outcome==0)/n())*100,
               Prob_loss = (sum(outcome<0)/n())*-100) %>% 
-    mutate(Type = x$type)
+    mutate(Type = x$Type)
   
   return(out)
   }
