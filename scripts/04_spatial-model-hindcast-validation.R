@@ -145,6 +145,7 @@ write.csv(accuracy, 'outputs/validation/hindcast-accuracy_pressure-ambiguity_kfo
 
 # heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
 
+# indidvidual kfolds
 accuracy %>% 
   mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
   mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
@@ -161,6 +162,26 @@ accuracy %>%
   theme_classic()
 
 ggsave('outputs/validation/accuracy-heatmap_kfold.png', width = 12, height = 9)
+
+# averaged across kfolds
+accuracy %>% 
+  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
+  mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
+  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
+  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
+  distinct() %>% 
+  group_by(mangrove, pressure_def, ambig_threshold, class, metric) %>% 
+  summarise(accuracy = mean(accuracy)) %>% 
+  ggplot() +
+  aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
+  geom_tile() +
+  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+  facet_nested_wrap(~factor(mangrove) + factor(class) + factor(metric), nrow = 2) +
+  ylab('Pressure definition') +
+  xlab('Ambiguity probability threshold') +
+  theme_classic()
+
+ggsave('outputs/validation/accuracy-heatmap_kfold_averaged.png',  width = 10, height = 4.5)
 
 # use optimal thresholds and training set to make hindcasts and obtain valid interaction coefficients by comparing to historical observations
 # pressure definition is based on optimal for landward above, taking average from across training fold and rounding down if needed
@@ -215,18 +236,20 @@ write.csv(test_results, paste0('outputs/validation/test_outcomes_', chosen_model
 # classify outcomes according to optimal ambiguity threshold identified in training data and quantify accuracy
 
 tmp <- list()
-for(i in seq_along(kfold)){
+for(i in seq_along(1:kfold)){
   opt_thresh_sea <- round(mean(filter(accuracy, mangrove == 'Seaward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Seaward' & k != i)$Overall_accuracy))$ambig_threshold))
   opt_thresh_land <- round(mean(filter(accuracy, mangrove == 'Landward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Landward' & k != i)$Overall_accuracy))$ambig_threshold))
+  optimal_press <- round(mean(filter(accuracy, mangrove == 'Landward' & k != i, Overall_accuracy == max(filter(accuracy, mangrove == 'Landward' & k != i)$Overall_accuracy))$pressure_def))
   tmp[[i]] <- test_results %>% 
+    filter(k == i ) %>% 
     mutate(Prob_gain_neutrality = Prob_gain + Prob_loss) %>% 
-    mutate(Change = case_when(Prob_gain_neutrality > opt_thresh_sea & mangrove == 'Seaward' ~ 'Gain_neutrality',
-                              Prob_gain_neutrality > opt_thresh_land & mangrove == 'Landward' ~ 'Gain_neutrality',
-                              Prob_loss < -opt_thresh_sea & mangrove == 'Seaward' ~ 'Loss',
-                              Prob_loss < -opt_thresh_land & mangrove == 'Landward' ~ 'Loss',
+    mutate(Change = case_when(Prob_gain_neutrality > opt_thresh_sea & var == 'SeawardMang' ~ 'Gain_neutrality',
+                              Prob_gain_neutrality > opt_thresh_land & var == 'LandwardMang' ~ 'Gain_neutrality',
+                              Prob_loss < -opt_thresh_sea & var == 'SeawardMang' ~ 'Loss',
+                              Prob_loss < -opt_thresh_land & var == 'LandwardMang' ~ 'Loss',
                               .default = 'Ambiguous')) %>%
     pivot_wider(id_cols = c('Type', 'k'), names_from = 'var', values_from = 'Change', names_prefix = 'Change_') %>% 
-    inner_join(dplyr::select(shuffled_dat, Type, pressure_def, land_net_change, sea_net_change)) %>% 
+    inner_join(filter(dplyr::select(shuffled_dat, Type, pressure_def, land_net_change, sea_net_change), pressure_def == optimal_press)) %>% 
     mutate(ambig_threshold = thresh)
 }
 test_class <- do.call(rbind, tmp)
@@ -241,29 +264,20 @@ sea_validate <- test_class %>%
   filter(Change_SeawardMang != 'Ambiguous' & Commodities < 0.1 & Erosion < 0.1) 
 
 # net change hindcast accuracy
-tmp2 <- list()
-for(j in seq_along(unique(class$kfold))){
-  land <- land_validate %>% filter(kfold == j)
-  sea <- sea_validate %>% filter(kfold == j)
-  tmp <- list()
-  for(i in seq_along(threshold)){
-    thresh <- threshold[i]
-    landval <- land %>% filter(ambig_threshold == thresh)
-    seaval <- sea %>% filter(ambig_threshold == thresh)
+tmp <- list()
+for(j in seq_along(1:kfold)){
+    landval <- land_validate %>% filter(k == j)
+    seaval <- sea_validate %>% filter(k == j)
     results <- data.frame(validation = 'net',
                           mangrove = 'Landward',
-                          ambig_threshold = thresh, 
                           calc_accuracy(landval$Change_LandwardMang, landval$land_net_change)$accuracy.results)
     results2 <- data.frame(validation = 'net',
                            mangrove = 'Seaward',
-                           ambig_threshold = thresh, 
                            calc_accuracy(seaval$Change_SeawardMang, seaval$sea_net_change)$accuracy.results)
-    tmp[[i]] <- rbind(results, results2)
+    tmp[[j]] <- data.frame(kfold = j, rbind(results, results2)) 
   }
-  tmp2[[j]] <- data.frame(kfold = j, do.call(rbind, tmp))
-}
 
-accuracy <- do.call(rbind, tmp2) %>%  mutate(mangrove = factor(mangrove, levels = c('Landward', 'Seaward')))
+accuracy <- do.call(rbind, tmp) %>%  mutate(mangrove = factor(mangrove, levels = c('Landward', 'Seaward')))
 write.csv(accuracy, 'outputs/validation/cross-val-accuracy.csv', row.names = F)
 
 
