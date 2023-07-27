@@ -20,6 +20,14 @@ cast <- function(x, # spatial unit
                  ){
   if(type == 'forecast'){
     
+    # define model relative edge constraints - which edge interaction strengths are greater than other
+    # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
+    # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
+    # the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
+    rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                                    parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
+    names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
+    
     # perturbations for forecasting
     datselect <- dplyr::select(x, fut_csqueeze_1, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>% 
       pivot_longer(fut_csqueeze_1:fut_storms, names_to = 'press', values_to = 'vals') %>% 
@@ -78,6 +86,14 @@ cast <- function(x, # spatial unit
     return(out)
     }
   }else{
+    
+    # define model relative edge constraints - which edge interaction strengths are greater than other
+    # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
+    # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
+    # the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
+    rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                                    parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
+    names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
     
     # perturbations for hindcasting
     datselect <- dplyr::select(x, csqueeze_1, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
@@ -141,6 +157,14 @@ cast <- function(x, # spatial unit
 # train model and obtain calibrated (i.e. valid/invalid) interaction coefficients/strengths
 
 train <- function(x, numsims){ # x is spatial training units
+  
+  # define model relative edge constraints - which edge interaction strengths are greater than other
+  # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
+  # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
+  # the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
+  rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                                  parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
+  names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
   
   datselect <- dplyr::select(x, csqueeze_1, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
     pivot_longer(csqueeze_1:storms, names_to = 'press', values_to = 'vals') %>% 
@@ -212,6 +236,14 @@ train <- function(x, numsims){ # x is spatial training units
 
 test <- function(x, numsims, params){ # params is calibrated parameters
   
+  # define model relative edge constraints - which edge interaction strengths are greater than other
+  # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
+  # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
+  # the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
+  rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                                  parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
+  names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
+  
   datselect <- dplyr::select(x, csqueeze_1, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
     pivot_longer(csqueeze_1:storms, names_to = 'press', values_to = 'vals') %>% 
     filter(vals == 1) %>% 
@@ -275,6 +307,14 @@ test <- function(x, numsims, params){ # params is calibrated parameters
 
 forecast_calibrated <- function(x, numsims, params){
   
+  # define model relative edge constraints - which edge interaction strengths are greater than other
+  # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
+  # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
+  # the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
+  rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                                  parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
+  names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
+  
   datselect <- select(x, fut_csqueeze_1, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>% 
     pivot_longer(fut_csqueeze_1:fut_storms, names_to = 'press', values_to = 'vals') %>% 
     filter(vals == 1) %>% 
@@ -337,6 +377,15 @@ forecast_calibrated <- function(x, numsims, params){
 # make a calibrated forecast with increased propagules (i.e., management/conservation/restoration)
 
 forecast_calibrated_manage <- function(x, numsims, params){
+  
+  # define model relative edge constraints - which edge interaction strengths are greater than other
+  # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
+  # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
+  # the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
+  rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
+                                  parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
+  names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
+  
   datselect <- select(x, fut_csqueeze_1, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>% 
     pivot_longer(fut_csqueeze_1:fut_storms, names_to = 'press', values_to = 'vals') %>% 
     filter(vals == 1) %>% 

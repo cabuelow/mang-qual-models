@@ -44,14 +44,6 @@ names(models) # names of available models
 chosen_model <- models$mangrove_model
 chosen_model_name <- 'mangrove_model'
 
-# define model relative edge constraints - which edge interaction strengths are greater than other
-# in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
-# under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
-# the negative interaction between sea level rise -* and seaward mangroves; vice versa for the low sediment supply model
-rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
-                                parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
-names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
-
 # set up training vs. test folds
 
 nsim <- 100 # number of sims
