@@ -42,6 +42,8 @@ chosen_model_name <- 'mangrove_model'
 # import the final set of hindcast predictions, posterior probabilities, and posterior predictions for each
 # biophysical/pressure scenario using optimal pressure definition and calibrated ambiguity threshold
 
+
+
 # extract outcomes and matrices for each scenario
 
 outcomes <- do.call(rbind, lapply(tmp, function(x){data.frame(x[[3]], scenario = names(x)[1])})) %>% 

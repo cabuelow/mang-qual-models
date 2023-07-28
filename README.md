@@ -9,10 +9,6 @@ Link to documents describing all spatial data processing:
 -   [Part 1 here](https://mangrove-climate-risk-mapping.netlify.app/)
 -   [Part 2 here](https://mangrove-climate-risk-mapping-2.netlify.app/)
 
-##### TODO
-
--   [ ] If going to exclude areas with loss from commodities and erosion, update drivers data with CB estimates
-
 #### Scripts
 
 1.  01_wrangle-dat.R: wrangles processed data into a master dataframe
@@ -21,17 +17,15 @@ Link to documents describing all spatial data processing:
 
 3.  03_plot-scenarios.R: plot the scenario results
 
-4.  04_spatial-model-hindcast-validation.R: make spatial hindcasts, calibrate and cross-validate
+4.  04_spatial-model-hindcast-validation.R: calibrate and cross-validate spatial hindcasts
 
 5.  05_spatial-model-forecast.R: make calibrated forecasts
 
-6.  06_map-spatial.R: map the hindcasts and forecasts
+6.  06_plot-sensitivity.R: plot sensitivity analyses
 
-7.  07_plot-sensitivity.R: plot sensitivity analyses
+7.  helpers/models.R: a script that builds different models
 
-8.  helpers/models.R: a script that builds different models
+8.  helpers/helpers.R: a script with helper functions for simulating models
 
-9.  helpers/helpers.R: a script with helper functions for simulating models
-
-10. helpers/spatial-helpers.R: a script with helper functions for simulating models spatially
+9. helpers/spatial-helpers.R: a script with helper functions for simulating models spatially
 

@@ -86,6 +86,7 @@ names(matrices) <- press_dat$scenario
 
 kfold <- 5 # number of folds
 
+# shuffle the data and split
 shuffled_dat <- spatial_dat %>% 
   left_join(data.frame(Type = spatial_dat[1:length(unique(spatial_dat$Type)),]$Type[sample(1:length(unique(spatial_dat$Type)))],
                        k = rep(1:kfold, each = length(unique(spatial_dat$Type))/kfold)), by = 'Type') %>% 
@@ -123,7 +124,6 @@ results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
     for(h in seq_along(unique(shuffled_dat$pressure_def))){
  
        # make posterior predictions using training data
-
   train_preds <- shuffled_dat %>% 
       filter(k != i & pressure_def == h) %>% 
       left_join(outcomes, by = 'scenario') %>% 
@@ -421,6 +421,4 @@ smap <- tm_shape(world_mang) +
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
-# make forecasts using posterior predictions given future pressures
-# are there any combinations of pressures in the future that we don't have in the past?
 
