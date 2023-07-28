@@ -97,7 +97,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
   }
   
   stableout <- list()
-  stablews_array <- array(NA, dim = c(nrow(edges1), nrow(edges1), numsims))
+  stablews_array <- array(NA, dim = c(nrow(edges1), nrow(edges1), n.sims))
   stable <- 0
   unstable <- 0
   
