@@ -108,12 +108,13 @@ shuffled_dat <- spatial_dat %>%
   #theme_classic()
   
 # make posterior predictions accounting for matrix likelihood as a weighted sum using training data
-# go through each k fold unit, make a new predictions using get relevant model outcomes and likelihoods from training set
+# go through each k fold unit, make training posterior predictions using relevant model outcomes and likelihoods calibrated against training outcomes
+# use training posterior predictions as predictions in test set, and quantify accuracy
 
 threshold <- seq(60, 90, by = 5) # range of thresholds for defining when a prediction is ambiguous or not
 cl <- makeCluster(5)
 registerDoParallel(cl)
-system.time( # takes 2.2 hours with 1000 sims
+system.time( #
 results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
   preds <- list()
   acc <- list()
@@ -152,7 +153,7 @@ results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
                               LandwardMang < 100-thresh & SeawardMang >= 100-thresh ~ "Landward Loss & Seaward Gain",
                               .default = NA))
   
-  # join to test data based by pressure def and scenario
+  # join to test data by pressure def and scenario
   test_set <- shuffled_dat %>% 
     filter(k == i & pressure_def == h) %>% 
     mutate(Change_obs = case_when(land_net_change_obs == 1 & sea_net_change_obs == 1 ~ "Gain",
@@ -163,7 +164,7 @@ results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
            sea_net_change_obs = ifelse(sea_net_change_obs == 1, 'Gain', 'Loss')) %>%
     left_join(train_preds) %>% 
     mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
-    mutate(ambig_threshold = threshold[j])
+    mutate(ambig_threshold = thresh)
   preds2[[h]] <- test_set
   
   test_set <- test_set %>% 
@@ -421,4 +422,151 @@ smap <- tm_shape(world_mang) +
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, '.png'), width = 5, height = 3)
 
+# now make posterior predictions for each biophysical setting/pressure model using all the data (i.e. not split by kfolds)
+# to be used for making forecasts
+# here am only getting the predictions for pressure biophysical/pressure combinations using pressure definition 4
+# not sure what this means for forecasts - need to check if we are missing 
 
+thresh <- 85 # optimal ambiguity threshold
+press <- 4 # optimal pressure threshold
+final_preds <- spatial_dat %>% 
+  dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+  pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  filter(vals == 1) %>% 
+  pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
+  mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
+         sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
+         Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
+         prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
+  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T) %>% 
+  filter(pressure_def == press) %>% 
+  left_join(outcomes, by = 'scenario') %>% 
+  mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
+  group_by(pressure_def, scenario, nsim, LandwardMang, SeawardMang) %>% 
+  summarise(matrix_post_prob = mean(valid)) %>% 
+  mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calcuting the probability of gain/neutrality
+         SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang)) %>% 
+  mutate(LandwardMang = LandwardMang*matrix_post_prob,
+         SeawardMang = SeawardMang*matrix_post_prob) %>% 
+  group_by(pressure_def, scenario) %>% 
+  summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
+            SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 
+  mutate(Landward = case_when(is.na(LandwardMang) ~ NA,
+                              LandwardMang >= thresh ~ 'Gain',
+                              LandwardMang < 100-thresh ~ 'Loss',
+                              .default = 'Ambiguous'),
+         Seaward = case_when(is.na(SeawardMang) ~ NA,
+                             SeawardMang >= thresh ~ 'Gain',
+                             SeawardMang < 100-thresh ~ 'Loss',
+                             .default = 'Ambiguous'),
+         Change = case_when(LandwardMang >= thresh & SeawardMang >= thresh ~ "Gain",
+                            LandwardMang < 100-thresh & SeawardMang < 100-thresh ~ "Loss",
+                            Landward == 'Ambiguous' | SeawardMang == 'Ambiguous' ~ "Ambiguous",
+                            LandwardMang >= thresh & SeawardMang < thresh ~ "Landward Gain & Seaward Loss",
+                            LandwardMang < 100-thresh & SeawardMang >= 100-thresh ~ "Landward Loss & Seaward Gain",
+                            .default = NA)) %>% 
+  mutate(ambig_threshold = thresh)
+write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_',press, '_', thresh, '.csv'), row.names = F)
+
+spatial_pred <- spatial_dat %>% 
+  dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+  pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  filter(vals == 1) %>% 
+  pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
+  mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
+         sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
+         Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
+         prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
+  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T) %>% 
+  filter(pressure_def == press) %>% 
+  left_join(final_preds)
+
+# map final 'all data' hindcasts
+
+preds <- typ_points %>% 
+  left_join(spatial_pred) %>%
+  st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
+
+# map hindcasts
+
+lmap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  tm_shape(filter(preds, is.na(Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(preds, Landward == 'Ambiguous' & !is.na(Change))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(preds, Landward == 'Loss' & !is.na(Change))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_shape(filter(preds, Landward == 'Gain' & !is.na(Change))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.025) +
+  tm_layout(legend.outside = F,
+            #legend.outside.position = 'bottom',
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'B) Landward hindcast',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+lmap
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', chosen_model_name, '_all-data.png'), width = 5, height = 3)
+
+smap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  tm_shape(filter(preds, is.na(Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Change))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(preds, Seaward == 'Loss' & !is.na(Change))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_shape(filter(preds, Seaward == 'Gain' & !is.na(Change))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.025) +
+  tm_layout(legend.outside = F,
+            #legend.outside.position = 'bottom',
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'B) Seaward hindcast',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+smap
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, '_all-data.png'), width = 5, height = 3)

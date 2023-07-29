@@ -33,35 +33,15 @@ spatial_dat <- read.csv('outputs/master-dat.csv') %>%
                                     .default = sea_net_change)) %>% 
   mutate(Geomorphology = sub("\\_.*", "", Type))
 
-# which model do you want to run?
+# import the final set of calibrated posterior predictions for each biophysical/pressure scenario 
+# using optimal pressure definition and calibrated ambiguity threshold
+press <- 4 # optimal pressure definition threshold
+thresh <- 85 # optimal ambiguity threshold
+preds <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '.csv'))
 
-names(models) # names of available models
-chosen_model <- models$mangrove_model
-chosen_model_name <- 'mangrove_model'
-
-# import the final set of hindcast predictions, posterior probabilities, and posterior predictions for each
-# biophysical/pressure scenario using optimal pressure definition and calibrated ambiguity threshold
-
-
-
-# extract outcomes and matrices for each scenario
-
-outcomes <- do.call(rbind, lapply(tmp, function(x){data.frame(x[[3]], scenario = names(x)[1])})) %>% 
-  filter(var %in% c('LandwardMang', 'SeawardMang')) %>% 
-  mutate(outcome = case_when(outcome >= 0 ~ 1,
-                             outcome < 0 ~ -1)) %>% 
-  pivot_wider(names_from = 'var', values_from = 'outcome')
-matrices <- lapply(tmp, function(x){x[[4]]})
-names(matrices) <- press_dat$scenario
-
-# calculate likelihood/posterior probability of each matrix based on observed mangrove loss or gain
-
-kfold <- 5 # number of folds
-
-shuffled_dat <- spatial_dat %>% 
-  left_join(data.frame(Type = spatial_dat[1:length(unique(spatial_dat$Type)),]$Type[sample(1:length(unique(spatial_dat$Type)))],
-                       k = rep(1:kfold, each = length(unique(spatial_dat$Type))/kfold)), by = 'Type') %>% 
-  dplyr::select(pressure_def, k, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+spatial_pred <- spatial_dat %>% 
+  dplyr::select(pressure_def, Type, fut_csqueeze, fut_csqueeze_1, sed_supp, Tidal_Class, prop_estab, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms, land_net_change_obs, sea_net_change_obs) %>%
+  rename(csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, hist_gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
@@ -69,10 +49,97 @@ shuffled_dat <- spatial_dat %>%
          sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
-  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T)
+  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T) %>% 
+  filter(pressure_def == press) %>% 
+  left_join(preds, by = 'scenario')
 
-matrix_likelihood <- shuffled_dat %>% 
-  left_join(outcomes) %>% 
-  mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
-  group_by(pressure_def, k, scenario, nsim, LandwardMang, SeawardMang) %>% 
-  summarise(matrix_post_prob = mean(valid)) 
+# map final 'all data' hindcasts
+
+preds <- typ_points %>% 
+  left_join(spatial_pred) %>%
+  st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
+
+# map hindcasts
+
+lmap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  tm_shape(filter(preds, is.na(Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(preds, Landward == 'Ambiguous' & !is.na(Change))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(preds, Landward == 'Loss' & !is.na(Change))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  #tm_shape(filter(preds, Landward == 'Gain' & !is.na(Change))) +
+  #tm_dots('Landward', 
+   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+       #   size = 0.025) +
+  tm_layout(legend.outside = F,
+            #legend.outside.position = 'bottom',
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'B) Landward forecast',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+lmap
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', chosen_model_name, '_all-data.png'), width = 5, height = 3)
+
+smap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  tm_shape(filter(preds, is.na(Change))) +
+  tm_dots('darkgrey', size = 0.001) +
+  #tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Change))) +
+  #tm_dots('Seaward', 
+   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+       #   size = 0.0015) +
+  tm_shape(filter(preds, Seaward == 'Loss' & !is.na(Change))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  #tm_shape(filter(preds, Seaward == 'Gain' & !is.na(Change))) +
+  #tm_dots('Seaward', 
+   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain' = 'deepskyblue4'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+       #   size = 0.025) +
+  tm_layout(legend.outside = F,
+            #legend.outside.position = 'bottom',
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'B) Seaward forecast',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+smap
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', chosen_model_name, '_all-data.png'), width = 5, height = 3)
+
