@@ -97,7 +97,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
   }
   
   stableout <- list()
-  stablews_array <- array(NA, dim = c(nrow(edges1), nrow(edges1), n.sims))
+  stablews_array <- array(NA, dim = c(length(labels), length(labels), n.sims))
   stable <- 0
   unstable <- 0
   
@@ -114,7 +114,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
     } else{
       stable <- stable + 1
       stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
-      stablews_array[,,stable] <- sampler$weights(W)
+      stablews_array[,,stable] <- W
     }
   }
   

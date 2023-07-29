@@ -56,7 +56,7 @@ press_dat <- spatial_dat %>%
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
   select(-c(pressure_def,Type)) %>% 
-  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T) %>% 
+  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
   distinct()
 
 # simulate matrices for each scenario
@@ -98,9 +98,9 @@ shuffled_dat <- spatial_dat %>%
          sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
-  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T)
+  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.')
 
-# plot for just one training
+# plot for just one
 
 #ggplot(filter(matrix_likelihood, k != 2, scenario %in% unique(matrix_likelihood$scenario)[1:6])) +
  # geom_point(aes(x = nsim, y = matrix_post_prob, col = factor(pressure_def)), alpha = 0.5) +
@@ -268,10 +268,6 @@ ggsave('outputs/validation/accuracy-heatmap_kfold_averaged_overall.png',  width 
 
 filter(accuracy_sum2, accuracy == max(filter(accuracy_sum2, metric == 'Overall_accuracy' & class == 'Gain_neutrality & Loss')$accuracy))
 
-# TODO: save final set of hindcast predictions, posterior probabilities, and posterior predictions for each
-# biophysical/pressure scenario matrix using optimal pressure definition and calibrated ambiguity threshold
-# will want nsim number for each matrix so can extract those that are most likely if possible
-
 # map prediction matches and mismatches
 
 filter(accuracy_sum, pressure_def == 4, ambig_threshold == 85)
@@ -425,7 +421,6 @@ tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, 
 # now make posterior predictions for each biophysical setting/pressure model using all the data (i.e. not split by kfolds)
 # to be used for making forecasts
 # here am only getting the predictions for pressure biophysical/pressure combinations using pressure definition 4
-# not sure what this means for forecasts - need to check if we are missing 
 
 thresh <- 85 # optimal ambiguity threshold
 press <- 4 # optimal pressure threshold
@@ -438,7 +433,7 @@ final_preds <- spatial_dat %>%
          sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
-  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T) %>% 
+  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
   filter(pressure_def == press) %>% 
   left_join(outcomes, by = 'scenario') %>% 
   mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
@@ -477,7 +472,7 @@ spatial_pred <- spatial_dat %>%
          sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
-  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T) %>% 
+  unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
   filter(pressure_def == press) %>% 
   left_join(final_preds)
 
