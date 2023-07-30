@@ -1,4 +1,4 @@
-# spatial model hindcast and cross validation
+# spatial model hindcast calibration and cross validation
 
 library(QPress)
 library(tidyverse)
@@ -9,7 +9,7 @@ library(ggh4x)
 library(sf)
 library(tmap)
 source('scripts/helpers/models.R')
-source('scripts/helpers/spatial-helpers_v2.R')
+source('scripts/helpers/spatial-helpers.R')
 set.seed(123) # set random number generator to make results reproducible
 sf_use_s2(FALSE)
 
@@ -49,6 +49,8 @@ chosen_model_name <- 'mangrove_model'
 press_dat <- spatial_dat %>% 
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  #dplyr::select(pressure_def, Type, csqueeze, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
+  #pivot_longer(cols = c(ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -57,13 +59,14 @@ press_dat <- spatial_dat %>%
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
   select(-c(pressure_def,Type)) %>% 
   unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
+  #unite('scenario', csqueeze_2:prop_estab_2, press_gwsub:press_ant_slr, na.rm = T, sep = '.') %>% 
   distinct()
 
 # simulate matrices for each scenario
 
 nsim <- 1000 # number of sims
 tmp <- list()
-system.time(
+system.time( # takes 4 mins
 for(k in 1:nrow(press_dat)){ #TODO: not sure why apply won't work here over rows instead of forloop
     tmp[[k]] <- sim_mod(press_dat[k,], nsim)
     names(tmp[[k]]) <- press_dat[k,]$scenario
@@ -82,39 +85,53 @@ outcomes <- do.call(rbind, lapply(tmp, function(x){data.frame(x[[3]], scenario =
 matrices <- lapply(tmp, function(x){x[[4]]})
 names(matrices) <- press_dat$scenario
 
-# calculate likelihood/posterior probability of each matrix based on observed mangrove loss or gain
+# calculate likelihood/posterior probability of each matrix in a scenario model based on observed mangrove loss or gain
 
 kfold <- 5 # number of folds
 
 # shuffle the data and split
 shuffled_dat <- spatial_dat %>% 
-  left_join(data.frame(Type = spatial_dat[1:length(unique(spatial_dat$Type)),]$Type[sample(1:length(unique(spatial_dat$Type)))],
-                       k = rep(1:kfold, each = length(unique(spatial_dat$Type))/kfold)), by = 'Type') %>% 
+  left_join(data.frame(Type = .[1:length(unique(.$Type)),]$Type[sample(1:length(unique(.$Type)))],
+                       k = rep(1:kfold, each = length(unique(.$Type))/kfold)), by = 'Type') %>% 
   dplyr::select(pressure_def, k, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  #dplyr::select(pressure_def, k, Type, csqueeze, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+  #pivot_longer(cols = c(ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
          sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
+  #unite('scenario', csqueeze_2:prop_estab_2, press_gwsub:press_ant_slr, na.rm = T, sep = '.')
   unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.')
 
-# plot for just one
+# map the folds
+
+m.dat <- typ_points %>% left_join(filter(shuffled_dat, pressure_def == 1)) %>% mutate(k = factor(k)) #%>% st_transform(crs = 'ESRI:54030')
+map <- tm_shape(world_mang) +
+  tm_fill(col = 'gray85') +
+  tm_shape(filter(m.dat, !is.na(k))) + 
+  tm_dots('k', title = '', legend.is.portrait = F, palette = 'Set2', size = 0.01) +
+  tm_layout(frame = T, legend.position = c(0.2, 0))
+map
+tmap_save(map, 'outputs/maps/k-fold-map.png', width = 8, height = 2)
+
+# plot to check
 
 #ggplot(filter(matrix_likelihood, k != 2, scenario %in% unique(matrix_likelihood$scenario)[1:6])) +
  # geom_point(aes(x = nsim, y = matrix_post_prob, col = factor(pressure_def)), alpha = 0.5) +
   #facet_wrap(~scenario) +
   #theme_classic()
   
-# make posterior predictions accounting for matrix likelihood as a weighted sum using training data
-# go through each k fold unit, make training posterior predictions using relevant model outcomes and likelihoods calibrated against training outcomes
+# go through each k fold unit, make training posterior predictions using relevant scenario matrices 
+# matrix likelihoods are calibrated against observed data
 # use training posterior predictions as predictions in test set, and quantify accuracy
 
 threshold <- seq(60, 90, by = 5) # range of thresholds for defining when a prediction is ambiguous or not
 cl <- makeCluster(5)
 registerDoParallel(cl)
-system.time( #
+system.time( # < 10mins
 results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
   preds <- list()
   acc <- list()
@@ -131,7 +148,7 @@ results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
       mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
       group_by(pressure_def, scenario, nsim, LandwardMang, SeawardMang) %>% 
       summarise(matrix_post_prob = mean(valid)) %>% 
-    mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calcuting the probability of gain/neutrality
+    mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calculating the probability of gain/neutrality
            SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang)) %>% 
     mutate(LandwardMang = LandwardMang*matrix_post_prob,
            SeawardMang = SeawardMang*matrix_post_prob) %>% 
@@ -427,6 +444,8 @@ press <- 4 # optimal pressure threshold
 final_preds <- spatial_dat %>% 
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  #dplyr::select(pressure_def, Type, csqueeze, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+  #pivot_longer(cols = c(ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -434,6 +453,7 @@ final_preds <- spatial_dat %>%
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
   unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
+  #unite('scenario', csqueeze_2:prop_estab_2, press_gwsub:press_ant_slr, na.rm = T, sep = '.') %>% 
   filter(pressure_def == press) %>% 
   left_join(outcomes, by = 'scenario') %>% 
   mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
@@ -464,6 +484,8 @@ final_preds <- spatial_dat %>%
 write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_',press, '_', thresh, '.csv'), row.names = F)
 
 spatial_pred <- spatial_dat %>% 
+  #dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+  #pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
@@ -473,6 +495,7 @@ spatial_pred <- spatial_dat %>%
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
   unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
+  #unite('scenario', csqueeze_2:prop_estab_2, press_gwsub:press_ant_slr, na.rm = T, sep = '.') %>% 
   filter(pressure_def == press) %>% 
   left_join(final_preds)
 
@@ -565,3 +588,4 @@ smap <- tm_shape(world_mang) +
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, '_all-data.png'), width = 5, height = 3)
+

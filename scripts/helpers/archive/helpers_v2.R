@@ -11,12 +11,12 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   if (length(from) > 0){ # here add new column to edges with high, medium or low classification
     constrain <- data.frame(From = from, To = to, Class = class)
     if(spatial == 'N'){ # in non-spatial model, only if coastal development is being perturbed do we constrain SeaLevelRise -> LandwardMang edge
-      if(length(which(names(perturb) == 'CoastalDev')) != 0){ 
-        edges$Class <- dplyr::left_join(edges, constrain)$Class
-      }else{
-        edges$Class <- dplyr::left_join(edges, constrain)$Class
-        edges <- mutate(edges, Class = ifelse(To == 'LandwardMang', 'NA', Class))
-      }
+    if(length(which(names(perturb) == 'CoastalDev')) != 0){ 
+    edges$Class <- dplyr::left_join(edges, constrain)$Class
+    }else{
+    edges$Class <- dplyr::left_join(edges, constrain)$Class
+    edges <- mutate(edges, Class = ifelse(To == 'LandwardMang', 'NA', Class))
+    }
     }else{ # in spatial model, always constrain SeaLevelRise -> LandwardMang edge according to pop. density, i.e. coastal development
       edges$Class <- dplyr::left_join(edges, constrain)$Class
     }
@@ -86,6 +86,10 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
 system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
                               sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial),  
                               perturb, spatial) {
+  stableout <- list()
+  stablews <- list()
+  stable <- 0
+  unstable <- 0
   
   edges1 <- constrainedigraph$edges
   labels <- node.labels(edges1)
@@ -96,38 +100,34 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
     k
   }
   
-  stableout <- list()
-  stablews_array <- array(NA, dim = c(length(labels), length(labels), n.sims))
-  stable <- 0
-  unstable <- 0
-  
   k.perturb <- index(names(perturb))
   S.press <- double(length(labels))
   S.press[k.perturb] <- -perturb
-  
-  while (stable < n.sims) {
-    z <- sampler$select(runif(1))
-    W <- sampler$community()
-    if (!stable.community(W) & !is.null(solve(W, S.press))){
-      unstable <- unstable + 1
-      next
-    } else{
-      stable <- stable + 1
-      stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
-      stablews_array[,,stable] <- W
+
+    while (stable < n.sims) {
+      z <- sampler$select(runif(1))
+      W <- sampler$community()
+      if (!stable.community(W) & !is.null(solve(W, S.press))){
+        unstable <- unstable + 1
+        next
+      } else{
+        stable <- stable + 1
+        stableout[[stable]] <- data.frame(nsim = stable, var = labels, outcome = solve(W, S.press))
+        stablews[[stable]] <- data.frame(nsim = stable, param = sampler$weight.labels, weight = sampler$weights(W))
+      }
     }
-  }
   
   stableout <- do.call(rbind, stableout)
+  stablews <- do.call(rbind, stablews)
   stability <- data.frame(Num_unstable = unstable, Num_stable = stable, Potential_stability =  stable/(unstable+stable))
-  list(edges = edges1, stability.df = stability, stableoutcome = stableout, stableweights = stablews_array)
+  list(edges = edges1, stability.df = stability, stableoutcome = stableout, stableweights = stablews)
 }
 
 # include outcome validation 
 
 system.sim_press_valid <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
-                                    sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial),  
-                                    perturb, spatial, monitor, epsilon = 1e-05) {
+                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial),  
+                              perturb, spatial, monitor, epsilon = 1e-05) {
   stableout <- list()
   stablews <- list()
   stable <- 0
@@ -162,14 +162,14 @@ system.sim_press_valid <- function (n.sims, constrainedigraph, required.groups =
         stablews[[1]] <- data.frame(nsim = stable, valid = 'invalid', pressures = paste0(names(perturb), collapse = '_'), param = sampler$weight.labels, weight = sampler$weights(W))
         break
       }else{
-        next
+      next
       }
     } else{
       stable <- stable + 1
       stableout[[stable]] <- data.frame(nsim = stable, valid = 'valid', pressures = paste0(names(perturb), collapse = '_'), var = labels, outcome = solve(W, S.press))
       stablews[[stable]] <- data.frame(nsim = stable, valid = 'valid', pressures = paste0(names(perturb), collapse = '_'), param = sampler$weight.labels, weight = sampler$weights(W))
     }
-  }
+    }
   
   stableout <- do.call(rbind, stableout)
   stablews <- do.call(rbind, stablews)
@@ -269,8 +269,8 @@ community.sampler_con3 <- function (constrainedigraph, required.groups = c(0), f
 # also paramaterises weights according to pressures
 
 system.sim_press2 <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
-                               sampler = community.sampler_con3(constrainedigraph, required.groups, from, to, class, perturb, weights, spatial),  
-                               perturb, weights, spatial) {
+                              sampler = community.sampler_con3(constrainedigraph, required.groups, from, to, class, perturb, weights, spatial),  
+                              perturb, weights, spatial) {
   stableout <- list()
   stablews <- list()
   stable <- 0
@@ -368,3 +368,4 @@ constraint.order <- function(w,bounds) {
   }
   w
 }
+
