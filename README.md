@@ -27,5 +27,7 @@ Link to documents describing all spatial data processing:
 
 8.  helpers/helpers.R: a script with helper functions for simulating models
 
-9. helpers/spatial-helpers.R: a script with helper functions for simulating models spatially
+9.  helpers/spatial-helpers.R: a script with helper functions for simulating models spatially
+
+10. misc-plotting.R: miscellaneous plotting and mapping
 

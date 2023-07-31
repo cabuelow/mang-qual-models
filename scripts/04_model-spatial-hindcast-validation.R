@@ -14,26 +14,10 @@ set.seed(123) # set random number generator to make results reproducible
 sf_use_s2(FALSE)
 
 # read in spatial data (mangrove typological units)
+
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
 world <- data("World")
-spatial_dat <- read.csv('outputs/master-dat.csv') %>% 
-  mutate(land_net_change_obs = ifelse(land_net_change == 'Gain', 1, -1),
-         sea_net_change_obs = ifelse(sea_net_change == 'Gain', 1, -1)) %>% 
-  mutate(csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
-         csqueeze_1 = ifelse(csqueeze == 'None', 0, 1), 
-         fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
-         fut_csqueeze_1 = ifelse(fut_csqueeze == 'None', 0, 1), 
-         sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
-         fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
-         prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
-         Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L')) %>% 
-  mutate(land_net_change = case_when(land_net_change == 'Gain' ~ 'Gain_neutrality',
-                                     land_net_change == 'Neutral' ~ 'Gain_neutrality',
-                                     .default = land_net_change)) %>% 
-  mutate(sea_net_change = case_when(sea_net_change == 'Gain' ~ 'Gain_neutrality',
-                                    sea_net_change == 'Neutral' ~ 'Gain_neutrality',
-                                    .default = sea_net_change)) %>% 
-  mutate(Geomorphology = sub("\\_.*", "", Type))
+spatial_dat <- read.csv('outputs/master-dat.csv')
 
 # which model do you want to run?
 
@@ -41,10 +25,8 @@ names(models) # names of available models
 chosen_model <- models$mangrove_model
 chosen_model_name <- 'mangrove_model'
 
-# simulate a set of matrices for each mangrove network model (i.e., biophysical setting and pressure combinations), 
+# simulate a set of matrices for each mangrove network model (i.e., biophysical setting) 
 # and store the outcome for landward/seaward mangroves, i.e., gain/neutrality or loss
-
-# identify unique biophysical setting/pressure scenarios
 
 dat <- spatial_dat %>% # get unique biophysical/pressure combinations historically, given 5 different pressure definitions
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
@@ -60,7 +42,7 @@ dat <- spatial_dat %>% # get unique biophysical/pressure combinations historical
   unite('press', press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
   distinct()
 
-bio_dat <- dat %>% select(csqueeze:prop_estab, scenario) %>% distinct()
+bio_dat <- dat %>% select(csqueeze:prop_estab, scenario) %>% distinct() # unique biophysical settings
 
 # simulate matrices for each biophysical scenario
 
@@ -98,6 +80,7 @@ for(i in 1:nrow(dat)){
 })
 naive_outcomes <- do.call(rbind, tmp2) %>% pivot_wider(names_from = 'node', values_from = 'outcome')
 write.csv(naive_outcomes, 'outputs/validation/naive_outcomes.csv', row.names = F)
+naive_outcomes <- read.csv('outputs/validation/naive_outcomes.csv')
 
 # split data into training and test folds
 
@@ -140,11 +123,11 @@ registerDoParallel(cl)
 system.time( # 24mins
   results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
     acc <- list() # list to store accuracy outcomes
-    preds <- list()
+    preds <- list() # list to store predictions
     for(j in seq_along(threshold)){
       thresh <- threshold[j] # set ambiguity threshold
       acc2 <- list() # list to store accuracy outcomes
-      preds2 <- list()
+      preds2 <- list() # list to store predictions
       for(h in seq_along(unique(shuffled_dat$pressure_def))){
         
         # get training units for a fold and pressure definition
@@ -159,12 +142,10 @@ system.time( # 24mins
           summarise(matrix_post_prob = mean(valid)) 
         
         # get test units and make posterior predictions/hindcasts using posterior probability of each biomodel matrix
-        
         test_units <- shuffled_dat %>% 
           filter(k == i & pressure_def == h)
         
         # join naive hindcasts and posterior probabilities, calculate posterior hindcasts for test units
- 
         test_post_hindcasts <- test_units %>% 
           left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
           left_join(train_post_prob, by = c('scenario', 'nsim')) %>% 
@@ -176,11 +157,11 @@ system.time( # 24mins
           summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
                     SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 
           mutate(Landward = case_when(is.na(LandwardMang) ~ NA,
-                                      LandwardMang >= thresh ~ 'Gain',
+                                      LandwardMang >= thresh ~ 'Gain_neutrality',
                                       LandwardMang < 100-thresh ~ 'Loss',
                                       .default = 'Ambiguous'),
                  Seaward = case_when(is.na(SeawardMang) ~ NA,
-                                     SeawardMang >= thresh ~ 'Gain',
+                                     SeawardMang >= thresh ~ 'Gain_neutrality',
                                      SeawardMang < 100-thresh ~ 'Loss',
                                      .default = 'Ambiguous'),
                  Change = case_when(LandwardMang >= thresh & SeawardMang >= thresh ~ "Gain",
@@ -193,10 +174,7 @@ system.time( # 24mins
                  Change_obs = case_when(land_net_change_obs == 1 & sea_net_change_obs == 1 ~ "Gain",
                                         land_net_change_obs == -1 & sea_net_change_obs == -1 ~ "Loss",
                                         land_net_change_obs == 1 & sea_net_change_obs == -1 ~ "Landward Gain & Seaward Loss",
-                                        land_net_change_obs == -1 & sea_net_change_obs == 1 ~ "Landward Loss & Seaward Gain"),
-                 land_net_change_obs = ifelse(land_net_change_obs == 1, 'Gain', 'Loss'),
-                 sea_net_change_obs = ifelse(sea_net_change_obs == 1, 'Gain', 'Loss')) %>%
-          mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
+                                        land_net_change_obs == -1 & sea_net_change_obs == 1 ~ "Landward Loss & Seaward Gain")) %>% 
           mutate(ambig_threshold = thresh)
         preds2[[h]] <- test_post_hindcasts
         
@@ -275,36 +253,9 @@ accuracy_sum %>%
 
 ggsave('outputs/validation/accuracy-heatmap_kfold_averaged.png',  width = 10, height = 4.5)
 
-# both seaward and landward 
-
-accuracy_sum2 <- accuracy %>% 
-  filter(mangrove == 'Seaward & Landward') %>% 
-  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
-  mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
-  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
-  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
-  distinct() %>% 
-  group_by(mangrove, pressure_def, ambig_threshold, class, metric) %>% 
-  summarise(accuracy = mean(accuracy)) 
-
-accuracy_sum2 %>% 
-  ggplot() +
-  aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
-  geom_tile() +
-  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
-  facet_nested_wrap(~factor(class) + factor(metric), nrow = 2) +
-  ylab('Pressure definition') +
-  xlab('Ambiguity probability threshold') +
-  theme_classic()
-
-ggsave('outputs/validation/accuracy-heatmap_kfold_averaged_overall.png',  width = 10, height = 4.5)
-
-filter(accuracy_sum2, accuracy == max(filter(accuracy_sum2, metric == 'Overall_accuracy' & class == 'Gain_neutrality & Loss')$accuracy))
-
 # map prediction matches and mismatches
 
 filter(accuracy_sum, pressure_def == 4, ambig_threshold == 70)
-filter(accuracy_sum2, pressure_def == 4, ambig_threshold == 70)
 
 preds <- typ_points %>% 
   left_join(filter(test_hindcasts, pressure_def == 4, ambig_threshold == 70)) %>% 
@@ -458,7 +409,7 @@ tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, 
 thresh <- 70 # optimal ambiguity threshold
 press <- 4 # optimal pressure threshold
 
-# all data posterior prob
+# all data posterior probs
 post_prob <- spatial_dat %>% 
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
@@ -474,7 +425,9 @@ post_prob <- spatial_dat %>%
   mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
   group_by(scenario, nsim) %>% 
   summarise(matrix_post_prob = mean(valid)) 
+write.csv(post_prob, 'outputs/validation/matrix-posterior-prob.csv', row.names = F)
 
+# final predictions
 final_preds <- spatial_dat %>% 
   filter(pressure_def == press) %>% 
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
@@ -500,11 +453,11 @@ final_preds <- spatial_dat %>%
   summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
             SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 
   mutate(Landward = case_when(is.na(LandwardMang) ~ NA,
-                              LandwardMang >= thresh ~ 'Gain',
+                              LandwardMang >= thresh ~ 'Gain_neutrality',
                               LandwardMang < 100-thresh ~ 'Loss',
                               .default = 'Ambiguous'),
          Seaward = case_when(is.na(SeawardMang) ~ NA,
-                             SeawardMang >= thresh ~ 'Gain',
+                             SeawardMang >= thresh ~ 'Gain_neutrality',
                              SeawardMang < 100-thresh ~ 'Loss',
                              .default = 'Ambiguous'),
          Change = case_when(LandwardMang >= thresh & SeawardMang >= thresh ~ "Gain",
@@ -517,10 +470,7 @@ final_preds <- spatial_dat %>%
          Change_obs = case_when(land_net_change_obs == 1 & sea_net_change_obs == 1 ~ "Gain",
                                 land_net_change_obs == -1 & sea_net_change_obs == -1 ~ "Loss",
                                 land_net_change_obs == 1 & sea_net_change_obs == -1 ~ "Landward Gain & Seaward Loss",
-                                land_net_change_obs == -1 & sea_net_change_obs == 1 ~ "Landward Loss & Seaward Gain"),
-         land_net_change_obs = ifelse(land_net_change_obs == 1, 'Gain', 'Loss'),
-         sea_net_change_obs = ifelse(sea_net_change_obs == 1, 'Gain', 'Loss')) %>%
-  mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
+                                land_net_change_obs == -1 & sea_net_change_obs == 1 ~ "Landward Loss & Seaward Gain")) %>% 
   mutate(ambig_threshold = thresh)
 write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_',press, '_', thresh, '.csv'), row.names = F)
 
@@ -614,3 +564,30 @@ smap <- tm_shape(world_mang) +
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', chosen_model_name, '_all-data.png'), width = 5, height = 3)
 
+# End here
+
+# accuracy for simulatneous seaward and landward 
+
+accuracy_sum2 <- accuracy %>% 
+  filter(mangrove == 'Seaward & Landward') %>% 
+  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
+  mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
+  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
+  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
+  distinct() %>% 
+  group_by(mangrove, pressure_def, ambig_threshold, class, metric) %>% 
+  summarise(accuracy = mean(accuracy)) 
+
+accuracy_sum2 %>% 
+  ggplot() +
+  aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
+  geom_tile() +
+  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+  facet_nested_wrap(~factor(class) + factor(metric), nrow = 2) +
+  ylab('Pressure definition') +
+  xlab('Ambiguity probability threshold') +
+  theme_classic()
+
+ggsave('outputs/validation/accuracy-heatmap_kfold_averaged_overall.png',  width = 10, height = 4.5)
+
+filter(accuracy_sum2, accuracy == max(filter(accuracy_sum2, metric == 'Overall_accuracy' & class == 'Gain_neutrality & Loss')$accuracy))

@@ -278,12 +278,12 @@ sea <- read.csv('data/typologies/gmw_v3_change_96_20_sea_typologies.csv') %>%
 typ2 <- typ %>% 
   left_join(land) %>% 
   left_join(sea) %>% 
-  mutate(sea_net_change = case_when(sea_net_change_ha > 0 ~ 'Gain',
+  mutate(sea_net_change = case_when(sea_net_change_ha >= 0 ~ 'Gain_neutrality',
                                     sea_net_change_ha < 0 ~ 'Loss',
-                                    is.na(sea_net_change_ha) ~ 'Neutral'),
-         land_net_change = case_when(land_net_change_ha > 0 ~ 'Gain',
+                                    is.na(sea_net_change_ha) ~ 'Gain_neutrality'),
+         land_net_change = case_when(land_net_change_ha >= 0 ~ 'Gain_neutrality',
                                     land_net_change_ha < 0 ~ 'Loss',
-                                    is.na(land_net_change_ha) ~ 'Neutral')) %>% 
+                                    is.na(land_net_change_ha) ~ 'Gain_neutrality')) %>% 
   select(Type, sea_net_change:land_net_change)
 
 qtm(typ2, dots.col = 'sea_net_change') 
@@ -296,7 +296,18 @@ tmp[[i]] <- data.frame(pressure_def = i, Reduce(full_join, dat))
 
 }
 
-mast.dat <- do.call(rbind, tmp)
+mast.dat <- do.call(rbind, tmp) %>% 
+  mutate(land_net_change_obs = ifelse(land_net_change == 'Gain_neutrality', 1, -1),
+         sea_net_change_obs = ifelse(sea_net_change == 'Gain_neutrality', 1, -1)) %>% 
+  mutate(csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
+         csqueeze_1 = ifelse(csqueeze == 'None', 0, 1), 
+         fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
+         fut_csqueeze_1 = ifelse(fut_csqueeze == 'None', 0, 1), 
+         sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
+         fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
+         prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
+         Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L')) %>% 
+  mutate(Geomorphology = sub("\\_.*", "", Type))
 
 # save
 
