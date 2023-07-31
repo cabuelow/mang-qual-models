@@ -5,7 +5,7 @@ library(QPress)
 library(tidyverse)
 library(patchwork)
 source('scripts/helpers/models.R')
-source('scripts/helpers/helpers.R')
+source('scripts/helpers/helpers_v2.R')
 
 # loop through available model structures and store results in tmp files
 tmp <- list()
@@ -85,7 +85,7 @@ for(k in seq_along(rel.edge.cons.scenarios)){
                               spatial = 'N')
       out[[i]] <- sim$stableoutcome
       stability[[i]] <- sim$stability.df
-      weights[[i]] <- sim$stableweights
+      #weights[[i]] <- sim$stableweights
     } # end i loop
     # potential stability (i.e. proportion of stable matrices out of total simulated)
     stability.ls[[j]] <- data.frame(press.labels, do.call(rbind, stability))

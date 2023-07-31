@@ -51,7 +51,6 @@ spatial_pred <- spatial_dat %>% # here renaming future pressures as historical p
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
   relocate(press_gwsub, .after = press_csqueeze_1) %>% # relocate columns so in same order as historical pressures
   relocate(press_hist_drought, .after = press_gwsub) %>% 
-  relocate(press_hist_drought, .after = press_gwsub) %>% 
   relocate(press_hist_ext_rain, .after = press_hist_drought) %>% 
   relocate(press_storms, .after = press_hist_ext_rain) %>% 
   unite('scenario', csqueeze_2:prop_estab_2, press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 

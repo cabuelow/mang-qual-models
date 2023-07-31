@@ -1,5 +1,5 @@
 # functions for simulating spatial models and running validation
-source('scripts/helpers/helpers.R')
+source('scripts/helpers/helpers_v2.R')
 
 # calculate accuracy
 calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference vector
@@ -16,7 +16,7 @@ calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference 
 # simulate model matrices and store outcomes
 
 sim_mod <- function(x, # spatial unit
-                 numsims # number of simulations
+                    numsims # number of simulations
 ){ # define model relative edge constraints - which edge interaction strengths are greater than other
   # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
   # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
@@ -24,25 +24,7 @@ sim_mod <- function(x, # spatial unit
   rel.edge.cons.scenarios <- list(parse.constraints(c('SeaLevelRise -* SeawardMang < Sediment -> SubVol', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model),
                                   parse.constraints(c('Sediment -> SubVol < SeaLevelRise -* SeawardMang', 'LandwardMang -> SubVol < SeawardMang -> SubVol'), chosen_model))
   names(rel.edge.cons.scenarios) <- c('High Sediment Supply', 'Low Sediment Supply') # label the list of relative edge constraint scenarios 
-  
-  # perturbations for hindcasting
-  datselect <- dplyr::select(x, vals_csqueeze_1, vals_ant_slr, vals_gwsub, vals_hist_drought, vals_hist_ext_rain, vals_storms) %>% 
-    pivot_longer(vals_csqueeze_1:vals_storms, names_to = 'press', values_to = 'vals') %>% 
-    filter(vals == 1) %>% 
-    mutate(press = recode(press, 'vals_csqueeze_1' = 'CoastalDev', 'vals_ant_slr' = "SeaLevelRise", 'vals_gwsub' = "GroundSubsid", 
-                          'vals_hist_drought' = 'Drought', 'vals_hist_ext_rain' = 'ExtremeRainfall', 'vals_storms' = 'Cyclones'))
-  
-  #datselect <- dplyr::select(x, vals_ant_slr, vals_gwsub, vals_hist_drought, vals_hist_ext_rain, vals_storms) %>% 
-   # pivot_longer(vals_ant_slr:vals_storms, names_to = 'press', values_to = 'vals') %>% 
-    #filter(vals == 1) %>% 
-    #mutate(press = recode(press, 'vals_ant_slr' = "SeaLevelRise", 'vals_gwsub' = "GroundSubsid", 
-     #                     'vals_hist_drought' = 'Drought', 'vals_hist_ext_rain' = 'ExtremeRainfall', 'vals_storms' = 'Cyclones'))
-  
-  if(nrow(datselect) != 0){ # if there are no perturbations, go to next typology
-    
-    press.scenario <- rep(1, nrow(datselect))
-    names(press.scenario) <- datselect$press
-    
+
     # edge constraint scenarios
     
     if(x$csqueeze == 'None'){
@@ -70,12 +52,10 @@ sim_mod <- function(x, # spatial unit
     
     # simulate outcomes
     
-    sim <- system.sim_press(numsims, constrainedigraph = model, 
+    sim <- system.sim(numsims, constrainedigraph = model, 
                             from = from_vec,
                             to = to_vec,
-                            class = con.scenario,
-                            perturb = press.scenario,
-                            spatial = 'Y')
-  return(sim)
+                            class = con.scenario, spatial = 'Y')
+    return(sim)
   }
-}
+#}
