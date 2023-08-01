@@ -255,7 +255,7 @@ dat[[15]] <- propest # if happy add to dat list
 
 #### landward vs. seaward loss
 
-land <- read.csv('data/typologies/gmw_v3_change_96_20_land_typologies.csv') %>% 
+land <- read.csv('data/typologies/landward_change_96_20_gmw_v3.csv') %>% 
   group_by(chng_type, Type) %>% 
   summarise(area_ha = sum(area_ha)) %>% 
   pivot_wider(names_from = 'chng_type', values_from = 'area_ha') %>% 
@@ -264,7 +264,7 @@ land <- read.csv('data/typologies/gmw_v3_change_96_20_land_typologies.csv') %>%
   mutate(land_net_change_ha = gain - loss) %>% 
   select(Type, land_net_change_ha)
   
-sea <- read.csv('data/typologies/gmw_v3_change_96_20_sea_typologies.csv') %>% 
+sea <- read.csv('data/typologies/seaward_change_96_20_gmw_v3.csv') %>% 
   group_by(chng_type, Type) %>% 
   summarise(area_ha = sum(area_ha)) %>% 
   pivot_wider(names_from = 'chng_type', values_from = 'area_ha') %>% 
@@ -282,7 +282,7 @@ typ2 <- typ %>%
                                     sea_net_change_ha < 0 ~ 'Loss',
                                     is.na(sea_net_change_ha) ~ 'Gain_neutrality'),
          land_net_change = case_when(land_net_change_ha >= 0 ~ 'Gain_neutrality',
-                                    land_net_change_ha < 0 ~ 'Loss',
+                                    land_net_change_ha < 0 ~ 'Loss',  
                                     is.na(land_net_change_ha) ~ 'Gain_neutrality')) %>% 
   select(Type, sea_net_change:land_net_change)
 

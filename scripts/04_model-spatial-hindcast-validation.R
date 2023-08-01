@@ -32,6 +32,8 @@ chosen_model_name <- 'mangrove_model'
 dat <- spatial_dat %>% # get unique biophysical/pressure combinations historically, given 5 different pressure definitions
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  #dplyr::select(pressure_def, Type, csqueeze, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
+  #pivot_longer(cols = c(ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -41,11 +43,12 @@ dat <- spatial_dat %>% # get unique biophysical/pressure combinations historical
   select(-c(pressure_def,Type)) %>% 
   unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
   unite('press', press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.') %>% 
+  #unite('press', press_gwsub:press_ant_slr, na.rm = T, sep = '.') %>% 
   distinct()
 
-bio_dat <- dat %>% select(csqueeze:prop_estab, scenario) %>% distinct() # unique biophysical settings
+bio_dat <- dat %>% select(csqueeze:prop_estab, scenario) %>% distinct() # unique biophysical contexts
 
-# simulate matrices for each biophysical scenario
+# simulate matrices for each biophysical context
 
 nsim <- 1000 # number of sims
 tmp <- list()
@@ -88,10 +91,14 @@ naive_outcomes <- read.csv('outputs/validation/naive_outcomes.csv')
 kfold <- 5 # number of folds
 
 shuffled_dat <- spatial_dat %>% # shuffle the data and split
+  left_join(select(drivers, Type, Erosion, Commodities), by = 'Type') %>% 
+  filter(Erosion < 0.1) %>% 
   left_join(data.frame(Type = .[1:length(unique(.$Type)),]$Type[sample(1:length(unique(.$Type)))],
-                       k = rep(1:kfold, each = length(unique(.$Type))/kfold)), by = 'Type') %>% 
+                       k = c(rep(1:kfold, each = round(length(unique(.$Type))/kfold)),1:kfold)[1:length(unique(.$Type))]), by = 'Type') %>% 
   dplyr::select(pressure_def, k, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  #dplyr::select(pressure_def, k, Type, csqueeze, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+  #pivot_longer(cols = c(ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -99,6 +106,7 @@ shuffled_dat <- spatial_dat %>% # shuffle the data and split
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
          prop_estab_2 = paste0('Propestab_', .$prop_estab)) %>% 
   unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
+  #unite('press', press_gwsub:press_ant_slr, na.rm = T, sep = '.')
   unite('press', press_csqueeze_1:press_ant_slr, na.rm = T, sep = '.')
 
 # map the folds
@@ -121,7 +129,7 @@ tmap_save(map, 'outputs/maps/k-fold-map.png', width = 8, height = 2)
 threshold <- seq(60, 90, by = 5) # range of thresholds for defining when a prediction is ambiguous or not
 cl <- makeCluster(5)
 registerDoParallel(cl)
-system.time( # 24mins
+system.time( # ~30 mins
   results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret')) %dopar% {
     acc <- list() # list to store accuracy outcomes
     preds <- list() # list to store predictions
@@ -182,8 +190,7 @@ system.time( # 24mins
         preds2[[h]] <- test_post_hindcasts
         
         test_set <- test_post_hindcasts %>% 
-          left_join(drivers, by = 'Type') %>% 
-          filter(Landward != 'Ambiguous' & Seaward != 'Ambiguous' & Erosion < 0.5 & Commodities < 0.5)
+          filter(Landward != 'Ambiguous' & Seaward != 'Ambiguous')
         
         results <- data.frame(mangrove = 'Landward',
                               k = i,
@@ -210,6 +217,7 @@ system.time( # 24mins
 stopCluster(cl)
 saveRDS(results, 'outputs/validation/accuracy.RDS')
 results <- readRDS('outputs/validation/accuracy.RDS')
+#results <- readRDS('outputs/validation/accuracy_nodriv.RDS')
 accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
 test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
 
@@ -259,7 +267,7 @@ ggsave('outputs/validation/accuracy-heatmap_kfold_averaged.png',  width = 10, he
 
 # map prediction matches and mismatches
 
-filter(accuracy_sum, pressure_def == 4, ambig_threshold == 80)
+filter(accuracy_sum, pressure_def == 1, ambig_threshold == 90)
 
 preds <- typ_points %>% 
   left_join(filter(test_hindcasts, pressure_def == 4, ambig_threshold == 70)) %>% 

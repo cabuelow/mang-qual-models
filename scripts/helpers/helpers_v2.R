@@ -4,7 +4,7 @@
 # simulate stable matrices, no perturbations
 
 system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, spatial,
-                              sampler = community.sampler_con3(constrainedigraph, required.groups, from, to, class, spatial = 'Y')) {
+                              sampler = community.sampler_con1(constrainedigraph, required.groups, from, to, class, spatial = 'Y')) {
   
   edges1 <- constrainedigraph$edges
   labels <- node.labels(edges1)
@@ -155,7 +155,7 @@ constraint.order <- function(w,bounds) {
 # and allows relative strengths of edges to be constrained
 # based on 'community.ordering.sampler' function from Wotherspoon
 # does not handle perturbations
-community.sampler_con3 <- function (constrainedigraph, required.groups = c(0), from, to, class, spatial)# from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), from, to, class, spatial)# from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
   edges <- constrainedigraph$edges
   if (length(from) > 0){ # here add new column to edges with high, medium or low classification
