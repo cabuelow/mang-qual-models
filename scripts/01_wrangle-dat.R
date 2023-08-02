@@ -38,6 +38,16 @@ coast <- read.csv('outputs/processed-data/coastal-population.csv') %>%
   mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.66) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Medium', fut_csqueeze)) %>% 
   mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Low', fut_csqueeze)) %>% 
   mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2100 == 0, 'None', fut_csqueeze)) %>% 
+  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.77), 'High', NA)) %>% 
+  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.77) & log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.55), 'Medium', csqueeze)) %>% 
+  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.55) & log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.33), 'Low', csqueeze)) %>% 
+  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.33), 'None', csqueeze)) %>% 
+  #mutate(csqueeze = ifelse(sum.pop_size_lecz_2000 == 0, 'None', csqueeze)) %>% 
+  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.77), 'High', NA)) %>% 
+  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.77) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.55), 'Medium', fut_csqueeze)) %>% 
+  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.55) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Low', fut_csqueeze)) %>% 
+  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'None', fut_csqueeze)) %>% 
+  #mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2100 == 0, 'None', fut_csqueeze)) %>% 
   select(Type, csqueeze, fut_csqueeze) %>% 
   mutate(fut_csqueeze = ifelse(csqueeze == 'Low' & fut_csqueeze == 'None', 'Low', fut_csqueeze),
          fut_csqueeze = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'None', 'Medium', fut_csqueeze),
@@ -295,19 +305,26 @@ dat[[16]] <- st_drop_geometry(typ2) # if happy add to dat list
 tmp[[i]] <- data.frame(pressure_def = i, Reduce(full_join, dat))
 
 }
+tempdat <- do.call(rbind, tmp)
 
-mast.dat <- do.call(rbind, tmp) %>% 
+cs <- list('None', c('None', 'Low'), c('None', 'Low', 'Medium')) # when does pop. pressure = coastal development?
+tmp <- list()
+for(i in seq_along(cs)){
+tmp[[i]] <- tempdat %>% 
   mutate(land_net_change_obs = ifelse(land_net_change == 'Gain_neutrality', 1, -1),
          sea_net_change_obs = ifelse(sea_net_change == 'Gain_neutrality', 1, -1)) %>% 
-  mutate(csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
-         csqueeze_1 = ifelse(csqueeze == 'None', 0, 1), 
-         fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H'), # note counterintuitive notation here
-         fut_csqueeze_1 = ifelse(fut_csqueeze == 'None', 0, 1), 
+  mutate(csqueeze_1 = ifelse(csqueeze %in% cs[[i]], 0, 1), # this is for coastal development pressure
+         csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H', 'None' = 'H'), # note counterintuitive notation here
+         fut_csqueeze_1 = ifelse(fut_csqueeze %in% cs[[i]], 0, 1), 
+         fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H', 'None' = 'H'), # note counterintuitive notation here
          sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
          fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
          prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
          Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L')) %>% 
-  mutate(Geomorphology = sub("\\_.*", "", Type))
+  mutate(Geomorphology = sub("\\_.*", "", Type),
+         Cdev_thresh = i)
+}
+mast.dat <- do.call(rbind, tmp)
 
 # save
 

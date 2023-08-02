@@ -167,7 +167,7 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
         edges$Class <- dplyr::left_join(edges, constrain)$Class
         edges <- mutate(edges, Class = ifelse(To == 'LandwardMang', 'NA', Class))
       }
-    }else{ # in spatial model, always constrain SeaLevelRise -> LandwardMang edge according to pop. density, i.e. coastal development
+    }else{ # in spatial model, always constrain SeaLevelRise -> LandwardMang edge according to pop. density, i.e. coastal squeeze
       edges$Class <- dplyr::left_join(edges, constrain)$Class
     }
   }
