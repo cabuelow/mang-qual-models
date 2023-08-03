@@ -247,8 +247,13 @@ system.time( # ~30 mins
   })
 stopCluster(cl)
 saveRDS(results, paste0('outputs/validation/accuracy_', go,'_', rm_e, '.RDS'))
-#results <- readRDS('outputs/validation/accuracy.RDS')
-accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
+#results <- readRDS(paste0('outputs/validation/accuracy_', go,'_', rm_e, '.RDS'))
+accuracy <- do.call(rbind, lapply(results, function(x)x[[1]])) %>% 
+  mutate(pressure_def = recode(pressure_def, '1' = 'Very low',
+                               '2' = 'Low',
+                               '3' = 'Medium',
+                               '4' = 'High', 
+                               '5' = 'Very high'))
 test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
 
 # heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
@@ -264,10 +269,10 @@ accuracy %>%
   ggplot() +
   aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
   geom_tile() +
-  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy', limits = c(0,100)) +
   facet_nested_wrap(~factor(k) + factor(mangrove) + factor(class) + factor(metric), nrow = 5) +
   ylab('Pressure definition') +
-  xlab('Ambiguity probability threshold') +
+  xlab('Ambiguity probability threshold (%)') +
   theme_classic()
 
 ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_', go, '_', rm_e,'.png'), width = 15, height = 11)
@@ -275,8 +280,8 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_', go, '_', rm_e,'.png'
 # averaged across kfolds
 accuracy_sum <- accuracy %>% 
   filter(mangrove != 'Seaward & Landward') %>% 
-  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
-  mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
+  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'A) Seaward', mangrove == 'Landward' ~ 'B) Landward')) %>% 
+  mutate(mangrove = factor(mangrove, levels = c('A) Seaward', 'B) Landward'))) %>% 
   pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
   mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
   distinct() %>% 
@@ -287,11 +292,12 @@ accuracy_sum %>%
   ggplot() +
   aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
   geom_tile() +
-  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy', limits = c(0,100)) +
   facet_nested_wrap(~factor(mangrove) + factor(class) + factor(metric), nrow = 2) +
-  ylab('Pressure definition') +
-  xlab('Ambiguity probability threshold') +
-  theme_classic()
+  ylab('Pressure definition threshold') +
+  xlab('Ambiguity probability threshold (%)') +
+  theme_classic() +
+  theme(axis.title = element_text(size = 10))
 
 ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm_e,'.png'), width = 10, height = 4.5)
   }else{
@@ -537,7 +543,7 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
       scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy', limits=c(0,100)) +
       facet_nested_wrap(~factor(k) + factor(mangrove) + factor(class) + factor(metric), nrow = 5) +
       ylab('Pressure definition') +
-      xlab('Ambiguity probability threshold') +
+      xlab('Ambiguity probability threshold (%)') +
       theme_classic()
     
     ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_', go, '_', rm_e,'.png'), width = 15, height = 11)
@@ -560,7 +566,7 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
       scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy', limits=c(0,100)) +
       facet_nested_wrap(~factor(mangrove) + factor(class) + factor(metric), nrow = 2) +
       ylab('Pressure definition') +
-      xlab('Ambiguity probability threshold') +
+      xlab('Ambiguity probability threshold (%)') +
       theme_classic()
     
     ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm_e,'.png'), width = 10, height = 4.5)

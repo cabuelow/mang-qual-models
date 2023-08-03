@@ -22,7 +22,7 @@ spatial_dat <- read.csv('outputs/master-dat.csv')
 # using optimal pressure definition and calibrated ambiguity threshold
 go <- 1 # which coastal dev threshold?
 press <- 3 # which pressure definition threshold?
-thresh <- 85 # which ambiguity threshold?
+thresh <- 75 # which ambiguity threshold?
 rm_e <- 'N' # remove erosion from validation? Y or N
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
 post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
@@ -71,6 +71,7 @@ spatial_pred <- spatial_pred %>%
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
 write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
+#spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
 
 # map final 'all data' forecasts
 
@@ -110,10 +111,10 @@ lmap <- tm_shape(world_mang) +
             #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
-            legend.title.size = 0.45,
-            legend.text.size = 0.35,
-            main.title = 'B) Landward forecast',
-            main.title.size = 0.45,
+            legend.title.size = 0.4,
+            legend.text.size = 0.3,
+            main.title = 'E) Landward forecast',
+            main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
@@ -152,9 +153,9 @@ smap <- tm_shape(world_mang) +
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
-            legend.text.size = 0.35,
+            legend.text.size = 0.3,
             main.title = 'A) Seaward forecast',
-            main.title.size = 0.45,
+            main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
@@ -319,6 +320,9 @@ spatial_pred <- spatial_pred %>%
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
 write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '.csv'), row.names = F)
+spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '.csv'))
+titlea <- c('B) Seaward forecast with transplantation', 'C) Seaward forecast with sediment addition', 'D) Seaward forecast with removal of coastal barriers')
+titleb <- c('F) Landward forecast with transplantation', 'G) Landward forecast with sediment addition', 'H) Landward forecast with removal of coastal barriers')
 
 # map final 'all data' forecasts
 
@@ -358,16 +362,16 @@ lmap <- tm_shape(world_mang) +
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
-            legend.text.size = 0.35,
-            main.title = 'B) Landward forecast',
-            main.title.size = 0.45,
+            legend.text.size = 0.3,
+            main.title = titleb[i],
+            main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_', scenario, '.png'), width = 5, height = 1)
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '.png'), width = 5, height = 1)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
@@ -399,15 +403,15 @@ smap <- tm_shape(world_mang) +
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
-            legend.text.size = 0.35,
-            main.title = 'A) Seaward forecast',
-            main.title.size = 0.45,
+            legend.text.size = 0.3,
+            main.title = titlea[i],
+            main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_', scenario, '.png'), width = 5, height = 1)
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '.png'), width = 5, height = 1)
 }
 

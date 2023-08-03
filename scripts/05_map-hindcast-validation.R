@@ -41,13 +41,13 @@ if(rm_e == 'N'){
 preds <- typ_points %>% # join hindcasts to spatial data
   left_join(filter(test_hindcasts, pressure_def == press, ambig_threshold == thresh)) %>% 
   mutate(Seaward_match = case_when(Seaward == 'Ambiguous' ~ 'Ambiguous',
-                                   is.na(SeawardMang) ~'No Prediction',
+                                   is.na(SeawardMang) ~'No Hindcast',
                                    Seaward == sea_net_change ~'Match', 
-                                   Seaward != sea_net_change ~ 'MisMatch'),
+                                   Seaward != sea_net_change ~ 'Mis-match'),
          Landward_match = case_when(Landward == 'Ambiguous' ~ 'Ambiguous',
-                                    is.na(LandwardMang) ~'No Prediction',
+                                    is.na(LandwardMang) ~'No Hindcast',
                                     Landward == land_net_change ~'Match', 
-                                    Landward != land_net_change ~ 'MisMatch')) %>%
+                                    Landward != land_net_change ~ 'Mis-match')) %>%
   st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 }else{
   preds <- typ_points %>% # join hindcasts to spatial data
@@ -72,7 +72,7 @@ lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
   tm_shape(preds) +
   tm_dots('Landward_match', 
-          palette = c('No Prediction' = 'red', 'Ambiguous' = 'lightgoldenrod', 'MisMatch' = 'black', 'Match' = 'palegreen4'), 
+          palette = c('No Hindcast' = 'red', 'Ambiguous' = 'lightgoldenrod', 'Mis-match' = 'black', 'Match' = 'palegreen4'), 
           alpha = 0.5, 
           title = '',
           legend.show = F,
@@ -81,14 +81,14 @@ lmap <- tm_shape(world_mang) +
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
-            legend.text.size = 0.35,
-            main.title = 'B) Landward hindcast',
-            main.title.size = 0.45,
+            legend.text.size = 0.3,
+            main.title = 'D) Landward hindcast matches and mis-matches with optimal thresholds',
+            main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
-  tm_add_legend('symbol', col =  c('red','black', 'lightgoldenrod', 'palegreen4'), 
-                labels =  c('No Prediction', 'MisMatch', 'Ambiguous', 'Match'), border.alpha = 0, size = 0.3)
+  tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
+                labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1)
 
@@ -96,7 +96,7 @@ smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
   tm_shape(preds) +
   tm_dots('Seaward_match', 
-          palette = c('No Prediction' = 'red', 'Ambiguous' = 'lightgoldenrod', 'MisMatch' = 'black', 'Match' = 'palegreen4'), 
+          palette = c('No Hindcast' = 'red', 'Ambiguous' = 'lightgoldenrod', 'Mis-match' = 'black', 'Match' = 'palegreen4'), 
           alpha = 0.5, 
           title = '',
           legend.show = F,
@@ -105,14 +105,14 @@ smap <- tm_shape(world_mang) +
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
-            legend.text.size = 0.35,
-            main.title = 'A) Seaward hindcast',
-            main.title.size = 0.45,
+            legend.text.size = 0.3,
+            main.title = 'C) Seaward hindcast matches and mis-matches with optimal thresholds',
+            main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0.8) +
-  tm_add_legend('symbol', col =  c('red','black', 'lightgoldenrod', 'palegreen4'), 
-                labels =  c('No Prediction', 'MisMatch', 'Ambiguous', 'Match'), border.alpha = 0, size = 0.3)
+  tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
+                labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1)
 
