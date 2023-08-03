@@ -21,7 +21,7 @@ library(mapview)
 library(sf)
 library(tidyverse)
 
-dat <- read.csv('outputs/master-dat.csv') %>% filter(sensitivity == 2)
+dat <- read.csv('outputs/master-dat.csv') %>% filter(pressure_def == 3)
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_dams:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
