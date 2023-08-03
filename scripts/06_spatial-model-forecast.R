@@ -22,7 +22,7 @@ spatial_dat <- read.csv('outputs/master-dat.csv')
 # using optimal pressure definition and calibrated ambiguity threshold
 go <- 1 # which coastal dev threshold?
 press <- 3 # which pressure definition threshold?
-thresh <- 75 # which ambiguity threshold?
+thresh <- 85 # which ambiguity threshold?
 rm_e <- 'N' # remove erosion from validation? Y or N
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
 post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
@@ -201,8 +201,8 @@ matrix_index <- data.frame(index = 1:length(matrices), scenario = unlist(lapply(
 # to obtain naive forecasts of loss/gain given management/conservation scenarios
 
 dat2 <- dat %>% mutate(split = rep(1:5, (nrow(.)+4)/5)[1:nrow(.)]) # add a column to split so can parallelise
-scenarios <- list(c('LandwardAvailableProp', 'SeawardAvailableProp'), 'Sediment', 'Coastalsqueeze')
-system.time(
+scenarios <- list(c('LandwardAvailableProp', 'SeawardAvailableProp'), 'SubVol', 'Coastalsqueeze')
+system.time( # takes 23 mins
 for(b in seq_along(scenarios)){
   scn <- scenarios[[b]]
   if(scn[1] != 'Coastalsqueeze'){
@@ -242,7 +242,7 @@ write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1]
         for(j in 1:dim(bio_model)[3]){
           new_mat <- bio_model[,,j]
           new_mat[8,9] <- 1 # update so interaction between sea level rise and landward mangrove is always high (i.e., 1)
-          tmp[[j]] <- data.frame(solver(bio_model[,,j], chosen_model, pressures$press), nsim = j)  
+          tmp[[j]] <- data.frame(solver(new_mat, chosen_model, pressures$press), nsim = j)  
         }
         tmp2[[i]] <- do.call(rbind, tmp) %>% mutate(scenario = as.character(datsub[i,'scenario']), press = as.character(datsub[i,'press']))
       }
@@ -252,6 +252,15 @@ write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1]
     results <- do.call(rbind, results) %>% pivot_wider(names_from = 'node', values_from = 'outcome')
     write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
 }})
+
+# choose management/conservation scenario
+#' LandwardAvailableProp', 'Sediment', 'Coastalsqueeze'
+
+for(i in seq_along(scenarios)){
+  
+scenario <- scenarios[[i]][1]
+
+naive_outcomes_restore <- read.csv(paste0('outputs/predictions/naive_outcomes_scenario_', scenario, '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
 
 # make posterior forecast for each future scenario, using matrix calibrated posterior probabilities
 
@@ -287,8 +296,8 @@ naive_outcomes_restore <- rbind(naive_outcomes_restore, data.frame(nsim = rep(1:
                                                    press = rep(d$press, each = nsim),
                                                    LandwardMang = 1, # assuming no pressure means neutral
                                                    SeawardMang = 1))
-write.csv(naive_outcomes_restore, paste0('outputs/validation/naive_outcomes_restore_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
-naive_outcomes_restore <- read.csv(paste0('outputs/validation/naive_outcomes_restore_', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
+write.csv(naive_outcomes_restore, paste0('outputs/validation/naive_outcomes_restore_', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '.csv'), row.names = F)
+naive_outcomes_restore <- read.csv(paste0('outputs/validation/naive_outcomes_restore_', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '.csv'))
 
 spatial_pred <- spatial_pred %>% 
   left_join(naive_outcomes_restore, by = c('scenario', 'press')) %>% 
@@ -309,7 +318,7 @@ spatial_pred <- spatial_pred %>%
                              SeawardMang < 100-thresh ~ 'Loss',
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
-write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_restore.csv'), row.names = F)
+write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '.csv'), row.names = F)
 
 # map final 'all data' forecasts
 
@@ -358,7 +367,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_restore.png'), width = 5, height = 1)
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_', scenario, '.png'), width = 5, height = 1)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
@@ -399,6 +408,6 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_restore.png'), width = 5, height = 1)
-
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_', scenario, '.png'), width = 5, height = 1)
+}
 

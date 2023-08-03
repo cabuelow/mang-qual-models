@@ -11,8 +11,7 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
 typ_area <- read.csv('outputs/processed-data/typology-area.csv')
 dat <- list() # list to store wrangled dat
 
-# do pressure classifications within a range for sensitivity analysis
-# mid-range in sensitvity ranges below is used for main results
+# do pressure classifications across a range of thresholds
 sens <- c(30, 40, 50, 60, 70)
 sens_fdrought <- c(2, 3, 4, 5, 6)
 sens_hdrought <- c(0.5, 1, 1.5, 2, 2.5)
@@ -175,7 +174,8 @@ dat[[9]] <- frain # if happy add to dat list
 #### historical cyclones
 
 cyc <- read.csv('outputs/processed-data/cyclone-tracks-wind_1996_2020.csv') %>% 
-  mutate(storms = ifelse(cyclone_tracks_1996_2020 > 1, 1, 0)) %>% 
+  mutate(storms = ifelse(cyclone_tracks_1996_2020> quantile(.$cyclone_tracks_1996_2020, sens[i]/100), 1, 0)) %>% 
+  #mutate(storms = ifelse(cyclone_tracks_1996_2020 > 1, 1, 0)) %>% 
   select(Type, storms)
 
 # map to check

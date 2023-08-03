@@ -26,7 +26,7 @@ names(models) # names of available models
 chosen_model <- models$mangrove_model
 
 # remove erosion from validation?
-rm_e <- 'Y'
+rm_e <- 'N'
 
 system.time( # takes ~ 2 hours
 for(go in 1:3){ # loop over coastal development threshold
@@ -513,7 +513,12 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
     stopCluster(cl)
     saveRDS(results, paste0('outputs/validation/accuracy_', go,'_', rm_e, '.RDS'))
     #results <- readRDS('outputs/validation/accuracy.RDS')
-    accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
+    accuracy <- do.call(rbind, lapply(results, function(x)x[[1]])) %>% 
+      mutate(pressure_def = recode(pressure_def, '1' = 'Very low',
+                                   '2' = 'Low',
+                                   '3' = 'Medium',
+                                   '4' = 'High', 
+                                   '5' = 'Very high'))
     test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
     
     # heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
@@ -529,7 +534,7 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
       ggplot() +
       aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
       geom_tile() +
-      scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+      scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy', limits=c(0,100)) +
       facet_nested_wrap(~factor(k) + factor(mangrove) + factor(class) + factor(metric), nrow = 5) +
       ylab('Pressure definition') +
       xlab('Ambiguity probability threshold') +
@@ -552,7 +557,7 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
       ggplot() +
       aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
       geom_tile() +
-      scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
+      scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy', limits=c(0,100)) +
       facet_nested_wrap(~factor(mangrove) + factor(class) + factor(metric), nrow = 2) +
       ylab('Pressure definition') +
       xlab('Ambiguity probability threshold') +
