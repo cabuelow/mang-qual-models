@@ -253,7 +253,8 @@ accuracy <- do.call(rbind, lapply(results, function(x)x[[1]])) %>%
                                '2' = 'Low',
                                '3' = 'Medium',
                                '4' = 'High', 
-                               '5' = 'Very high'))
+                               '5' = 'Very high')) %>% 
+  mutate(pressure_def = factor(pressure_def, levels = c('Very low', 'Low', 'Medium','High', 'Very high')))
 test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
 
 # heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
@@ -524,7 +525,8 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
                                    '2' = 'Low',
                                    '3' = 'Medium',
                                    '4' = 'High', 
-                                   '5' = 'Very high'))
+                                   '5' = 'Very high')) %>% 
+      mutate(pressure_def = factor(pressure_def, levels = c('Very low', 'Low', 'Medium','High', 'Very high')))
     test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
     
     # heatmap of accuracy metrics for combinations of pressure and ambiguity thresholds
