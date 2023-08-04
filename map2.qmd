@@ -89,8 +89,6 @@ Conceptual diagram of the network model that makes qualitative predictions of ma
 
 Historical subsidence from groundwater extraction (2010) is mapped in the left pane, future subsidence from groundwater extraction (2040) on the right.
 
-mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.9, lwd = 0) \| mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.9, lwd = 0)
-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
 mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.9, lwd = 0)
