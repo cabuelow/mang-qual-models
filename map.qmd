@@ -26,7 +26,8 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
   left_join(dat) %>% 
   mutate_at(vars(fut_slr:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
   mutate(fut_dams = ifelse(fut_dams == 'H', 'Present', 'Absent')) %>% 
-  mutate_at(vars(csqueeze:sed_supp, prop_estab), ~case_when(. == 'H' ~ 'High',
+  mutate_at(vars(csqueeze, fut_csqueeze), ~case_when(. == 'H' ~ 'Low', . == 'M' ~ 'Medium', . == 'L' ~ 'High', .default = .)) %>% 
+  mutate_at(vars(sed_supp, prop_estab), ~case_when(. == 'H' ~ 'High',
                                                            . == 'M' ~ 'Medium', 
                                                            . == 'L' ~ 'Low',
                                                            .default = .)) %>% 
