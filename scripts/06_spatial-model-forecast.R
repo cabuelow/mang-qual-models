@@ -467,6 +467,7 @@ all_scen <- transplant %>% left_join(sediment, by = 'Type') %>% left_join(barrie
   unite('Seaward_scenario_gain', Transplant_Seaward_gain, Sediment_Seaward_gain, Barriers_Seaward_gain, na.rm = T, sep = '_') %>% 
   unite('Seaward_scenario_reduced_risk', Transplant_Seaward_risk_reduced, Sediment_Seaward_risk_reduced, Barriers_Seaward_risk_reduced, na.rm = T, sep = '_') %>% 
   mutate_at(vars(Landward_scenario_gain, Landward_scenario_reduced_risk, Seaward_scenario_gain, Seaward_scenario_reduced_risk), ~ifelse(. == '', NA, .))
+write.csv(all_scen, 'outputs/predictions/scenario-forecasts-all.csv', row.names = F)
 
 # summarise
 
