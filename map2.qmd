@@ -42,6 +42,7 @@ dat <- read.csv('outputs/master-dat.csv') %>% filter(Cdev_thresh == go & pressur
 results <- readRDS(paste0('outputs/validation/accuracy_', go,'_', rm_e, '.RDS'))
 accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
 test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
+all_scen <- read.csv('outputs/predictions/scenario-forecasts-all.csv')
 typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_slr:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
@@ -65,6 +66,7 @@ preds <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids
                                     is.na(LandwardMang) ~'No Prediction',
                                     Landward == land_net_change ~'Match', 
                                     Landward != land_net_change ~ 'MisMatch'))
+scenario_change <- typ %>% inner_join(all_scen)
 
 ```
 
@@ -72,7 +74,7 @@ This webpage provides an overview of the data used to paramaterise a qualitative
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
-Due to memory limitations, only **subsidence**, **sediment supply**, **future dams**, **tidal range**, **propagule establishment capacity**, **historical observations of landward and seaward mangrove extent change**, and **hindcasts and forecasts of landward and seaward extent change** are found on this page.
+Only **subsidence**, **sediment supply**, **future dams**, **historical observations of landward and seaward mangrove extent change**, and **hindcasts and forecasts of landward and seaward extent change** are found on this page.
 
 Go [here to see part 1](https://mangrove-climate-risk-mapping.netlify.app/), which provides information on sea-level rise, coastal development, drought, extreme rainfall, intense storms, and subsidence.
 
@@ -85,7 +87,7 @@ Conceptual diagram of the network model that makes qualitative predictions of ma
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
-### Subsidence from groundwater extraction {#subsidence}
+### Subsidence from groundwater extraction
 
 Historical subsidence from groundwater extraction (2010) is mapped in the left pane, future subsidence from groundwater extraction (2040) on the right.
 
@@ -122,27 +124,7 @@ Catchments representing all land and river networks associated with a mangrove t
 **Future dams**
 
 River networks from the HydroRivers database (Lehner & Grill, 2013) that drain into mangrove typological units were identified and buffered by 10 kilometres. The number of dams either [planned or under construction in the future (Zarfl et al., 2015)](https://www.globaldamwatch.org/fhred) that intersected with each unit's buffered river network was calculated and converted to future dam presence-absence. Mangrove typological units without river networks received a value of 0.
-:::
-
-::: {.callout-tip icon="false" collapse="true"}
-### Tidal range and propaule establishment capacity {#tidal-range}
-
-Tidal range (macro, meso or micro) is mapped in the left pane, propagule establishment capacity on the right.
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
-
-mapview(typ, zcol = 'Tidal_Class', layer.name = 'Tidal range', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'prop_estab', layer.name = 'Propagule establishment capacity', cex = 0.9, lwd = 0)
-
-```
-
-**Tidal range**
-
-Tidal range was estimated for each mangrove typological unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). Typological units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and typological units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (*under review*).
-
-**Progpagule establishment capacity**
-
-Propagule establishment capacity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having 'high', 'medium', or 'low' establishment capacity using terciles, where large average distance values corresponded to low establishment capacity and vice versa.
-:::
+::: -32817
 
 ::: {.callout-tip icon="false" collapse="true"}
 ### Historical observations of mangrove loss and gain {#historical-mangrove-loss-and-gain}
@@ -166,7 +148,6 @@ Matches and mis-matches between hindcasts and historical observations of mangrov
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
 mapview(preds, zcol = 'Seaward_match', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(preds, zcol = 'Landward_match', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
-
 ```
 :::
 
@@ -178,5 +159,27 @@ Forecasts of seaward mangrove extent change are mapped in the left pane, landwar
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
 mapview(filter(preds, !is.na(Seaward)), zcol = 'Seaward', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(preds, !is.na(Landward)), zcol = 'Landward', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+```
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Scenario-based forecasts of mangrove gain/neutrality with management or restoration
+
+Scenario-based forecasts of seaward gain/neutrality with management or restoration change are mapped in the left pane, landward on the right.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
+
+mapview(filter(scenario_change, !is.na(Seaward_scenario_gain)), zcol = 'Seaward_scenario_gain', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Landward_scenario_gain)), zcol = 'Landward_scenario_gain', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+```
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Scenario-based forecasts of reduced certainty of loss with management or restoration
+
+Scenario-based forecasts of seaward reduced certainty of loss with management or restoration change are mapped in the left pane, landward on the right.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
+
+mapview(filter(scenario_change, !is.na(Seaward_scenario_reduced_risk)), zcol = 'Seaward_scenario_reduced_risk', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Landward_scenario_reduced_risk)), zcol = 'Landward_scenario_reduced_risk', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 ```
 :::
