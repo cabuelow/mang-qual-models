@@ -22,8 +22,9 @@ dat2 <- dat %>%
             Prob_loss = (sum(outcome<0)/n())*-100) %>%  
   mutate(tide = strsplit(constraint_scenario, ', ')[[1]][1],
          coastalsqueeze = strsplit(constraint_scenario, ', ')[[1]][3],
-         var = recode(var, 'LandwardMang' = 'Landward mangrove', 'SeawardMang' = 'Seaward mangrove')) %>% 
-  mutate(tide = factor(tide, levels = c('Microtidal', 'Mesotidal', 'Macrotidal')))
+         var = recode(var, 'LandwardMang' = 'Landward mangrove', 'SeawardMang' = 'Seaward mangrove'),
+         tide = recode(tide, 'Microtidal' = 'Micro- tidal', 'Mesotidal' = 'Meso- tidal', 'Macrotidal' = 'Macro- tidal')) %>% 
+  mutate(tide = factor(tide, levels = c('Micro- tidal', 'Meso- tidal', 'Macro- tidal')))
 
 # plot
 
@@ -35,15 +36,13 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
-  #facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 4) +
   facet_nested(~factor(model_scenario) + factor(coastalsqueeze)) +
-  #facet_wrap(~factor(model_scenario)) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
   theme_classic() +
   theme(legend.position = 'bottom',
         legend.justification = 'left',
-        #axis.text.y =  element_blank(),
         strip.text.x = element_text(size = 9),
-        title = element_text(size = 10),
+        title = element_text(size = 9),
         axis.title = element_blank()) +
   ggtitle('A) Seaward mangrove') +
   guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5))
@@ -57,13 +56,13 @@ b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
                        breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
   facet_wrap(~factor(coastalsqueeze)) +
-  #facet_wrap(vars(factor(model_scenario), factor(coastalsqueeze)), ncol = 2) +
+  scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
   theme_classic() +
   theme(legend.position = 'none',
         legend.justification = 'left',
         axis.text.y =  element_blank(),
         strip.text.x = element_text(size = 9),
-        title = element_text(size = 10),
+        title = element_text(size = 9),
         axis.title = element_blank()) +
   ggtitle('B) Landward mangrove') +
   guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5))
@@ -71,5 +70,5 @@ b
 
 c <- a+b+plot_layout(widths = c(2, 1))
 c 
-ggsave('outputs/heatmap_outputs/mangrove_model_heatmap.png', width = 11, height = 4)
+ggsave('outputs/heatmap_outputs/mangrove_model_heatmap.png', width = 10.5, height = 4)
 
