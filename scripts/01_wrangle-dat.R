@@ -33,21 +33,10 @@ coast <- read.csv('outputs/processed-data/coastal-population.csv') %>%
   mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.66) & log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.33), 'Medium', csqueeze)) %>% 
   mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.33), 'Low', csqueeze)) %>% 
   mutate(csqueeze = ifelse(sum.pop_size_lecz_2000 == 0, 'None', csqueeze)) %>% 
-  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.66), 'High', NA)) %>% 
-  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.66) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Medium', fut_csqueeze)) %>% 
-  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.33), 'Low', fut_csqueeze)) %>% 
-  mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2100 == 0, 'None', fut_csqueeze)) %>% 
-  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.75), 'High', NA)) %>% 
-  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.75) & log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.5), 'Medium', csqueeze)) %>% 
-  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.5) & log(sum.pop_size_lecz_2000) > quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.25), 'Low', csqueeze)) %>% 
-  #mutate(csqueeze = ifelse(log(sum.pop_size_lecz_2000) < quantile(log(.$sum.pop_size_lecz_2000[.$sum.pop_size_lecz_2000>0]), 0.25), 'None', csqueeze)) %>% 
-  #mutate(csqueeze = ifelse(sum.pop_size_lecz_2000 == 0, 'None', csqueeze)) %>% 
-  #mutate(csqueeze = ifelse(is.na(csqueeze), 'None', csqueeze)) %>% 
-  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.75), 'High', NA)) %>% 
-  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.75) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.5), 'Medium', fut_csqueeze)) %>% 
-  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.5) & log(sum.pop_size_lecz_2100) > quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.25), 'Low', fut_csqueeze)) %>% 
-  #mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2100) < quantile(log(.$sum.pop_size_lecz_2100[.$sum.pop_size_lecz_2100>0]), 0.25), 'None', fut_csqueeze)) %>% 
-  #mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2100 == 0, 'None', fut_csqueeze)) %>% 
+  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2060) > quantile(log(.$sum.pop_size_lecz_2060[.$sum.pop_size_lecz_2060>0]), 0.66), 'High', NA)) %>% 
+  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2060) < quantile(log(.$sum.pop_size_lecz_2060[.$sum.pop_size_lecz_2060>0]), 0.66) & log(sum.pop_size_lecz_2060) > quantile(log(.$sum.pop_size_lecz_2060[.$sum.pop_size_lecz_2060>0]), 0.33), 'Medium', fut_csqueeze)) %>% 
+  mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2060) < quantile(log(.$sum.pop_size_lecz_2060[.$sum.pop_size_lecz_2060>0]), 0.33), 'Low', fut_csqueeze)) %>% 
+  mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2060 == 0, 'None', fut_csqueeze)) %>% 
   select(Type, csqueeze, fut_csqueeze) %>% 
   mutate(fut_csqueeze = ifelse(csqueeze == 'Low' & fut_csqueeze == 'None', 'Low', fut_csqueeze), # here assuming that any coastal development in the past can't be reversed
          fut_csqueeze = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'None', 'Medium', fut_csqueeze),
@@ -96,7 +85,7 @@ dat[[3]] <- dams # if happy add to dat list
 #### future sea level rise
 
 fslr <- read.csv('outputs/processed-data/future-slr.csv') %>% 
-  mutate(fut_slr = ifelse(slr_m_2081_2100 > quantile(.$slr_m_2081_2100, sens[i]/100), 1, 0)) %>% 
+  mutate(fut_slr = ifelse(slr_m_2041_2060 > quantile(.$slr_m_2041_2060, sens[i]/100), 1, 0)) %>% 
   select(Type, fut_slr)
   
 # map to check
@@ -148,7 +137,7 @@ dat[[7]] <- gw # if happy add to dat list
 #### future drought
 
 fdro <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
-  mutate(fut_drought = ifelse(mean.spi_change_percent_2081_2100 < -sens[i], 1, 0)) %>% 
+  mutate(fut_drought = ifelse(mean.spi_change_percent_2041_2060 < -sens[i], 1, 0)) %>% 
   select(Type, fut_drought)
 
 # map to check
@@ -161,7 +150,7 @@ dat[[8]] <- fdro # if happy add to dat list
 #### future extreme rainfall
 
 frain <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
-  mutate(fut_ext_rain = ifelse(mean.spi_change_percent_2081_2100 > sens[i], 1, 0)) %>% 
+  mutate(fut_ext_rain = ifelse(mean.spi_change_percent_2041_2060 > sens[i], 1, 0)) %>% 
   select(Type, fut_ext_rain)
 
 # map to check
