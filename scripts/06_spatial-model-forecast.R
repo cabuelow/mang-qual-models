@@ -1,6 +1,6 @@
 # make forecasts of mangrove loss or gain using calibrated posterior hindcasts
-# then ask what happens if there is a sustained increase in mangrove propagules via
-# management or restoration? solve the matrices under each scenario with increased propagules
+# then ask what happens if there is a sustained increase in a node via
+# management or restoration? solve the matrices under each scenario
 
 library(QPress)
 library(tidyverse)
@@ -435,6 +435,7 @@ tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_',
 
 # get the landward and seaward forecasts for each scenario, and show where the additional gains or reduced risk of loss would be
 
+scenarios <- list(c('LandwardAvailableProp', 'SeawardAvailableProp'), 'SubVol', 'Coastalsqueeze')
 baseline <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '.csv')) %>%
   filter(!is.na(Landward) & !is.na(Seaward)) %>% 
   rename('Landward_base' = 'Landward', 'Seaward_base' = 'Seaward')
@@ -491,6 +492,7 @@ write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm
 scenario_change <- typ_points %>% 
   inner_join(all_scen) %>%
   st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
+world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)  
 
 # landward gains
 lmap <- tm_shape(world_mang) +
@@ -560,7 +562,7 @@ lmap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.3,
-            main.title = " F) Forecast of landward reduced risk of loss relative to baseline",
+            main.title = " F) Forecast of landward reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
@@ -638,7 +640,7 @@ smap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.3,
-            main.title = "E) Forecast of seaward reduced risk of loss relative to baseline",
+            main.title = "E) Forecast of seaward reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
