@@ -41,7 +41,7 @@ This webpage provides an overview of the data used to paramaterise a qualitative
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
-Due to memory limitations, only **sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, and **intense storms** are found on this page.
+Only **sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, and **intense storms** are found on this page.
 
 Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on sediment supply, future dams, tidal range, propagule establishment capacity, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
 
