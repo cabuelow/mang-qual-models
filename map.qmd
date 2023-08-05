@@ -43,7 +43,7 @@ Sections below provide an overview of the network model structure and the proces
 
 Only **sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, and **intense storms** are found on this page.
 
-Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on sediment supply, future dams, tidal range, propagule establishment capacity, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
+Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
 
 ### Network model of mangrove landward migration and seaward progradation
 
@@ -150,4 +150,4 @@ The number of tropical cyclones within a 200 km radius buffer from the centroid 
 The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of cyclone occurring by 2050 was greater than 50%.
 :::
 
-Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on sediment supply, future dams, tidal range, propagule establishment capacity, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
+Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
