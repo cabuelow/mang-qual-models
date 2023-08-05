@@ -74,7 +74,7 @@ write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions', go, '
 #spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
 
 # summarise predictions
-datsum <- spatial_pred %>% 
+datsum <- ungroup(spatial_pred) %>% 
   mutate(Landward = paste0('Landward_', .$Landward),
          Seaward = paste0('Seaward_', .$Seaward)) %>% 
   mutate(Landward_seaward = paste0(.$Landward, '.', .$Seaward)) %>% 
@@ -136,13 +136,13 @@ smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
   tm_shape(filter(preds, is.na(Seaward))) +
   tm_dots('darkgrey', size = 0.001) +
-  tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Seaward))) +
-  tm_dots('Seaward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.0015) +
+  #tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Seaward))) +
+  #tm_dots('Seaward', 
+   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+        #  size = 0.0015) +
   tm_shape(filter(preds, Seaward == 'Loss' & !is.na(Seaward))) +
   tm_dots('Seaward', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
