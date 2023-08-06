@@ -12,9 +12,8 @@ typ_area <- read.csv('outputs/processed-data/typology-area.csv')
 dat <- list() # list to store wrangled dat
 
 # do pressure classifications across a range of thresholds
-sens <- c(30, 40, 50, 60, 70)
-sens_fdrought <- c(2, 3, 4, 5, 6)
-sens_hdrought <- c(0.5, 1, 1.5, 2, 2.5)
+sens <- c(30, 40, 50, 60, 70) #percentiles
+sens_sub <- c(2, 3, 4, 5, 6) #subsidence probability intervals
 
 # loop through pressure classifications and save in master dataframe
 tmp <- list()
@@ -111,7 +110,7 @@ dat[[5]] <- aslr # if happy add to dat list
 #### future subsidence from groundwater extraction
 
 fgw <- read.csv('outputs/processed-data/gw_subsid_2040.csv') %>% 
-  mutate(fut_gwsub = ifelse(mode >= sens_fdrought[i], 1, 0)) %>% 
+  mutate(fut_gwsub = ifelse(mode >= sens_sub[i], 1, 0)) %>% 
   select(Type, fut_gwsub)
 
 # map to check
@@ -124,7 +123,7 @@ dat[[6]] <- fgw # if happy add to dat list
 #### current subsidence from groundwater extraction
 
 gw <- read.csv('outputs/processed-data/gw_subsid_2010.csv') %>% 
-  mutate(gwsub = ifelse(mode >= sens_fdrought[i], 1, 0)) %>% 
+  mutate(gwsub = ifelse(mode >= sens_sub[i], 1, 0)) %>% 
   select(Type, gwsub)
 
 # map to check
@@ -137,7 +136,7 @@ dat[[7]] <- gw # if happy add to dat list
 #### future drought
 
 fdro <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
-  mutate(fut_drought = ifelse(mean.spi_change_percent_2041_2060 < -sens[i], 1, 0)) %>% 
+  mutate(fut_drought = ifelse(mean.spi_change_percent_2041_2060 < quantile(.$mean.spi_change_percent_2041_2060[.$mean.spi_change_percent_2041_2060 < 0] , 1-(sens[i]/100)), 1, 0)) %>% 
   select(Type, fut_drought)
 
 # map to check
@@ -150,7 +149,7 @@ dat[[8]] <- fdro # if happy add to dat list
 #### future extreme rainfall
 
 frain <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
-  mutate(fut_ext_rain = ifelse(mean.spi_change_percent_2041_2060 > sens[i], 1, 0)) %>% 
+  mutate(fut_ext_rain = ifelse(mean.spi_change_percent_2041_2060 > quantile(.$mean.spi_change_percent_2041_2060[.$mean.spi_change_percent_2041_2060 > 0] , sens[i]/100), 1, 0)) %>% 
   select(Type, fut_ext_rain)
 
 # map to check
@@ -164,7 +163,6 @@ dat[[9]] <- frain # if happy add to dat list
 
 cyc <- read.csv('outputs/processed-data/cyclone-tracks-wind_1996_2020.csv') %>% 
   mutate(storms = ifelse(cyclone_tracks_1996_2020> quantile(.$cyclone_tracks_1996_2020, sens[i]/100), 1, 0)) %>% 
-  #mutate(storms = ifelse(cyclone_tracks_1996_2020 > 1, 1, 0)) %>% 
   select(Type, storms)
 
 # map to check
@@ -177,7 +175,7 @@ dat[[10]] <- cyc # if happy add to dat list
 #### historical drought
 
 hdro <- read.csv('outputs/processed-data/historical-drought.csv') %>% 
-  mutate(hist_drought = ifelse(min_spei_1996_2020 < -sens_hdrought[i], 1, 0)) %>% 
+  mutate(hist_drought = ifelse(min_spei_1996_2020 < quantile(.$min_spei_1996_2020[.$min_spei_1996_2020 < 0] , 1-(sens[i]/100)), 1, 0)) %>% 
   select(Type, hist_drought)
 
 # map to check
@@ -190,7 +188,7 @@ dat[[11]] <- hdro # if happy add to dat list
 #### historical extreme rainfall
 
 hrain <- read.csv('outputs/processed-data/historical-drought.csv') %>% 
-  mutate(hist_ext_rain = ifelse(max_spei_1996_2020 > sens_hdrought[i], 1, 0)) %>% 
+  mutate(hist_ext_rain = ifelse(max_spei_1996_2020 > quantile(.$max_spei_1996_2020[.$max_spei_1996_2020 > 0], sens[i]/100), 1, 0)) %>% 
   select(Type, hist_ext_rain)
 
 # map to check
@@ -222,7 +220,7 @@ fstorms <- lapply(fils, read.csv) %>%
   group_by(Type) %>% 
   summarise(cyclone_occurrences_10000yrs = median(cyclone_occurrences_10000yrs)) %>% 
   mutate(fut_storms = 1 - (1 - (cyclone_occurrences_10000yrs/10000))^(2050-2023)) %>% 
-  mutate(fut_storms = ifelse(fut_storms > sens[i]/100, 1, 0)) %>% 
+  mutate(fut_storms = ifelse(fut_storms > quantile(.$fut_storms, sens[i]/100), 1, 0)) %>% 
   select(Type, fut_storms)
 
 # map to check
