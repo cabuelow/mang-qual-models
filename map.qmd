@@ -42,7 +42,7 @@ This webpage provides an overview of the data used to paramaterise a qualitative
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
-Only **sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, and **intense storms** are found on this page.
+**Sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, and **intense storms** are found on this page.
 
 Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
 
@@ -104,11 +104,11 @@ mapview(typ, zcol = 'hist_drought', layer.name = 'Historical drought', cex = 0.9
 
 **Historical drought**
 
-Historical drought conditions were estimated for each mangrove typological unit from 1996-2020 using the [Standardized Precipitation-Evapotranspiration index](https://spei.csic.es/) (SPEI; raster with 0.5° resolution) (Beguria et al., 2022). The SPEI index is a standardised variable where values greater or less than 0 indicate anomalies from the mean. Raster pixels with SPEI values representing conditions over a 12-month time scale for each year between 1996 and 2020 were averaged within each typological unit to obtain average annual SPEI values. Typological units that did not directly intersect with the SPEI raster were buffered by 10 kilometres to obtain average annual SPEI values. All other units received a value of 0 (i.e., mean conditions). Drought was considered present between 1996 and 2020 if the minimum SPEI value for a unit was more than 1.5 standard deviations below the mean.
+Historical drought conditions were estimated for each mangrove typological unit from 1996-2020 using the [Standardized Precipitation-Evapotranspiration index](https://spei.csic.es/) (SPEI; raster with 0.5° resolution) (Beguria et al., 2022). The SPEI index is a standardised variable where values greater or less than 0 indicate anomalies from the mean. Raster pixels with SPEI values representing conditions over a 12-month time scale for each year between 1996 and 2020 were averaged within each typological unit to obtain average annual SPEI values. Typological units that did not directly intersect with the SPEI raster were buffered by 10 kilometres to obtain average annual SPEI values. All other units received a value of 0 (i.e., mean conditions). Drought was considered present between 1996 and 2020 if the minimum SPEI value for a unit was more than the 50th percentile of standard deviations below the mean.
 
 **Future drought**
 
-[Long term (2081-2100) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove typological unit was calculated. Mangrove typological units with greater than 50% decrease in SPI values were considered at risk from drought.
+[Long term (2081-2100) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove typological unit was calculated. Mangrove typological units with greater than a 50th percentile decrease in SPI values were considered at risk from drought.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -144,11 +144,31 @@ mapview(typ, zcol = 'storms', layer.name = 'Historical intense tropical storms',
 
 **Historical intense tropical storms**
 
-The number of tropical cyclones within a 200 km radius buffer from the centroid of each mangrove typological unit was calculated between 1996 and 2020 using the [IBTrACS database](https://climatedataguide.ucar.edu/climate-data/ibtracs-tropical-cyclone-best-track-data) (Knapp et al., 2010). As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Damage from intense tropical storms was considered present if the number of tropical cyclones intersecting a unit's buffer was greater than 0.
+The number of tropical cyclones within a 200 km radius buffer from the centroid of each mangrove typological unit was calculated between 1996 and 2020 using the [IBTrACS database](https://climatedataguide.ucar.edu/climate-data/ibtracs-tropical-cyclone-best-track-data) (Knapp et al., 2010). As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Damage from intense tropical storms was considered present if the number of tropical cyclones intersecting a unit's buffer was greater than the 50th percentile.
 
 **Future intense tropical storms**
 
-The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of cyclone occurring by 2050 was greater than 50%.
+The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of a cyclone occurring by 2050 was greater than the 50th percentile.
+:::
+
+::: {.callout-tip icon="false" collapse="true"}
+### Tidal range and propaule establishment capacity {#tidal-range}
+
+Tidal range (macro, meso or micro) is mapped in the left pane, propagule establishment capacity on the right.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
+
+mapview(typ, zcol = 'Tidal_Class', layer.name = 'Tidal range', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'prop_estab', layer.name = 'Propagule establishment capacity', cex = 0.9, lwd = 0)
+
+```
+
+**Tidal range**
+
+Tidal range was estimated for each mangrove typological unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). Typological units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and typological units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (*under review*).
+
+**Progpagule establishment capacity**
+
+Propagule establishment capacity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having 'high', 'medium', or 'low' establishment capacity using terciles, where large average distance values corresponded to low establishment capacity and vice versa.
 :::
 
 Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
