@@ -1,8 +1,8 @@
-### Qualitative forecasts of mangrove extent change
+### Qualitative forecasts of mangrove extent change with network models
 
 This repository provides code for reproducing results and figures in Buelow et al. (*in prep*), 'Forecasting mangrove futures under climate change'.
 
-The codebase draws heavily from the excellent R package [{QPress}](https://github.com/SWotherspoon/QPress).
+The codebase draws heavily from the R package [{QPress}](https://github.com/SWotherspoon/QPress).
 
 Link to documents describing all spatial data processing:
 
