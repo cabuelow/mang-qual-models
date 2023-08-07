@@ -12,6 +12,7 @@ Link to documents describing all spatial data processing:
 ## TODO
 
 - [ ] Clean up all scripts, especially helpers
+- [ ] Make land in maps a bit darker
 
 #### Scripts
 
