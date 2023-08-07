@@ -257,13 +257,34 @@ final_preds <- pred_dat %>%
   mutate(ambig_threshold = thresh)
 write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_', go, '_', rm_e, '_', press, '_', thresh,'.csv'), row.names = F)
 
+final_preds_unfit <- pred_dat %>% 
+  left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
+  left_join(post_prob, by = c('scenario', 'nsim')) %>% 
+  mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calculating the probability of gain/neutrality
+         SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang)) %>% 
+  mutate(LandwardMang = LandwardMang*1,
+         SeawardMang = SeawardMang*1) %>% 
+  group_by(pressure_def, Type, land_net_change_obs, sea_net_change_obs) %>% 
+  summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
+            SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 
+  mutate(Landward = case_when(is.na(LandwardMang) ~ NA,
+                              LandwardMang >= thresh ~ 'Gain_neutrality',
+                              LandwardMang < 100-thresh ~ 'Loss',
+                              .default = 'Ambiguous'),
+         Seaward = case_when(is.na(SeawardMang) ~ NA,
+                             SeawardMang >= thresh ~ 'Gain_neutrality',
+                             SeawardMang < 100-thresh ~ 'Loss',
+                             .default = 'Ambiguous')) %>% 
+  mutate(ambig_threshold = thresh)
+write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_', go, '_', rm_e, '_', press, '_', thresh,'_unfit.csv'), row.names = F)
+
 # map final 'all data' hindcasts
 
 preds <- typ_points %>% 
   left_join(final_preds) %>%
   st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
-# map hindcasts
+# map fit hindcasts
 
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
@@ -296,7 +317,7 @@ lmap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.35,
-            main.title = 'B) Landward hindcast',
+            main.title = 'B) Landward hindcast - fit',
             main.title.size = 0.45,
             frame = T,
             legend.bg.color = 'white',
@@ -338,7 +359,7 @@ smap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.35,
-            main.title = 'B) Seaward hindcast',
+            main.title = 'A) Seaward hindcast - fit',
             main.title.size = 0.45,
             frame = T,
             legend.bg.color = 'white',
@@ -347,3 +368,92 @@ smap <- tm_shape(world_mang) +
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1)
+
+# map unfit hindcasts
+
+preds <- typ_points %>% 
+  left_join(final_preds_unfit) %>%
+  st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
+
+lmap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  #tm_shape(filter(preds, is.na(Landward))) +
+  #tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(preds, Landward == 'Gain_neutrality' & !is.na(Landward))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.025) +
+  tm_shape(filter(preds, Landward == 'Ambiguous' & !is.na(Landward))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(preds, Landward == 'Loss' & !is.na(Landward))) +
+  tm_dots('Landward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_layout(legend.outside = F,
+            #legend.outside.position = 'bottom',
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'D) Landward hindcast - unfit',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+lmap
+
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1)
+
+smap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray95') +
+  #tm_shape(filter(preds, is.na(Seaward))) +
+  #tm_dots('darkgrey', size = 0.001) +
+  tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Seaward))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(preds, Seaward == 'Loss' & !is.na(Seaward))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_shape(filter(preds, Seaward == 'Gain_neutrality' & !is.na(Seaward))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.025) +
+  tm_layout(legend.outside = F,
+            #legend.outside.position = 'bottom',
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.35,
+            main.title = 'C) Seaward hindcast - unfit',
+            main.title.size = 0.45,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
+                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+smap
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1)
