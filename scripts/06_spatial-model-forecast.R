@@ -22,20 +22,24 @@ spatial_dat <- read.csv('outputs/master-dat.csv')
 # using optimal pressure definition and calibrated ambiguity threshold
 go <- 1 # which coastal dev threshold?
 press <- 3 # which pressure definition threshold?
-thresh <- 75 # which ambiguity threshold?
+thresh <- 70 # which ambiguity threshold?
 rm_e <- 'N' # remove erosion from validation? Y or N
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
 post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
 
-# make posterior forecasts using naive hindcasts and posterior probabilities
+# make posterior forecasts using naive hindcasts and posterior probabilities, without future sealevle rise
 
 spatial_pred <- spatial_dat %>% # here renaming future pressures as historical pressures so can join to posterior hindcasts
   filter(Cdev_thresh == go & pressure_def == press) %>% 
-  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms, land_net_change_obs, sea_net_change_obs) %>%
-  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
-  mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
+  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, #fut_slr, 
+                fut_gwsub, fut_drought, fut_ext_rain, fut_storms, land_net_change_obs, sea_net_change_obs) %>%
+  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, #ant_slr = fut_slr, 
+         gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
+  mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
+  #mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
-  pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
+  pivot_longer(cols = c(csqueeze_1,gwsub:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
+  #pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -45,8 +49,9 @@ spatial_pred <- spatial_dat %>% # here renaming future pressures as historical p
 # reorder column names so always in same order regardless of filtering
 spatial_pred <- spatial_pred[,c('pressure_def', 'Type', 'csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 
                           'land_net_change_obs', 'sea_net_change_obs',  'vals_gwsub', 'vals_hist_drought',
-                          'vals_hist_ext_rain', 'vals_storms', 'vals_ant_slr', 'vals_csqueeze_1', 'press_no_press', 'press_gwsub',
-                          'press_hist_drought', 'press_hist_ext_rain', 'press_storms', 'press_ant_slr',
+                          'vals_hist_ext_rain', 'vals_storms', #'vals_ant_slr', 
+                          'vals_csqueeze_1', 'press_no_press', 'press_gwsub',
+                          'press_hist_drought', 'press_hist_ext_rain', 'press_storms', #'press_ant_slr',
                           'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2')]
 spatial_pred <- spatial_pred %>% 
   unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
@@ -130,7 +135,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh,'_all-data.png'), width = 5, height = 1)
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray95') +
@@ -171,20 +176,24 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1)
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_noSLR.png'), width = 5, height = 1)
 
-# now take biophysical matrices and solve if mangrove propagules increase, plus future pressures
+# now take biophysical matrices and solve with future SLR and 
 chosen_model <- models$mangrove_model # choose correct network model
 
 # find future biophysical and pressure scenarios
 
 dat <- spatial_dat %>% # get unique biophysical/pressure combinations historically, given 5 different pressure definitions
   filter(Cdev_thresh == go & pressure_def == press) %>% 
-  dplyr::select(pressure_def, Type, fut_csqueeze, fut_csqueeze_1, fut_dams, Tidal_Class, prop_estab, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>%
-  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
+  dplyr::select(pressure_def, Type, fut_csqueeze, fut_csqueeze_1, fut_dams, Tidal_Class, prop_estab, fut_slr, 
+                fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>%
+  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, 
+         gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
   mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
+  #mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
-  pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
+  #pivot_longer(cols = c(csqueeze_1,gwsub:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
+  pivot_longer(cols = c(csqueeze_1, ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -194,13 +203,20 @@ dat <- spatial_dat %>% # get unique biophysical/pressure combinations historical
   select(-c(pressure_def, Type))
 # reorder column names so always in same order regardless of filtering
 dat <- dat[,c('csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 'vals_gwsub', 'vals_hist_drought',
-                                'vals_hist_ext_rain', 'vals_storms', 'vals_ant_slr', 'vals_csqueeze_1', 'press_no_press', 'press_gwsub',
+                                'vals_hist_ext_rain', 'vals_storms', 'vals_ant_slr', 
+                                 'vals_csqueeze_1', 'press_no_press', 'press_gwsub',
                                 'press_hist_drought', 'press_hist_ext_rain', 'press_storms', 'press_ant_slr',
                                 'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2')]
 dat <- dat %>% 
   unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
   unite('press', press_gwsub:press_csqueeze_1, na.rm = T, sep = '.') %>% 
   distinct()
+  #mutate(ID = 1:nrow(dat)) %>% 
+  #left_join(select(., ID, press_gwsub:press_storms, press_csqueeze_1), by = 'ID') %>% 
+  #unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
+  #unite('press1', press_gwsub.x:press_csqueeze_1.x, na.rm = T, sep = '.') %>% 
+  #unite('press2', press_gwsub.y:press_csqueeze_1.y, na.rm = T, sep = '.') %>% 
+  #distinct()
 
 # read in matrices  
 tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices_', go,'_', rm_e, '.RDS'))
@@ -211,11 +227,11 @@ matrix_index <- data.frame(index = 1:length(matrices), scenario = unlist(lapply(
 # to obtain naive forecasts of loss/gain given management/conservation scenarios
 
 dat2 <- dat %>% mutate(split = rep(1:5, (nrow(.)+4)/5)[1:nrow(.)]) # add a column to split so can parallelise
-scenarios <- list(c('LandwardAvailableProp', 'SeawardAvailableProp'), 'SubVol', 'Coastalsqueeze')
-system.time( # takes 23 mins
+scenarios <- list('LandwardAvailableProp', 'SubVol', 'Coastalsqueeze', 'SeaLevelRise')
+system.time( # takes 8 hours
 for(b in seq_along(scenarios)){
   scn <- scenarios[[b]]
-  if(scn[1] != 'Coastalsqueeze'){
+  if(scn[1] %in% c('LandwardAvailableProp', 'SubVol')){
 cl <- makeCluster(5)
 registerDoParallel(cl)
 results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
@@ -235,9 +251,9 @@ tmp2 <- list()
 do.call(rbind, tmp2)
 }
 stopCluster(cl)
-results <- do.call(rbind, results) %>% pivot_wider(names_from = 'node', values_from = 'outcome')
+results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
 write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
-  }else{
+  }else if(scn[1] == 'Coastalsqueeze'){
     cl <- makeCluster(5)
     registerDoParallel(cl)
     results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
@@ -259,27 +275,58 @@ write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1]
       do.call(rbind, tmp2)
     }
     stopCluster(cl)
-    results <- do.call(rbind, results) %>% pivot_wider(names_from = 'node', values_from = 'outcome')
+    results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
     write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
-}})
+}else if(scn[1] == 'SeaLevelRise'){
+  cl <- makeCluster(5)
+  registerDoParallel(cl)
+  results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
+    datsub <- dat2 %>% filter(split == h)
+    tmp2 <- list()
+    for(i in 1:nrow(datsub)){
+      bio_model <- matrices[[filter(matrix_index, scenario == as.character(datsub[i,'scenario']))$index]]
+      pressures <- data.frame(press = unlist(strsplit(as.character(datsub[i,'press']), '\\.'))) %>% 
+        mutate(press = recode(press, 'csqueeze_1' = 'CoastalDev', 'ant_slr' = "SeaLevelRise", 'gwsub' = "GroundSubsid", 
+                              'hist_drought' = 'Drought', 'hist_ext_rain' = 'ExtremeRainfall', 'storms' = 'Cyclones'))
+      tmp <- vector("list", dim(bio_model)[3])
+      for(j in 1:dim(bio_model)[3]){
+        tmp[[j]] <- data.frame(solver(bio_model[,,j], chosen_model, pressures$press), nsim = j)  
+      }
+      tmp2[[i]] <- do.call(rbind, tmp) %>% mutate(scenario = as.character(datsub[i,'scenario']), press = as.character(datsub[i,'press']))
+    }
+    do.call(rbind, tmp2)
+  }
+  stopCluster(cl)
+  results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
+  write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
+}
+  })
 
 # choose management/conservation scenario
-#' LandwardAvailableProp', 'Sediment', 'Coastalsqueeze'
+#' LandwardAvailableProp', 'Sediment', 'Coastalsqueeze', 'SeaLevelRise'
 
 for(i in seq_along(scenarios)){
   
 scenario <- scenarios[[i]][1]
 
-naive_outcomes_restore <- read.csv(paste0('outputs/predictions/naive_outcomes_scenario_', scenario, '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
+naive_outcomes_restore <- read.csv(paste0('outputs/predictions/naive_outcomes_scenario_', scenario, '_', go, '_', rm_e, '_', press, '_', thresh, '.csv')) %>% 
+  #distinct() %>% 
+  pivot_wider(names_from = 'node', values_from = 'outcome') #%>% 
+  #select(-press2) %>% 
+  #rename(press = press1)
 
 # make posterior forecast for each future scenario, using matrix calibrated posterior probabilities
 
 spatial_pred <- spatial_dat %>% # here renaming future pressures as historical pressures so can join to posterior hindcasts
   filter(Cdev_thresh == go & pressure_def == press) %>% 
-  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, fut_slr, fut_gwsub, fut_drought, fut_ext_rain, fut_storms, land_net_change_obs, sea_net_change_obs) %>%
-  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>%
+  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, fut_slr, 
+                fut_gwsub, fut_drought, fut_ext_rain, fut_storms, land_net_change_obs, sea_net_change_obs) %>%
+  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, 
+         gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>%
   mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
+  #mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
+  #pivot_longer(cols = c(csqueeze_1,gwsub:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
@@ -290,7 +337,8 @@ spatial_pred <- spatial_dat %>% # here renaming future pressures as historical p
 # reorder column names so always in same order regardless of filtering
 spatial_pred <- spatial_pred[,c('pressure_def', 'Type', 'csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 
                                   'land_net_change_obs', 'sea_net_change_obs',  'vals_gwsub', 'vals_hist_drought',
-                                  'vals_hist_ext_rain', 'vals_storms', 'vals_ant_slr', 'vals_csqueeze_1','press_no_press', 'press_gwsub',
+                                  'vals_hist_ext_rain', 'vals_storms', 'vals_ant_slr', 
+                                'vals_csqueeze_1','press_no_press', 'press_gwsub',
                                   'press_hist_drought', 'press_hist_ext_rain', 'press_storms', 'press_ant_slr',
                                   'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2')]
 spatial_pred <- spatial_pred %>% 
@@ -330,8 +378,8 @@ spatial_pred <- spatial_pred %>%
   mutate(ambig_threshold = thresh)
 write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '.csv'), row.names = F)
 spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '.csv'))
-titlea <- c('C) Seaward forecast with transplantation', 'E) Seaward forecast with sediment addition', 'G) Seaward forecast with removal of coastal barriers')
-titleb <- c('D) Landward forecast with transplantation', 'F) Landward forecast with sediment addition', 'H) Landward forecast with removal of coastal barriers')
+titlea <- c('C) Seaward forecast with increased propagules', 'E) Seaward forecast with sediment addition', 'G) Seaward forecast with removal of coastal barriers', 'A) Seaward baseline forecast')
+titleb <- c('D) Landward forecast with increased propagules', 'F) Landward forecast with sediment addition', 'H) Landward forecast with removal of coastal barriers', 'B) Landward baseline forecast')
 
 # summarise predictions
 datsum <- spatial_pred %>% 
@@ -351,7 +399,7 @@ preds <- typ_points %>%
 # map forecasts
 
 lmap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   #tm_shape(filter(preds, is.na(Landward))) +
   #tm_dots('darkgrey', size = 0.001) +
   tm_shape(filter(preds, Landward == 'Gain_neutrality' & !is.na(Landward))) +
@@ -392,7 +440,7 @@ lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '.png'), width = 5, height = 1)
 
 smap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   #tm_shape(filter(preds, is.na(Seaward))) +
   #tm_dots('darkgrey', size = 0.001) +
   tm_shape(filter(preds, Seaward == 'Gain_neutrality' & !is.na(Seaward))) +
@@ -435,8 +483,8 @@ tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_',
 
 # get the landward and seaward forecasts for each scenario, and show where the additional gains or reduced risk of loss would be
 
-scenarios <- list(c('LandwardAvailableProp', 'SeawardAvailableProp'), 'SubVol', 'Coastalsqueeze')
-baseline <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '.csv')) %>%
+scenarios <- list('LandwardAvailableProp', 'SubVol', 'Coastalsqueeze')
+baseline <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', 'SeaLevelRise', '.csv')) %>%
   filter(!is.na(Landward) & !is.na(Seaward)) %>% 
   rename('Landward_base' = 'Landward', 'Seaward_base' = 'Seaward')
 transplant <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[1]][1], '.csv')) %>% 
@@ -497,7 +545,7 @@ world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
 # landward gains
 lmap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   tm_shape(filter(scenario_change, Landward_scenario_gain == 'Barriers' & !is.na(Landward_scenario_gain))) +
   tm_dots('Landward_scenario_gain', 
           palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3'), 
@@ -530,13 +578,13 @@ lmap <- tm_shape(world_mang) +
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
   tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3'), 
-                labels =  c('Removal of barriers','Transplantation', 'Removal of barriers & Transplantation'), border.alpha = 0, size = 0.3)
+                labels =  c('Removal of barriers','Increased propagules', 'Removal of barriers or Increased propagules'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_gain_scenario.png'), width = 5, height = 1)
 
 # landward reduced risk
 lmap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   tm_shape(filter(scenario_change, Landward_scenario_reduced_risk == 'Barriers' & !is.na(Landward_scenario_reduced_risk))) +
   tm_dots('Landward_scenario_reduced_risk', 
           palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3'), 
@@ -569,13 +617,13 @@ lmap <- tm_shape(world_mang) +
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
   tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3'), 
-                labels =  c('Removal of barriers','Transplantation', 'Removal of barriers & Transplantation'), border.alpha = 0, size = 0.3)
+                labels =  c('Removal of barriers','Increased propagules', 'Removal of barriers or Increased propagules'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_reduced_risk_scenario.png'), width = 5, height = 1)
 
 # seaward gains
 smap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   #tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Barriers' & !is.na(Seaward_scenario_gain))) +
   #tm_dots('Seaward_scenario_gain', 
    #       palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3'), 
@@ -608,13 +656,13 @@ smap <- tm_shape(world_mang) +
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
   tm_add_legend('symbol', col =  c('darkseagreen'), 
-                labels =  c('Transplantation'), border.alpha = 0, size = 0.3)
+                labels =  c('Increased propagules'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_gain_scenario.png'), width = 5, height = 1)
 
 # Seaward reduced risk
 smap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   tm_shape(filter(scenario_change, Seaward_scenario_reduced_risk == 'Sediment' & !is.na(Seaward_scenario_reduced_risk))) +
   tm_dots('Seaward_scenario_reduced_risk', 
           palette = c('Sediment' = 'plum4', 'Transplant' = 'darkseagreen', 'Transplant_Sediment' = 'turquoise4'), 
@@ -647,7 +695,7 @@ smap <- tm_shape(world_mang) +
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
   tm_add_legend('symbol', col =  c('plum4', 'darkseagreen', 'turquoise4'), 
-                labels =  c('Sediment addition','Transplantation', 'Sediment addition & Transplantation'), border.alpha = 0, size = 0.3)
+                labels =  c('Sediment addition','Increased propagules', 'Sediment addition or Increased propagules'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_reduced_risk_scenario.png'), width = 5, height = 1)
 

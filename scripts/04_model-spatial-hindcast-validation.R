@@ -37,8 +37,10 @@ for(go in 1:3){ # loop over coastal development threshold
 
 dat <- spatial_dat %>% # get unique biophysical/pressure combinations historically, given 5 different pressure definitions
   filter(Cdev_thresh == go) %>% 
-  dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms) %>% 
-  pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, #ant_slr, 
+                gwsub, hist_drought, hist_ext_rain, storms) %>% 
+  #pivot_longer(cols = c(csqueeze_1,ant_slr:storms), names_to = 'press', values_to = 'vals') %>% 
+  pivot_longer(cols = c(csqueeze_1,gwsub:storms), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -48,8 +50,9 @@ dat <- spatial_dat %>% # get unique biophysical/pressure combinations historical
   select(-c(pressure_def,Type))
 # reorder column names so always in same order regardless of filtering
 dat <- dat[,c('csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 'vals_gwsub', 'vals_hist_drought',
-              'vals_hist_ext_rain', 'vals_storms', 'vals_ant_slr', 'vals_csqueeze_1', 'press_gwsub',
-              'press_hist_drought', 'press_hist_ext_rain', 'press_storms', 'press_ant_slr',
+              'vals_hist_ext_rain', 'vals_storms', #'vals_ant_slr', 
+              'vals_csqueeze_1', 'press_gwsub',
+              'press_hist_drought', 'press_hist_ext_rain', 'press_storms', #'press_ant_slr',
               'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2')]
 dat <- dat %>% 
   unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
@@ -110,10 +113,13 @@ shuffled_dat <- spatial_dat %>% # shuffle the data and split
   filter(Cdev_thresh == go) %>% 
   left_join(data.frame(Type = .[1:length(unique(.$Type)),]$Type[sample(1:length(unique(.$Type)))],
                        k = c(rep(1:kfold, each = round(length(unique(.$Type))/kfold)),1:kfold)[1:length(unique(.$Type))]), by = 'Type') %>% 
-  dplyr::select(pressure_def, k, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, ant_slr, gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
-  mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
+  dplyr::select(pressure_def, k, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, #ant_slr, 
+                gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
+  #mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
+  mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
-  pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
+  #pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
+  pivot_longer(cols = c(csqueeze_1,gwsub:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
@@ -122,8 +128,9 @@ shuffled_dat <- spatial_dat %>% # shuffle the data and split
          prop_estab_2 = paste0('Propestab_', .$prop_estab))
 # reorder column names so always in same order regardless of filtering
 shuffled_dat <- shuffled_dat[,c('pressure_def', 'k', 'Type', 'csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 'land_net_change_obs', 'sea_net_change_obs',
-              'vals_gwsub', 'vals_hist_drought', 'vals_hist_ext_rain', 'vals_storms', 'vals_ant_slr', 'vals_csqueeze_1', 'press_no_press', 'press_gwsub',
-              'press_hist_drought', 'press_hist_ext_rain', 'press_storms', 'press_ant_slr',
+              'vals_gwsub', 'vals_hist_drought', 'vals_hist_ext_rain', 'vals_storms', #'vals_ant_slr', 
+              'vals_csqueeze_1', 'press_no_press', 'press_gwsub',
+              'press_hist_drought', 'press_hist_ext_rain', 'press_storms', #'press_ant_slr',
               'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2')]
 shuffled_dat <- shuffled_dat %>% 
   unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
@@ -578,7 +585,7 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
 
 # End here
 
-# accuracy for simulatneous seaward and landward 
+# accuracy for simultaneous seaward and landward 
 
 accuracy_sum2 <- accuracy %>% 
   filter(mangrove == 'Seaward & Landward') %>% 
