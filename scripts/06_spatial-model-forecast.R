@@ -585,13 +585,13 @@ tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_'
 # landward reduced risk
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  tm_shape(filter(scenario_change, Landward_scenario_reduced_risk == 'Barriers' & !is.na(Landward_scenario_reduced_risk))) +
-  tm_dots('Landward_scenario_reduced_risk', 
-          palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.025) +
+  #tm_shape(filter(scenario_change, Landward_scenario_reduced_risk == 'Barriers' & !is.na(Landward_scenario_reduced_risk))) +
+  #tm_dots('Landward_scenario_reduced_risk', 
+   #       palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+       #   size = 0.025) +
   tm_shape(filter(scenario_change, Landward_scenario_reduced_risk == 'Transplant' & !is.na(Landward_scenario_reduced_risk))) +
   tm_dots('Landward_scenario_reduced_risk', 
           palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3'), 
