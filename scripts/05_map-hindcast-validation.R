@@ -19,6 +19,7 @@ rm_e <- 'N' # remove erosion from validation? Y or N
 
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
 world <- data("World")
+meow <- st_read('data/MEOW/meow_ecos.shp')
 spatial_dat <- read.csv('outputs/master-dat.csv')
 drivers <- read.csv('data/typologies/SLR_Data.csv')
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
@@ -175,6 +176,71 @@ smap <- tm_shape(world_mang) +
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
+
+# characterise mis-matches according to geomorphology, driver of loss, and marine ecoregion
+
+preds_df <- preds %>% 
+  st_join(meow) %>% 
+  st_drop_geometry() %>% 
+  left_join(drivers)
+
+sea_eco <- preds_df %>% 
+  filter(Seaward_match != 'Ambiguous') %>% 
+  mutate(mismatch = ifelse(Seaward_match == 'Mis-match', 1, 0)) %>% 
+  group_by(ECOREGION) %>% 
+  summarise(percent_mismatch = sum(mismatch)/n())
+sea_eco_sf <- meow %>% inner_join(sea_eco)
+
+sea_m <- tm_shape(st_crop(World, st_bbox(sea_eco_sf))) +
+  tm_fill('grey88') +
+  tm_shape(sea_eco_sf) +
+  tm_polygons('percent_mismatch', title = 'Percent mis-match') +
+  tm_layout(legend.position = c(0.13, 0.01),
+            main.title.size = 1,
+            main.title = 'A) Seaward')
+sea_m
+tmap_save(sea_m, 'outputs/maps/seaward-mismatch.png', width = 10, height = 3, dpi = 1000)
+
+land_eco <- preds_df %>% 
+  filter(Landward_match != 'Ambiguous') %>% 
+  mutate(mismatch = ifelse(Landward_match == 'Mis-match', 1, 0)) %>% 
+  group_by(ECOREGION) %>% 
+  summarise(percent_mismatch = sum(mismatch)/n())
+land_eco_sf <- meow %>% inner_join(land_eco)
+
+land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
+  tm_fill('grey88') +
+  tm_shape(land_eco_sf) +
+  tm_polygons('percent_mismatch', title = 'Percent mis-match') +
+  tm_layout(legend.position = c(0.13, 0.01),
+            main.title.size = 1,
+            main.title = 'B) Landward')
+land_m
+tmap_save(land_m, 'outputs/maps/landward-mismatch.png', width = 10, height = 3, dpi = 1000)
+
+sea_geo <- preds_df %>% 
+  group_by(Seaward_match, Class) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = n/nrow(preds_df)*100)
+sea_geo
+
+land_geo <- preds_df %>% 
+  group_by(Landward_match, Class) %>% 
+  summarise(n = n()) %>% 
+  mutate(percent = n/nrow(preds_df)*100)
+land_geo
+
+sea_driver <- preds_df %>% 
+  pivot_longer(cols = Erosion:Settlement) %>% 
+  group_by(Seaward_match, name) %>% 
+  summarise(mean_prop = median(value))
+sea_driver
+
+land_driver <- preds_df %>% 
+  pivot_longer(cols = Erosion:Settlement) %>% 
+  group_by(Landward_match, name) %>% 
+  summarise(mean_prop = median(value))
+land_driver
 
 # map hindcasts
 
