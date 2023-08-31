@@ -150,7 +150,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -174,7 +174,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
 
 # map hindcasts
 
@@ -217,7 +217,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -258,7 +258,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
 
 # now make posterior predictions for each biophysical setting/pressure model using all the data (i.e. not split by kfolds)
 # to be used for making forecasts
@@ -390,7 +390,7 @@ lmap <- tm_shape(world_mang) +
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
 
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -431,7 +431,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
 
 # map unfit hindcasts
 
@@ -479,7 +479,7 @@ lmap <- tm_shape(world_mang) +
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 lmap
 
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -520,5 +520,5 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
                 labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
 
