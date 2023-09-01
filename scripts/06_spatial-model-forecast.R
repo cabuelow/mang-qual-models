@@ -390,10 +390,10 @@ spatial_pred_unfit <- spatial_pred %>%
   mutate(ambig_threshold = thresh)
 write.csv(spatial_pred_unfit, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '_unfit.csv'), row.names = F)
 spatial_pred_unfit <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '_unfit.csv'))
-titlea_fit <- c('C) Seaward forecast with increased propagules - fit', 'E) Seaward forecast with sediment addition - fit', 'G) Seaward forecast with removal of coastal barriers - fit', 'A) Seaward baseline forecast - fit')
-titleb_fit <- c('D) Landward forecast with increased propagules - fit', 'F) Landward forecast with sediment addition - fit', 'H) Landward forecast with removal of coastal barriers - fit', 'B) Landward baseline forecast - fit')
+titlea_fit <- c('C) Seaward forecast with increased propagules - fit', 'E) Seaward forecast with sediment addition - fit', 'G) Seaward forecast with removal of coastal barriers - fit', 'A) Seaward baseline forecast')
+titleb_fit <- c('D) Landward forecast with increased propagules - fit', 'F) Landward forecast with sediment addition - fit', 'H) Landward forecast with removal of coastal barriers - fit', 'C) Landward baseline forecast')
 titlea_unfit <- c('C) Seaward forecast with increased propagules - unfit', 'E) Seaward forecast with sediment addition - unfit', 'G) Seaward forecast with removal of coastal barriers - unfit', 'A) Seaward baseline forecast - unfit')
-titleb_unfit <- c('D) Landward forecast with increased propagules - unfit', 'F) Landward forecast with sediment addition - unfit', 'H) Landward forecast with removal of coastal barriers - unfit', 'B) Landward baseline forecast - unfit')
+titleb_unfit <- c('D) Landward forecast with increased propagules - unfit', 'F) Landward forecast with sediment addition - unfit', 'H) Landward forecast with removal of coastal barriers - unfit', 'C) Landward baseline forecast - unfit')
 
 # summarise predictions
 datsum <- spatial_pred_fit %>% 
@@ -860,7 +860,7 @@ lmap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.3,
-            main.title = " F) Forecast of landward reduced certainty of loss relative to baseline",
+            main.title = " D) Forecast of landward net gain/neutrality or reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
@@ -906,7 +906,7 @@ smap <- tm_shape(world_mang) +
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.3,
-            main.title = "E) Forecast of seaward reduced certainty of loss relative to baseline",
+            main.title = "B) Forecast of seaward net gain/neutrality or reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
@@ -915,3 +915,4 @@ smap <- tm_shape(world_mang) +
                 labels =  c('Sediment addition','Increased propagules', 'Sediment addition or Increased propagules'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', 'gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
+
