@@ -188,35 +188,55 @@ sea_eco <- preds_df %>%
   filter(Seaward_match != 'Ambiguous') %>% 
   mutate(mismatch = ifelse(Seaward_match == 'Mis-match', 1, 0)) %>% 
   group_by(ECOREGION) %>% 
-  summarise(percent_mismatch = sum(mismatch)/n())
+  summarise(percent_mismatch = sum(mismatch)/n()*100) %>% 
+  mutate(label = ifelse(percent_mismatch > 80, ECOREGION, NA))
+sea_sum <- preds_df %>% 
+  filter(ECOREGION %in% unique(sea_eco$label)) %>% 
+  group_by(ECOREGION, sea_net_change) %>% 
+  summarise(n = n())
 sea_eco_sf <- meow %>% inner_join(sea_eco)
 
 sea_m <- tm_shape(st_crop(World, st_bbox(sea_eco_sf))) +
   tm_fill('grey88') +
   tm_shape(sea_eco_sf) +
-  tm_polygons('percent_mismatch', title = 'Percent mis-match') +
+  tm_fill('percent_mismatch', title = 'Percent mis-match', legend.is.portrait = F) +
+  tm_text('label', col = 'black', size = 0.15, just = 'left') +
   tm_layout(legend.position = c(0.13, 0.01),
-            main.title.size = 1,
+            main.title.size = 0.4,
+            legend.title.size = 0.45,
+            legend.text.size = 0.3,
+            legend.width = 0.2,
+            legend.height = 0.2,
             main.title = 'A) Seaward')
 sea_m
-tmap_save(sea_m, 'outputs/maps/seaward-mismatch.png', width = 10, height = 3, dpi = 1000)
+tmap_save(sea_m, 'outputs/maps/seaward-mismatch.png', width = 5, height = 1, dpi = 1000)
 
 land_eco <- preds_df %>% 
   filter(Landward_match != 'Ambiguous') %>% 
   mutate(mismatch = ifelse(Landward_match == 'Mis-match', 1, 0)) %>% 
   group_by(ECOREGION) %>% 
-  summarise(percent_mismatch = sum(mismatch)/n())
+  summarise(percent_mismatch = sum(mismatch)/n()*100) %>% 
+  mutate(label = ifelse(percent_mismatch > 80, ECOREGION, NA))
+land_sum <- preds_df %>% 
+  filter(ECOREGION %in% unique(land_eco$label)) %>% 
+  group_by(ECOREGION, land_net_change) %>% 
+  summarise(n = n())
 land_eco_sf <- meow %>% inner_join(land_eco)
 
 land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
   tm_fill('grey88') +
   tm_shape(land_eco_sf) +
-  tm_polygons('percent_mismatch', title = 'Percent mis-match') +
+  tm_fill('percent_mismatch', title = 'Percent mis-match', legend.is.portrait = F) +
+  tm_text('label', col = 'black', size = 0.15, just = 'left') +
   tm_layout(legend.position = c(0.13, 0.01),
-            main.title.size = 1,
+            main.title.size = 0.4,
+            legend.title.size = 0.45,
+            legend.text.size = 0.3,
+            legend.width = 0.2,
+            legend.height = 0.2,
             main.title = 'B) Landward')
 land_m
-tmap_save(land_m, 'outputs/maps/landward-mismatch.png', width = 10, height = 3, dpi = 1000)
+tmap_save(land_m, 'outputs/maps/landward-mismatch.png', width = 5, height = 1, dpi = 1000)
 
 sea_geo <- preds_df %>% 
   group_by(Seaward_match, Class) %>% 
@@ -237,8 +257,7 @@ sea_driver <- preds_df %>%
 sea_driver
 
 land_driver <- preds_df %>% 
-  pivot_longer(cols = Erosion:Settlement) %>% 
-  group_by(Landward_match, name) %>% 
+  group_by(Landward_match, sea_net) %>% 
   summarise(mean_prop = median(value))
 land_driver
 

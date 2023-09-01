@@ -128,7 +128,7 @@ Same as above for **Historical drought**, except extreme rainfall was considered
 
 **Future extreme rainfall**
 
-Same as above for **Future drought**, except mangrove typological units with greater than 50% increase in SPI values were considered at risk from extreme rainfall.
+Same as above for **Future drought**, except mangrove typological units with greater than 50th percentile increase in SPI values were considered at risk from extreme rainfall.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
