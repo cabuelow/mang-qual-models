@@ -420,7 +420,7 @@ pred_dat <- spatial_dat %>%
   filter(Cdev_thresh == go & pressure_def == press) %>% 
   dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, #ant_slr, 
                 gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
-  #mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
+  #mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% # here am removing antecedent sea level rise
   mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
   #pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 

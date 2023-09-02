@@ -1,6 +1,4 @@
-# make forecasts of mangrove loss or gain using calibrated posterior hindcasts
-# then ask what happens if there is a sustained increase in a node via
-# management or restoration? solve the matrices under each scenario
+# make forecasts of mangrove loss or gain using matrix posterior probabilities for fitting
 
 library(QPress)
 library(tidyverse)
@@ -27,7 +25,7 @@ rm_e <- 'N' # remove erosion from validation? Y or N
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
 post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
 
-# make posterior forecasts using naive hindcasts and posterior probabilities, without future sealevel rise
+# make posterior forecasts using naive hindcasts and posterior probabilities, without future sea level rise
 
 spatial_pred <- spatial_dat %>% # here renaming future pressures as historical pressures so can join to posterior hindcasts
   filter(Cdev_thresh == go & pressure_def == press) %>% 
@@ -190,9 +188,7 @@ dat <- spatial_dat %>% # get unique biophysical/pressure combinations historical
   rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, 
          gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
   mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
-  #mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
-  #pivot_longer(cols = c(csqueeze_1,gwsub:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   pivot_longer(cols = c(csqueeze_1, ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
@@ -314,9 +310,7 @@ spatial_pred <- spatial_dat %>% # here renaming future pressures as historical p
   rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, 
          gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>%
   mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
-  #mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
-  #pivot_longer(cols = c(csqueeze_1,gwsub:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   pivot_longer(cols = c(csqueeze_1,ant_slr:storms, no_press), names_to = 'press', values_to = 'vals') %>% 
   filter(vals == 1) %>% 
   pivot_wider(names_from = 'press', values_from = c('vals', 'press')) %>% 
