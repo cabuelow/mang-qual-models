@@ -193,7 +193,11 @@ sea_eco <- preds_df %>%
 sea_sum <- preds_df %>% 
   filter(ECOREGION %in% unique(sea_eco$label)) %>% 
   group_by(ECOREGION, sea_net_change) %>% 
-  summarise(n = n())
+  summarise(n = n()) %>% 
+  pivot_wider(names_from = 'sea_net_change', values_from = 'n') %>% 
+  mutate(Loss = ifelse(is.na(Loss), 0, Loss)) %>% 
+  group_by(ECOREGION) %>% 
+  summarise(percent_gain = Gain_neutrality/(Gain_neutrality + Loss))
 sea_sum
 sea_eco_sf <- meow %>% inner_join(sea_eco)
 
@@ -221,7 +225,12 @@ land_eco <- preds_df %>%
 land_sum <- preds_df %>% 
   filter(ECOREGION %in% unique(land_eco$label)) %>% 
   group_by(ECOREGION, land_net_change) %>% 
-  summarise(n = n())
+  summarise(n = n()) %>% 
+  pivot_wider(names_from = 'land_net_change', values_from = 'n') %>% 
+  mutate(Loss = ifelse(is.na(Loss), 0, Loss)) %>% 
+  group_by(ECOREGION) %>% 
+  summarise(percent_gain = Gain_neutrality/(Gain_neutrality + Loss))
+land_sum
 land_eco_sf <- meow %>% inner_join(land_eco)
 
 land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
