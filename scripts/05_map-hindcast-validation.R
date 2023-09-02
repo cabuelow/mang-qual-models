@@ -194,6 +194,7 @@ sea_sum <- preds_df %>%
   filter(ECOREGION %in% unique(sea_eco$label)) %>% 
   group_by(ECOREGION, sea_net_change) %>% 
   summarise(n = n())
+sea_sum
 sea_eco_sf <- meow %>% inner_join(sea_eco)
 
 sea_m <- tm_shape(st_crop(World, st_bbox(sea_eco_sf))) +
@@ -260,6 +261,63 @@ land_driver <- preds_df %>%
   group_by(Landward_match, sea_net) %>% 
   summarise(mean_prop = median(value))
 land_driver
+
+# map ecoregions with highe percentages of mismatches below
+
+sea_m <- tm_shape(st_crop(World, st_bbox(sea_eco_sf))) +
+  tm_fill('grey88') +
+  tm_shape(filter(sea_eco_sf, percent_mismatch > 80)) +
+  tm_fill('black', legend.show = F, alpha = 0.3) +
+  #tm_text('label', col = 'black', size = 0.15, just = 'left') +
+  tm_shape(preds) +
+  tm_dots('Seaward_match', 
+          palette = c('No Hindcast' = 'red', 'Ambiguous' = 'lightgoldenrod', 'Mis-match' = 'black', 'Match' = 'palegreen4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.3,
+            main.title = 'D) Seaward hindcast matches and mis-matches with optimal thresholds',
+            main.title.size = 0.4,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
+                labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
+sea_m
+tmap_save(sea_m, 'outputs/maps/seaward-mismatch_ecoregion.png', width = 5, height = 1, dpi = 1000)
+
+land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
+  tm_fill('grey88') +
+  tm_shape(filter(land_eco_sf, percent_mismatch > 80)) +
+  tm_fill('black', legend.show = F, alpha = 0.3) +
+  #tm_text('label', col = 'black', size = 0.15, just = 'left') +
+  tm_shape(preds) +
+  tm_dots('Landward_match', 
+          palette = c('No Hindcast' = 'red', 'Ambiguous' = 'lightgoldenrod', 'Mis-match' = 'black', 'Match' = 'palegreen4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F,
+          size = 0.001) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.01),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.45,
+            legend.text.size = 0.3,
+            main.title = 'E) Landward hindcast matches and mis-matches with optimal thresholds',
+            main.title.size = 0.4,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0.8) +
+  tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
+                labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
+
+land_m
+tmap_save(land_m, 'outputs/maps/landward-mismatch_ecoregion.png', width = 5, height = 1, dpi = 1000)
 
 # map hindcasts
 
