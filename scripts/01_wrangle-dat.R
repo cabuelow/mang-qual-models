@@ -22,6 +22,7 @@ for(i in seq_along(sens)){
 #### coastal squeeze
 # TODO: replace below ifelses with casewhens where possible
 coast <- read.csv('outputs/processed-data/coastal-population.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   select(-sum.pop_size_lecz_2020) %>% 
   mutate_at(vars(sum.pop_size_lecz_2000:sum.pop_size_lecz_2100), ~./area_ha) %>% # divide by lecz area to get population density
   mutate(sum.pop_size_lecz_2000 = ifelse(area_ha == 0, max(.$sum.pop_size_lecz_2000, na.rm = T), sum.pop_size_lecz_2000),# assign max pop. density to units with 0 lecz area (indicates no space for mangroves to grow)
@@ -55,6 +56,7 @@ dat[[1]] <- coast # if happy add to dat list
 #### sediment supply
 
 sed <- read.csv('outputs/processed-data/free-flowing-rivers.csv') %>%
+  filter(Type %in% typ$Type) %>% 
   left_join(select(st_drop_geometry(typ), Type, Class), by = 'Type') %>% 
   mutate(SED_weighted_average = ifelse(Class != 'Delta', 100, SED_weighted_average)) %>%
   mutate(sed_supp = ifelse(SED_weighted_average >= sens[i], 'Low', NA)) %>% 
@@ -71,6 +73,7 @@ dat[[2]] <- sed # if happy add to dat list
 #### future dams
 
 dams <- read.csv('outputs/processed-data/future-dams.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(fut_dams = factor(ifelse(number_future_dams >= 1, 1, 0))) %>%
   select(Type, fut_dams)
 
@@ -84,6 +87,7 @@ dat[[3]] <- dams # if happy add to dat list
 #### future sea level rise
 
 fslr <- read.csv('outputs/processed-data/future-slr.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(fut_slr = ifelse(slr_m_2041_2060 > quantile(.$slr_m_2041_2060, sens[i]/100), 1, 0)) %>% 
   select(Type, fut_slr)
   
@@ -97,6 +101,7 @@ dat[[4]] <- fslr # if happy add to dat list
 #### antecedent sea level rise
 
 aslr <- read.csv('outputs/processed-data/antecedent-slr.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(ant_slr = ifelse(local_msl_trend > quantile(.$local_msl_trend, sens[i]/100), 1, 0)) %>% 
   select(Type, ant_slr)
 
@@ -110,6 +115,7 @@ dat[[5]] <- aslr # if happy add to dat list
 #### future subsidence from groundwater extraction
 
 fgw <- read.csv('outputs/processed-data/gw_subsid_2040.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(fut_gwsub = ifelse(mode >= sens_sub[i], 1, 0)) %>% 
   select(Type, fut_gwsub)
 
@@ -123,6 +129,7 @@ dat[[6]] <- fgw # if happy add to dat list
 #### current subsidence from groundwater extraction
 
 gw <- read.csv('outputs/processed-data/gw_subsid_2010.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(gwsub = ifelse(mode >= sens_sub[i], 1, 0)) %>% 
   select(Type, gwsub)
 
@@ -136,6 +143,7 @@ dat[[7]] <- gw # if happy add to dat list
 #### future drought
 
 fdro <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(fut_drought = ifelse(mean.spi_change_percent_2041_2060 < quantile(.$mean.spi_change_percent_2041_2060[.$mean.spi_change_percent_2041_2060 < 0] , 1-(sens[i]/100)), 1, 0)) %>% 
   select(Type, fut_drought)
 
@@ -149,6 +157,7 @@ dat[[8]] <- fdro # if happy add to dat list
 #### future extreme rainfall
 
 frain <- read.csv('outputs/processed-data/future-stand-precip-index.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(fut_ext_rain = ifelse(mean.spi_change_percent_2041_2060 > quantile(.$mean.spi_change_percent_2041_2060[.$mean.spi_change_percent_2041_2060 > 0] , sens[i]/100), 1, 0)) %>% 
   select(Type, fut_ext_rain)
 
@@ -162,6 +171,7 @@ dat[[9]] <- frain # if happy add to dat list
 #### historical cyclones
 
 cyc <- read.csv('outputs/processed-data/cyclone-tracks-wind_1996_2020.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(storms = ifelse(cyclone_tracks_1996_2020> quantile(.$cyclone_tracks_1996_2020, sens[i]/100), 1, 0)) %>% 
   select(Type, storms)
 
@@ -175,6 +185,7 @@ dat[[10]] <- cyc # if happy add to dat list
 #### historical drought
 
 hdro <- read.csv('outputs/processed-data/historical-drought.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(hist_drought = ifelse(min_spei_1996_2020 < quantile(.$min_spei_1996_2020[.$min_spei_1996_2020 < 0] , 1-(sens[i]/100)), 1, 0)) %>% 
   select(Type, hist_drought)
 
@@ -188,6 +199,7 @@ dat[[11]] <- hdro # if happy add to dat list
 #### historical extreme rainfall
 
 hrain <- read.csv('outputs/processed-data/historical-drought.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   mutate(hist_ext_rain = ifelse(max_spei_1996_2020 > quantile(.$max_spei_1996_2020[.$max_spei_1996_2020 > 0], sens[i]/100), 1, 0)) %>% 
   select(Type, hist_ext_rain)
 
@@ -201,6 +213,7 @@ dat[[12]] <- hrain # if happy add to dat list
 #### tidal range
 
 tide <- read.csv('data/typologies/SLR_Data.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   select(Type, Tidal_Class)
 
 # map to check
@@ -221,7 +234,8 @@ fstorms <- lapply(fils, read.csv) %>%
   summarise(cyclone_occurrences_10000yrs = median(cyclone_occurrences_10000yrs)) %>% 
   mutate(fut_storms = 1 - (1 - (cyclone_occurrences_10000yrs/10000))^(2050-2023)) %>% 
   mutate(fut_storms = ifelse(fut_storms > quantile(.$fut_storms, sens[i]/100), 1, 0)) %>% 
-  select(Type, fut_storms)
+  select(Type, fut_storms) %>% 
+  filter(Type %in% typ$Type)
 
 # map to check
 
@@ -233,6 +247,7 @@ dat[[14]] <- fstorms # if happy add to dat list
 #### propagule establishment distances
 
 propest <- read.csv('outputs/processed-data/propagule-establishment-distances.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   left_join(typ_area) %>% 
   mutate(prop_establishment = ifelse(extant_loss_dist_mean_m == 'no_loss', NA, extant_loss_dist_mean_m)) %>% 
   mutate(prop_establishment = as.numeric(ifelse(prop_establishment == 'no_extant', NA, prop_establishment))) %>% 
@@ -254,6 +269,7 @@ dat[[15]] <- propest # if happy add to dat list
 #### landward vs. seaward loss
 
 land <- read.csv('data/typologies/landward_change_96_20_gmw_v3.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   group_by(chng_type, Type) %>% 
   summarise(area_ha = sum(area_ha)) %>% 
   pivot_wider(names_from = 'chng_type', values_from = 'area_ha') %>% 
@@ -263,6 +279,7 @@ land <- read.csv('data/typologies/landward_change_96_20_gmw_v3.csv') %>%
   select(Type, land_net_change_ha)
   
 sea <- read.csv('data/typologies/seaward_change_96_20_gmw_v3.csv') %>% 
+  filter(Type %in% typ$Type) %>% 
   group_by(chng_type, Type) %>% 
   summarise(area_ha = sum(area_ha)) %>% 
   pivot_wider(names_from = 'chng_type', values_from = 'area_ha') %>% 
@@ -318,5 +335,5 @@ mast.dat <- do.call(rbind, tmp)
 
 write.csv(mast.dat, 'outputs/master-dat.csv', row.names = F)
 
-# End here
+# end here
 
