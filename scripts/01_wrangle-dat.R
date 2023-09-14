@@ -1,5 +1,5 @@
 # take spatial data processed to mangrove typological units
-# convert to meaningful input for climate risk model
+# convert to presence-absence for climate risk model
 # and combine into master dataframe
 
 library(tidyverse)
@@ -7,7 +7,7 @@ library(sf)
 library(tmap)
 tmap_mode('view')
 
-typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
+typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
 typ_area <- read.csv('outputs/processed-data/typology-area.csv')
 dat <- list() # list to store wrangled dat
 
