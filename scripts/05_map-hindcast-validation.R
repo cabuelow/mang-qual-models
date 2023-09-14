@@ -17,7 +17,7 @@ rm_e <- 'N' # remove erosion from validation? Y or N
 
 # read in spatial data
 
-typ_points <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg')
+typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
 world <- data("World")
 meow <- st_read('data/MEOW/meow_ecos.shp')
 spatial_dat <- read.csv('outputs/master-dat.csv')

@@ -583,30 +583,4 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
 }
 )
 
-# End here
-
-# accuracy for simultaneous seaward and landward 
-
-accuracy_sum2 <- accuracy %>% 
-  filter(mangrove == 'Seaward & Landward') %>% 
-  mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
-  mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
-  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
-  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
-  distinct() %>% 
-  group_by(mangrove, pressure_def, ambig_threshold, class, metric) %>% 
-  summarise(accuracy = mean(accuracy)) 
-
-accuracy_sum2 %>% 
-  ggplot() +
-  aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
-  geom_tile() +
-  scale_fill_distiller(palette = 'RdYlBu', direction = 1, name = 'Accuracy') +
-  facet_nested_wrap(~factor(class) + factor(metric), nrow = 2) +
-  ylab('Pressure definition') +
-  xlab('Ambiguity probability threshold') +
-  theme_classic()
-
-ggsave('outputs/validation/accuracy-heatmap_kfold_averaged_overall.png',  width = 10, height = 2)
-
-filter(accuracy_sum2, accuracy == max(filter(accuracy_sum2, metric == 'Overall_accuracy' & class == 'Gain_neutrality & Loss')$accuracy))
+# end here
