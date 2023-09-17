@@ -419,18 +419,6 @@ ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', go, '_', rm
     write.csv(naive_outcomes, paste0('outputs/validation/naive_outcomes_', go, '_', rm_e,'.csv'), row.names = F)
     #naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go, '_', rm_e,'.csv'))
     
-    # map the folds
-    
-    #m.dat <- typ_points %>% left_join(filter(shuffled_dat, pressure_def == 1)) %>% mutate(k = factor(k)) #%>% st_transform(crs = 'ESRI:54030')
-    #world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33) 
-    #map <- tm_shape(world_mang) +
-    # tm_fill(col = 'gray85') +
-    #tm_shape(filter(m.dat, !is.na(k))) + 
-    #tm_dots('k', title = '', legend.is.portrait = F, palette = 'Set2', size = 0.01) +
-    #tm_layout(frame = T, legend.position = c(0.2, 0))
-    #map
-    #tmap_save(map, 'outputs/maps/k-fold-map.png', width = 8, height = 2)
-    
     # join naive outcomes/hindcasts to each unit in a training fold, validate against observed mangrove loss or gain
     # calculate likelihood/posterior probability of each matrix in a biophysical model based on observed mangrove loss or gain
     # use training posterior probabilities to make posterior hindcasts in test units and quantify accuracy

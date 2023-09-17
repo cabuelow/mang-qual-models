@@ -19,8 +19,8 @@ spatial_dat <- read.csv('outputs/master-dat.csv')
 # import the final set of calibrated posterior hindcasts for each biophysical/pressure scenario 
 # using optimal pressure definition and calibrated ambiguity threshold
 go <- 1 # which coastal dev threshold?
-press <- 3 # which pressure definition threshold?
-thresh <- 70 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 65 # which ambiguity threshold?
 rm_e <- 'N' # remove erosion from validation? Y or N
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
 post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
@@ -95,7 +95,7 @@ world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 # map forecasts
 
 lmap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   tm_shape(filter(preds, is.na(Landward))) +
   tm_dots('darkgrey', size = 0.001) +
   tm_shape(filter(preds, Landward == 'Ambiguous' & !is.na(Landward))) +
@@ -136,16 +136,16 @@ lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
-  tm_fill(col = 'gray95') +
+  tm_fill(col = 'gray88') +
   tm_shape(filter(preds, is.na(Seaward))) +
   tm_dots('darkgrey', size = 0.001) +
-  #tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Seaward))) +
-  #tm_dots('Seaward', 
-   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-    #      alpha = 0.5, 
-     #     title = '',
-      #    legend.show = F, 
-        #  size = 0.0015) +
+  tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Seaward))) +
+  tm_dots('Seaward', 
+          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
   tm_shape(filter(preds, Seaward == 'Loss' & !is.na(Seaward))) +
   tm_dots('Seaward', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 

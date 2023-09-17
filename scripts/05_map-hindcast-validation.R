@@ -11,8 +11,8 @@ set.seed(123) # set random number generator to make results reproducible
 sf_use_s2(FALSE)
 
 go <- 1 # which coastal dev threshold?
-press <- 3 # which pressure definition threshold?
-thresh <- 70 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 65 # which ambiguity threshold?
 rm_e <- 'N' # remove erosion from validation? Y or N
 
 # read in spatial data
