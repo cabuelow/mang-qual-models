@@ -8,6 +8,7 @@ library(foreach)
 library(doParallel)
 source('scripts/helpers/models.R')
 source('scripts/helpers/spatial-helpers_v2.R')
+setseed(123) # set random number generator so reproducible
 sf_use_s2(FALSE)
 chosen_model_name <- 'mangrove_model'
 
@@ -218,31 +219,55 @@ matrix_index <- data.frame(index = 1:length(matrices), scenario = unlist(lapply(
 
 dat2 <- dat %>% mutate(split = rep(1:5, (nrow(.)+4)/5)[1:nrow(.)]) # add a column to split so can parallelise
 scenarios <- list('LandwardAvailableProp', 'SubVol', 'Coastalsqueeze', 'SeaLevelRise')
-system.time( # takes 8 hours
+system.time( # takes ~30 mins
 for(b in seq_along(scenarios)){
   scn <- scenarios[[b]]
-  if(scn[1] %in% c('LandwardAvailableProp', 'SubVol')){
-cl <- makeCluster(5)
-registerDoParallel(cl)
-results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
-datsub <- dat2 %>% filter(split == h)
-tmp2 <- list()
-  for(i in 1:nrow(datsub)){
-    bio_model <- matrices[[filter(matrix_index, scenario == as.character(datsub[i,'scenario']))$index]]
-    pressures <- data.frame(press = unlist(strsplit(as.character(datsub[i,'press']), '\\.'))) %>% 
-      mutate(press = recode(press, 'csqueeze_1' = 'CoastalDev', 'ant_slr' = "SeaLevelRise", 'gwsub' = "GroundSubsid", 
-                            'hist_drought' = 'Drought', 'hist_ext_rain' = 'ExtremeRainfall', 'storms' = 'Cyclones'))
-    tmp <- vector("list", dim(bio_model)[3])
-    for(j in 1:dim(bio_model)[3]){
-      tmp[[j]] <- data.frame(solver(bio_model[,,j], chosen_model, c(scn, pressures$press)), nsim = j)  
+  if(scn[1] == 'LandwardAvailableProp'){
+    cl <- makeCluster(5)
+    registerDoParallel(cl)
+    results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
+      datsub <- dat2 %>% filter(split == h)
+      tmp2 <- list()
+      for(i in 1:nrow(datsub)){
+        bio_model <- matrices[[filter(matrix_index, scenario == as.character(datsub[i,'scenario']))$index]]
+        pressures <- data.frame(press = unlist(strsplit(as.character(datsub[i,'press']), '\\.'))) %>% 
+          mutate(press = recode(press, 'csqueeze_1' = 'CoastalDev', 'ant_slr' = "SeaLevelRise", 'gwsub' = "GroundSubsid", 
+                                'hist_drought' = 'Drought', 'hist_ext_rain' = 'ExtremeRainfall', 'storms' = 'Cyclones'))
+        tmp <- vector("list", dim(bio_model)[3])
+        for(j in 1:dim(bio_model)[3]){
+          new_mat <- bio_model[,,j]
+          new_mat[8,7] <- runif(1, 0.67, 1) # update so interaction between landward propagules and landward mangrove is always high (i.e., between 0.67-1), increasing hydro connectivity
+          tmp[[j]] <- data.frame(solver(new_mat, chosen_model,c(scn, pressures$press)), nsim = j)  
+        }
+        tmp2[[i]] <- do.call(rbind, tmp) %>% mutate(scenario = as.character(datsub[i,'scenario']), press = as.character(datsub[i,'press']))
+      }
+      do.call(rbind, tmp2)
     }
-    tmp2[[i]] <- do.call(rbind, tmp) %>% mutate(scenario = as.character(datsub[i,'scenario']), press = as.character(datsub[i,'press']))
-  }
-do.call(rbind, tmp2)
-}
-stopCluster(cl)
-results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
-write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
+    stopCluster(cl)
+    results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
+    write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
+  }else if(scn[1] == 'SubVol'){
+    cl <- makeCluster(5)
+    registerDoParallel(cl)
+    results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
+      datsub <- dat2 %>% filter(split == h)
+      tmp2 <- list()
+      for(i in 1:nrow(datsub)){
+        bio_model <- matrices[[filter(matrix_index, scenario == as.character(datsub[i,'scenario']))$index]]
+        pressures <- data.frame(press = unlist(strsplit(as.character(datsub[i,'press']), '\\.'))) %>% 
+          mutate(press = recode(press, 'csqueeze_1' = 'CoastalDev', 'ant_slr' = "SeaLevelRise", 'gwsub' = "GroundSubsid", 
+                                'hist_drought' = 'Drought', 'hist_ext_rain' = 'ExtremeRainfall', 'storms' = 'Cyclones'))
+        tmp <- vector("list", dim(bio_model)[3])
+        for(j in 1:dim(bio_model)[3]){
+          tmp[[j]] <- data.frame(solver(bio_model[,,j], chosen_model, c(scn, pressures$press)), nsim = j)  
+        }
+        tmp2[[i]] <- do.call(rbind, tmp) %>% mutate(scenario = as.character(datsub[i,'scenario']), press = as.character(datsub[i,'press']))
+      }
+      do.call(rbind, tmp2)
+    }
+    stopCluster(cl)
+    results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
+    write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
   }else if(scn[1] == 'Coastalsqueeze'){
     cl <- makeCluster(5)
     registerDoParallel(cl)
@@ -257,7 +282,7 @@ write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1]
         tmp <- vector("list", dim(bio_model)[3])
         for(j in 1:dim(bio_model)[3]){
           new_mat <- bio_model[,,j]
-          new_mat[8,9] <- 1 # update so interaction between sea level rise and landward mangrove is always high (i.e., 1)
+          new_mat[8,9] <- runif(1, 0.67, 1) # update so interaction between sea level rise and landward mangrove is always high (i.e., 0.67 and 1)
           tmp[[j]] <- data.frame(solver(new_mat, chosen_model, pressures$press), nsim = j)  
         }
         tmp2[[i]] <- do.call(rbind, tmp) %>% mutate(scenario = as.character(datsub[i,'scenario']), press = as.character(datsub[i,'press']))
@@ -654,13 +679,13 @@ world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 # landward 
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  tm_shape(filter(scenario_change, Landward_scenario_gain == 'Barriers' & !is.na(Landward_scenario_gain))) +
-  tm_dots('Landward_scenario_gain', 
-          palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3', 'Barriers_Transplant' = 'darkorange3'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.025) +
+  #tm_shape(filter(scenario_change, Landward_scenario_gain == 'Barriers' & !is.na(Landward_scenario_gain))) +
+  #tm_dots('Landward_scenario_gain', 
+   #       palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3', 'Barriers_Transplant' = 'darkorange3'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+       #   size = 0.025) +
   tm_shape(filter(scenario_change, Landward_scenario_gain == 'Transplant' & !is.na(Landward_scenario_gain))) +
   tm_dots('Landward_scenario_gain', 
           palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3', 'Barriers_Transplant' = 'darkorange3'), 
@@ -693,13 +718,13 @@ tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_'
 # seaward
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Sediment' & !is.na(Seaward_scenario_gain))) +
-  tm_dots('Seaward_scenario_gain', 
-          palette = c('Sediment' = 'plum4', 'Transplant' = 'darkseagreen', 'Transplant_Sediment' = 'turquoise4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.025) +
+  #tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Sediment' & !is.na(Seaward_scenario_gain))) +
+  #tm_dots('Seaward_scenario_gain', 
+   #       palette = c('Sediment' = 'plum4', 'Transplant' = 'darkseagreen', 'Transplant_Sediment' = 'turquoise4'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+       #   size = 0.025) +
   tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Transplant_Sediment' & !is.na(Seaward_scenario_gain))) +
   tm_dots('Seaward_scenario_gain', 
           palette = c('Sediment' = 'plum4', 'Transplant' = 'darkseagreen', 'Transplant_Sediment' = 'turquoise4'), 
