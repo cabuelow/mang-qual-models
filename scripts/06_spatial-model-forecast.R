@@ -653,8 +653,7 @@ all_scen <- transplant %>% left_join(hydrology, by = 'Type') %>% left_join(sedim
   unite('Seaward_scenario_gain', Transplant_Seaward_gain, Hydrology_Seaward_gain, Sediment_Seaward_gain, Barriers_Seaward_gain, na.rm = T, sep = '_') %>% 
   unite('Seaward_scenario_reduced_risk', Transplant_Seaward_risk_reduced, Hydrology_Seaward_risk_reduced, Sediment_Seaward_risk_reduced, Barriers_Seaward_risk_reduced, na.rm = T, sep = '_') %>% 
   mutate_at(vars(Landward_scenario_gain, Landward_scenario_reduced_risk,
-                 Seaward_scenario_gain, Seaward_scenario_reduced_risk
-                 ), ~ifelse(. == '', NA, .))
+                 Seaward_scenario_gain, Seaward_scenario_reduced_risk), ~ifelse(. == '', NA, .))
 write.csv(all_scen, 'outputs/predictions/scenario-forecasts-all.csv', row.names = F)
 
 # summarise predictions
@@ -755,7 +754,7 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3', 'black', 'slateblue3'), alpha = 0.7,
+  tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3', 'black', 'slateblue3'), alpha = 0.8,
                 labels =  c('Removal of barriers to landward migration', 'Increased landward propagules (dispersal or enrichment)', 
                             'Removal of barriers to landward migration or Increased landward propagules', 'Improved hydrological connectivity or Increased landward propagules',
                             'Improved hydrological connectivity or Increased landward propagules or Removal of barriers to landward migration'), border.alpha = 0, size = 0.3)
@@ -772,6 +771,13 @@ smap <- tm_shape(world_mang) +
           title = '',
           legend.show = F, 
           size = 0.02) +
+  tm_shape(filter(scenario_change, Seaward_scenario_reduced_risk == 'Plant' & !is.na(Seaward_scenario_reduced_risk))) +
+  tm_dots('Seaward_scenario_reduced_risk', 
+          palette = c('Sediment' = 'plum4', 'Plant' = 'darkseagreen', 'Plant_Sediment' = 'turquoise4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
   tm_shape(filter(scenario_change, Seaward_scenario_reduced_risk == 'Plant_Sediment' & !is.na(Seaward_scenario_reduced_risk))) +
   tm_dots('Seaward_scenario_reduced_risk', 
           palette = c('Sediment' = 'plum4', 'Plant' = 'darkseagreen', 'Plant_Sediment' = 'turquoise4'), 
@@ -796,7 +802,7 @@ smap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col =  c('plum4', 'darkseagreen', 'turquoise4'), alpha = 0.7,
+  tm_add_legend('symbol', col =  c('plum4', 'darkseagreen', 'turquoise4'), alpha = 0.8,
                 labels =  c('Sediment addition/trapping','Increased landward propagules (dispersal or enrichment)','Sediment addition/trapping or Increased landward propagules'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
