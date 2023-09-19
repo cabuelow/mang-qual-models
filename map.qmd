@@ -22,7 +22,7 @@ library(sf)
 library(tidyverse)
 
 dat <- read.csv('outputs/master-dat.csv') %>% filter(Cdev_thresh == 1 & pressure_def == 3)
-typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_slr:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
   mutate(fut_dams = ifelse(fut_dams == 'H', 'Present', 'Absent')) %>% 
@@ -38,7 +38,7 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
   mutate_at(vars(csqueeze:sed_supp, prop_estab), ~factor(., levels = c('High', 'Medium', 'Low')))
 ```
 
-This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5)).
+This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5), updated [here](https://zenodo.org/record/8340259)).
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 

@@ -34,8 +34,8 @@ library(tidyverse)
 #}
 
 go <- 1 # which coastal dev threshold?
-press <- 3 # which pressure definition threshold?
-thresh <- 70 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 65 # which ambiguity threshold?
 rm_e <- 'N' # remove erosion from validation? Y or N
 scenario <- 'SeaLevelRise'
 
@@ -45,7 +45,7 @@ accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
 test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
 forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '_fit.csv'))
 all_scen <- read.csv('outputs/predictions/scenario-forecasts-all.csv')
-typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_slr:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
   mutate(fut_dams = ifelse(fut_dams == 'H', 'Present', 'Absent')) %>% 
@@ -58,7 +58,7 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.g
                                  Tidal_Class == 'L' ~ 'Macrotidal')) %>% 
   mutate_at(vars(csqueeze:prop_estab), as.factor) %>% 
   mutate_at(vars(csqueeze:sed_supp, prop_estab), ~factor(., levels = c('High', 'Medium', 'Low')))
-preds_hind <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% # join hindcasts to spatial data
+preds_hind <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% # join hindcasts to spatial data
   left_join(filter(test_hindcasts, pressure_def == press, ambig_threshold == thresh)) %>% 
   mutate(Seaward_match = case_when(Seaward == 'Ambiguous' ~ 'Ambiguous',
                                    is.na(SeawardMang) ~'No Prediction',
@@ -68,13 +68,13 @@ preds_hind <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_cent
                                     is.na(LandwardMang) ~'No Prediction',
                                     Landward == land_net_change ~'Match', 
                                     Landward != land_net_change ~ 'MisMatch'))
-preds_fore <- st_read('data/typologies/Mangrove_Typology_v3_Composite_valid_centroids.gpkg') %>% 
+preds_fore <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(forecasts)
-scenario_change <- typ %>% inner_join(all_scen)
+scenario_change <- typ %>% left_join(all_scen) %>% select(Seaward_scenario_gain, Seaward_scenario_reduced_risk, Landward_scenario_gain, Landward_scenario_reduced_risk)
 
 ```
 
-This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5)).
+This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5), updated [here](https://zenodo.org/record/8340259)).
 
 Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
@@ -165,13 +165,23 @@ mapview(filter(preds_fore, !is.na(Seaward)), zcol = 'Seaward', layer.name = 'Sea
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
-### Scenario-based forecasts of mangrove gain/neutrality or reduced certainty of loss with management or restoration
+### Scenario-based forecasts of mangrove gain/neutrality with management or restoration
 
-Scenario-based forecasts of seaward gain/neutrality with management or restoration are mapped in the left pane, landward on the right.
+Scenario-based forecasts of landward gain/neutrality with management or restoration are mapped in the left pane, seaward on the right.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(filter(scenario_change, !is.na(Seaward_scenario_gain)), zcol = 'Seaward_scenario_gain', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Landward_scenario_gain)), zcol = 'Landward_scenario_gain', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+ mapview(filter(scenario_change, !is.na(Landward_scenario_gain)), zcol = 'Landward_scenario_gain', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Seaward_scenario_gain)), zcol = 'Seaward_scenario_gain', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 ```
 :::
 
+::: {.callout-tip icon="false" collapse="true"}
+### Scenario-based forecasts of mangrove reduced certainty of loss with management or restoration
+
+Scenario-based forecasts of landward reduced certainty of loss with management or restoration are mapped in the left pane, seaward on the right.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
+
+ mapview(filter(scenario_change, !is.na(Landward_scenario_reduced_risk)), zcol = 'Landward_scenario_reduced_risk', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Seaward_scenario_reduced_risk)), zcol = 'Seaward_scenario_reduced_risk', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+```
+:::
