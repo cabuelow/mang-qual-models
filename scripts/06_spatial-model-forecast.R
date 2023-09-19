@@ -8,7 +8,7 @@ library(foreach)
 library(doParallel)
 source('scripts/helpers/models.R')
 source('scripts/helpers/spatial-helpers_v2.R')
-setseed(123) # set random number generator so reproducible
+set.seed(123) # set random number generator so reproducible
 sf_use_s2(FALSE)
 chosen_model_name <- 'mangrove_model'
 
@@ -218,11 +218,11 @@ matrix_index <- data.frame(index = 1:length(matrices), scenario = unlist(lapply(
 # to obtain naive forecasts of loss/gain given management/conservation scenarios
 
 dat2 <- dat %>% mutate(split = rep(1:5, (nrow(.)+4)/5)[1:nrow(.)]) # add a column to split so can parallelise
-scenarios <- list('LandwardAvailableProp', 'SubVol', 'Coastalsqueeze', 'SeaLevelRise')
-system.time( # takes ~30 mins
+scenarios <- list('LandwardAvailableProp', 'Hydrology', 'SubVol', 'Coastalsqueeze', 'SeaLevelRise')
+system.time( # takes ~40 mins
 for(b in seq_along(scenarios)){
   scn <- scenarios[[b]]
-  if(scn[1] == 'LandwardAvailableProp'){
+  if(scn[1] == 'Hydrology'){
     cl <- makeCluster(5)
     registerDoParallel(cl)
     results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
@@ -237,7 +237,8 @@ for(b in seq_along(scenarios)){
         for(j in 1:dim(bio_model)[3]){
           new_mat <- bio_model[,,j]
           new_mat[8,7] <- runif(1, 0.67, 1) # update so interaction between landward propagules and landward mangrove is always high (i.e., between 0.67-1), increasing hydro connectivity
-          tmp[[j]] <- data.frame(solver(new_mat, chosen_model,c(scn, pressures$press)), nsim = j)  
+          new_mat[11,10] <- runif(1, 0.67, 1) # update so interaction between seaward propagules and seaward mangrove is always high (i.e., between 0.67-1), increasing hydro connectivity
+          tmp[[j]] <- data.frame(solver(new_mat, chosen_model, pressures$press), nsim = j)  
         }
         tmp2[[i]] <- do.call(rbind, tmp) %>% mutate(scenario = as.character(datsub[i,'scenario']), press = as.character(datsub[i,'press']))
       }
@@ -246,7 +247,7 @@ for(b in seq_along(scenarios)){
     stopCluster(cl)
     results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
     write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
-  }else if(scn[1] == 'SubVol'){
+  }else if(scn[1] %in% c('LandwardAvailableProp','SubVol')){
     cl <- makeCluster(5)
     registerDoParallel(cl)
     results <- foreach(h = seq_along(unique(dat2$split)), .packages = c('tidyverse', 'QPress')) %dopar% {
@@ -385,6 +386,7 @@ spatial_pred_fit <- spatial_pred %>%
                              SeawardMang < 100-thresh ~ 'Loss',
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
+if(scenario == 'SubVol'){spatial_pred_fit <- spatial_pred_fit %>% mutate(Class = sub('\\_.*', '', Type)) %>% mutate(Seaward = ifelse(Class == 'OpenCoast', 'Loss', Seaward))} # in subvol scenario, only allow reduced risk of loss or gain/neutrality in geomorphologies other than open coast
 write.csv(spatial_pred_fit, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '_fit.csv'), row.names = F)
 spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '_fit.csv'))
 
@@ -407,12 +409,13 @@ spatial_pred_unfit <- spatial_pred %>%
                              SeawardMang < 100-thresh ~ 'Loss',
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
+if(scenario == 'SubVol'){spatial_pred_unfit <- spatial_pred_unfit %>% mutate(Class = sub('\\_.*', '', Type)) %>% mutate(Seaward = ifelse(Class == 'OpenCoast', 'Loss', Seaward))} # in subvol scenario, only allow reduced risk of loss or gain/neutrality in geomorphologies other than open coast
 write.csv(spatial_pred_unfit, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '_unfit.csv'), row.names = F)
 spatial_pred_unfit <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '_unfit.csv'))
-titlea_fit <- c('C) Seaward forecast with increased propagules - fit', 'E) Seaward forecast with sediment addition - fit', 'G) Seaward forecast with removal of coastal barriers - fit', 'A) Seaward baseline forecast')
-titleb_fit <- c('D) Landward forecast with increased propagules - fit', 'F) Landward forecast with sediment addition - fit', 'H) Landward forecast with removal of coastal barriers - fit', 'C) Landward baseline forecast')
-titlea_unfit <- c('C) Seaward forecast with increased propagules - unfit', 'E) Seaward forecast with sediment addition - unfit', 'G) Seaward forecast with removal of coastal barriers - unfit', 'A) Seaward baseline forecast - unfit')
-titleb_unfit <- c('D) Landward forecast with increased propagules - unfit', 'F) Landward forecast with sediment addition - unfit', 'H) Landward forecast with removal of coastal barriers - unfit', 'C) Landward baseline forecast - unfit')
+titlea_fit <- c('C) Seaward forecast with increased propagules - fit', 'D) Seaward forecast with improved hydrology - fit','E) Seaward forecast with sediment addition - fit', 'F) Seaward forecast with removal of coastal barriers - fit', 'A) Seaward baseline forecast')
+titleb_fit <- c('D) Landward forecast with increased propagules - fit', 'D) Landward forecast with improved hydrology - fit', 'F) Landward forecast with sediment addition - fit', 'H) Landward forecast with removal of coastal barriers - fit', 'C) Landward baseline forecast')
+titlea_unfit <- c('C) Seaward forecast with increased propagules - unfit', 'D) Seaward forecast with improved hydrology - unfit', 'E) Seaward forecast with sediment addition - unfit', 'G) Seaward forecast with removal of coastal barriers - unfit', 'A) Seaward baseline forecast - unfit')
+titleb_unfit <- c('D) Landward forecast with increased propagules - unfit', 'D) Landward forecast with improved hydrology - unfit', 'F) Landward forecast with sediment addition - unfit', 'H) Landward forecast with removal of coastal barriers - unfit', 'C) Landward baseline forecast - unfit')
 
 # summarise predictions
 datsum <- spatial_pred_fit %>% 
@@ -611,25 +614,32 @@ tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_',
 
 # get the landward and seaward forecasts for each scenario, and show where the additional gains or reduced risk of loss would be
 
-scenarios <- list('LandwardAvailableProp', 'SubVol', 'Coastalsqueeze')
+scenarios <- list('LandwardAvailableProp', 'Hydrology', 'SubVol', 'Coastalsqueeze')
 baseline <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', 'SeaLevelRise', '_fit.csv')) %>%
   filter(!is.na(Landward) & !is.na(Seaward)) %>% 
   rename('Landward_base' = 'Landward', 'Seaward_base' = 'Seaward')
 transplant <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[1]][1], '_fit.csv')) %>% 
   filter(!is.na(Landward) & !is.na(Seaward)) %>% 
   inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
-  mutate(Transplant_Landward_gain = ifelse(Landward_base != 'Gain_neutrality' & Landward == 'Gain_neutrality', 'Transplant', NA),
-         Transplant_Landward_risk_reduced = ifelse(Landward_base == 'Loss' & Landward == 'Ambiguous', 'Transplant', NA),
-         Transplant_Seaward_gain = ifelse(Seaward_base != 'Gain_neutrality' & Seaward == 'Gain_neutrality', 'Transplant', NA),
-         Transplant_Seaward_risk_reduced = ifelse(Seaward_base == 'Loss' & Seaward == 'Ambiguous', 'Transplant', NA))
-sediment <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[2]][1], '_fit.csv')) %>% 
+  mutate(Transplant_Landward_gain = ifelse(Landward_base != 'Gain_neutrality' & Landward == 'Gain_neutrality', 'Plant', NA),
+         Transplant_Landward_risk_reduced = ifelse(Landward_base == 'Loss' & Landward == 'Ambiguous', 'Plant', NA),
+         Transplant_Seaward_gain = ifelse(Seaward_base != 'Gain_neutrality' & Seaward == 'Gain_neutrality', 'Plant', NA),
+         Transplant_Seaward_risk_reduced = ifelse(Seaward_base == 'Loss' & Seaward == 'Ambiguous', 'Plant', NA))
+hydrology <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[2]][1], '_fit.csv')) %>% 
+  filter(!is.na(Landward) & !is.na(Seaward)) %>% 
+  inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
+  mutate(Hydrology_Landward_gain = ifelse(Landward_base != 'Gain_neutrality' & Landward == 'Gain_neutrality', 'Hydrology', NA),
+         Hydrology_Landward_risk_reduced = ifelse(Landward_base == 'Loss' & Landward == 'Ambiguous', 'Hydrology', NA),
+         Hydrology_Seaward_gain = ifelse(Seaward_base != 'Gain_neutrality' & Seaward == 'Gain_neutrality', 'Hydrology', NA),
+         Hydrology_Seaward_risk_reduced = ifelse(Seaward_base == 'Loss' & Seaward == 'Ambiguous', 'Hydrology', NA))
+sediment <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[3]][1], '_fit.csv')) %>% 
   filter(!is.na(Landward) & !is.na(Seaward)) %>% 
   inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
   mutate(Sediment_Landward_gain = ifelse(Landward_base != 'Gain_neutrality' & Landward == 'Gain_neutrality', 'Sediment', NA),
          Sediment_Landward_risk_reduced = ifelse(Landward_base == 'Loss' & Landward == 'Ambiguous', 'Sediment', NA),
          Sediment_Seaward_gain = ifelse(Seaward_base != 'Gain_neutrality' & Seaward == 'Gain_neutrality', 'Sediment', NA),
          Sediment_Seaward_risk_reduced = ifelse(Seaward_base == 'Loss' & Seaward == 'Ambiguous', 'Sediment', NA))
-barriers <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[3]][1], '_fit.csv')) %>% 
+barriers <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[4]][1], '_fit.csv')) %>% 
   filter(!is.na(Landward) & !is.na(Seaward)) %>% 
   inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
   mutate(Barriers_Landward_gain = ifelse(Landward_base != 'Gain_neutrality' & Landward == 'Gain_neutrality', 'Barriers', NA),
@@ -637,37 +647,43 @@ barriers <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_',
          Barriers_Seaward_gain = ifelse(Seaward_base != 'Gain_neutrality' & Seaward == 'Gain_neutrality', 'Barriers', NA),
          Barriers_Seaward_risk_reduced = ifelse(Seaward_base == 'Loss' & Seaward == 'Ambiguous', 'Barriers', NA))
 
-all_scen <- transplant %>% left_join(sediment, by = 'Type') %>% left_join(barriers, by = 'Type') %>% 
-  mutate(Transplant_Landward_gain_reduced_risk = ifelse(Transplant_Landward_gain == Transplant_Landward_risk_reduced, 'Transplant', NA),
-         Barriers_Landward_gain_reduced_risk = ifelse(Barriers_Landward_gain == Barriers_Landward_risk_reduced, 'Barriers', NA),
-         Transplant_Seaward_gain_reduced_risk = ifelse(Transplant_Seaward_gain == Transplant_Seaward_risk_reduced, 'Transplant', NA),
-         Sediment_Seaward_gain_reduced_risk = ifelse(Sediment_Seaward_gain == Sediment_Seaward_risk_reduced, 'Sediment', NA)) %>% 
-  unite('Landward_scenario_gain', Transplant_Landward_gain, Sediment_Landward_gain, Barriers_Landward_gain, Transplant_Landward_risk_reduced, Sediment_Landward_risk_reduced, Barriers_Landward_risk_reduced, Transplant_Landward_gain_reduced_risk, Barriers_Landward_gain_reduced_risk, na.rm = T, sep = '_') %>% 
-  #unite('Landward_scenario_reduced_risk', Transplant_Landward_risk_reduced, Sediment_Landward_risk_reduced, Barriers_Landward_risk_reduced, na.rm = T, sep = '_') %>% 
-  unite('Seaward_scenario_gain', Transplant_Seaward_gain, Sediment_Seaward_gain, Barriers_Seaward_gain,Transplant_Seaward_risk_reduced, Sediment_Seaward_risk_reduced, Barriers_Seaward_risk_reduced,Transplant_Seaward_gain_reduced_risk, Sediment_Seaward_gain_reduced_risk, na.rm = T, sep = '_') %>% 
-  #unite('Seaward_scenario_reduced_risk', Transplant_Seaward_risk_reduced, Sediment_Seaward_risk_reduced, Barriers_Seaward_risk_reduced, na.rm = T, sep = '_') %>% 
-  mutate_at(vars(Landward_scenario_gain, #Landward_scenario_reduced_risk, 
-                 Seaward_scenario_gain, #Seaward_scenario_reduced_risk
+all_scen <- transplant %>% left_join(hydrology, by = 'Type') %>% left_join(sediment, by = 'Type') %>% left_join(barriers, by = 'Type') %>% 
+  unite('Landward_scenario_gain', Transplant_Landward_gain, Hydrology_Landward_gain, Sediment_Landward_gain, Barriers_Landward_gain, na.rm = T, sep = '_') %>% 
+  unite('Landward_scenario_reduced_risk', Transplant_Landward_risk_reduced, Hydrology_Landward_risk_reduced, Sediment_Landward_risk_reduced, Barriers_Landward_risk_reduced, na.rm = T, sep = '_') %>% 
+  unite('Seaward_scenario_gain', Transplant_Seaward_gain, Hydrology_Seaward_gain, Sediment_Seaward_gain, Barriers_Seaward_gain, na.rm = T, sep = '_') %>% 
+  unite('Seaward_scenario_reduced_risk', Transplant_Seaward_risk_reduced, Hydrology_Seaward_risk_reduced, Sediment_Seaward_risk_reduced, Barriers_Seaward_risk_reduced, na.rm = T, sep = '_') %>% 
+  mutate_at(vars(Landward_scenario_gain, Landward_scenario_reduced_risk,
+                 Seaward_scenario_gain, Seaward_scenario_reduced_risk
                  ), ~ifelse(. == '', NA, .))
 write.csv(all_scen, 'outputs/predictions/scenario-forecasts-all.csv', row.names = F)
 
 # summarise predictions
 
+# landward
 datsum <- all_scen %>% 
   group_by(Landward_scenario_gain) %>% 
   summarise(n = n(), percent = 100*(n()/nrow(.)))
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_reduced_risk_summary-landward.csv'), row.names = F)   
+datsum
+write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_summary-landward.csv'), row.names = F)   
 
+datsum <- all_scen %>% 
+  group_by(Landward_scenario_reduced_risk) %>% 
+  summarise(n = n(), percent = 100*(n()/nrow(.)))
+datsum
+write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_reduced_risk_summary-landward.csv'), row.names = F)   
+
+# seaward
 datsum <- all_scen %>% 
   group_by(Seaward_scenario_gain) %>% 
   summarise(n = n(), percent = 100*(n()/nrow(.)))
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_reduced_risk_summary-seaward.csv'), row.names = F)   
+datsum
+write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_summary-seaward.csv'), row.names = F)   
 
 datsum <- all_scen %>% 
-  mutate(Landward_seaward = paste0(.$Landward_scenario_gain, '.', .$Seaward_scenario_gain)) %>% 
-  group_by(Landward_seaward) %>% 
+  group_by(Seaward_scenario_reduced_risk) %>% 
   summarise(n = n(), percent = 100*(n()/nrow(.)))
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_reduced_risk_summary-seaward-landward.csv'), row.names = F)   
+datsum
+write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_reduced_risk_summary-seaward.csv'), row.names = F)   
 
 # map
 
@@ -679,29 +695,58 @@ world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 # landward 
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  #tm_shape(filter(scenario_change, Landward_scenario_gain == 'Barriers' & !is.na(Landward_scenario_gain))) +
-  #tm_dots('Landward_scenario_gain', 
-   #       palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3', 'Barriers_Transplant' = 'darkorange3'), 
-    #      alpha = 0.5, 
-     #     title = '',
-      #    legend.show = F, 
-       #   size = 0.025) +
-  tm_shape(filter(scenario_change, Landward_scenario_gain == 'Transplant' & !is.na(Landward_scenario_gain))) +
+  tm_shape(filter(scenario_change, Landward_scenario_gain == 'Barriers' & !is.na(Landward_scenario_gain))) +
   tm_dots('Landward_scenario_gain', 
-          palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3', 'Barriers_Transplant' = 'darkorange3'), 
-          alpha = 1, 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'darkseagreen', 'Plant_Barriers' = 'darkorange3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'slateblue3'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.02) +
+  tm_shape(filter(scenario_change, Landward_scenario_gain == 'Plant' & !is.na(Landward_scenario_gain))) +
+  tm_dots('Landward_scenario_gain', 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'darkseagreen', 'Plant_Barriers' = 'darkorange3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'slateblue3'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.02) +
+  tm_shape(filter(scenario_change, Landward_scenario_gain == 'Plant_Barriers' & !is.na(Landward_scenario_gain))) +
+  tm_dots('Landward_scenario_gain', 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'darkseagreen', 'Plant_Barriers' = 'darkorange3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'slateblue3'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.02) +
+  tm_shape(filter(scenario_change, Landward_scenario_gain == 'Plant_Hydrology' & !is.na(Landward_scenario_gain))) +
+  tm_dots('Landward_scenario_gain', 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'darkseagreen', 'Plant_Barriers' = 'darkorange3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'slateblue3'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.02) +
+  tm_shape(filter(scenario_change, Landward_scenario_reduced_risk == 'Barriers' & !is.na(Landward_scenario_reduced_risk))) +
+  tm_dots('Landward_scenario_reduced_risk', 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'darkseagreen', 'Plant_Barriers' = 'darkorange3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'slateblue3'), 
+          alpha = 0.5, 
           title = '',
           legend.show = F, 
           size = 0.0015) +
-  tm_shape(filter(scenario_change, Landward_scenario_gain %in% c('Transplant_Barriers', 'Barriers_Transplant') & !is.na(Landward_scenario_gain))) +
-  tm_dots('Landward_scenario_gain', 
-          palette = c('Barriers' = 'darkcyan', 'Transplant' = 'darkseagreen', 'Transplant_Barriers' = 'darkorange3', 'Barriers_Transplant' = 'darkorange3'), 
+  tm_shape(filter(scenario_change, Landward_scenario_reduced_risk == 'Plant' & !is.na(Landward_scenario_reduced_risk))) +
+  tm_dots('Landward_scenario_reduced_risk', 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'darkseagreen', 'Plant_Barriers' = 'darkorange3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'slateblue3'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(scenario_change, Landward_scenario_reduced_risk == 'Plant_Hydrology_Barriers' & !is.na(Landward_scenario_reduced_risk))) +
+  tm_dots('Landward_scenario_reduced_risk', 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'darkseagreen', 'Plant_Barriers' = 'darkorange3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'slateblue3'), 
           alpha = 0.5, 
           title = '',
           legend.show = F, 
           size = 0.0015) +
   tm_layout(legend.outside = F,
             legend.position = c(0.13, 0.01),
+            legend.width = 2,
             title.position = c(0.01,0.45),
             legend.title.size = 0.45,
             legend.text.size = 0.3,
@@ -710,34 +755,34 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col =  c('darkseagreen', 'darkorange3'), 
-                labels =  c('Increased landward propagules', 'Removal of barriers to landward migration or Increased landward propagules'), border.alpha = 0, size = 0.3)
-  #tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3'), 
-   #             labels =  c('Removal of barriers','Increased landward propagules', 'Removal of barriers or Increased landward propagules'), border.alpha = 0, size = 0.3)
+  tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3', 'black', 'slateblue3'), alpha = 0.7,
+                labels =  c('Removal of barriers to landward migration', 'Increased landward propagules (dispersal or enrichment)', 
+                            'Removal of barriers to landward migration or Increased landward propagules', 'Improved hydrological connectivity or Increased landward propagules',
+                            'Improved hydrological connectivity or Increased landward propagules or Removal of barriers to landward migration'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
 
 # seaward
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Transplant_Barriers' & !is.na(Seaward_scenario_gain))) +
+  tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Plant' & !is.na(Seaward_scenario_gain))) +
   tm_dots('Seaward_scenario_gain', 
-          palette = c('Transplant_Barriers' = 'plum4', 'Transplant' = 'darkseagreen', 'Transplant_Sediment' = 'turquoise4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.0015) +
-  tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Transplant_Sediment' & !is.na(Seaward_scenario_gain))) +
-  tm_dots('Seaward_scenario_gain', 
-          palette = c('Transplant_Barriers' = 'plum4', 'Transplant' = 'darkseagreen', 'Transplant_Sediment' = 'turquoise4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.0015) +
-  tm_shape(filter(scenario_change, Seaward_scenario_gain == 'Transplant' & !is.na(Seaward_scenario_gain))) +
-  tm_dots('Seaward_scenario_gain', 
-          palette = c('Transplant_Barriers' = 'plum4', 'Transplant' = 'darkseagreen', 'Transplant_Sediment' = 'turquoise4'), 
+          palette = c('Sediment' = 'plum4', 'Plant' = 'darkseagreen', 'Plant_Sediment' = 'turquoise4'), 
           alpha = 1, 
+          title = '',
+          legend.show = F, 
+          size = 0.02) +
+  tm_shape(filter(scenario_change, Seaward_scenario_reduced_risk == 'Plant_Sediment' & !is.na(Seaward_scenario_reduced_risk))) +
+  tm_dots('Seaward_scenario_reduced_risk', 
+          palette = c('Sediment' = 'plum4', 'Plant' = 'darkseagreen', 'Plant_Sediment' = 'turquoise4'), 
+          alpha = 0.5, 
+          title = '',
+          legend.show = F, 
+          size = 0.0015) +
+  tm_shape(filter(scenario_change, Seaward_scenario_reduced_risk == 'Sediment' & !is.na(Seaward_scenario_reduced_risk))) +
+  tm_dots('Seaward_scenario_reduced_risk', 
+          palette = c('Sediment' = 'plum4', 'Plant' = 'darkseagreen', 'Plant_Sediment' = 'turquoise4'), 
+          alpha = 0.5, 
           title = '',
           legend.show = F, 
           size = 0.0015) +
@@ -751,8 +796,8 @@ smap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col =  c('plum4', 'darkseagreen', 'turquoise4'), 
-                labels =  c('Increased landward propagules or Removal of barriers to landward migration','Increased landward propagules','Sediment addition or Increased landward propagules'), border.alpha = 0, size = 0.3)
+  tm_add_legend('symbol', col =  c('plum4', 'darkseagreen', 'turquoise4'), alpha = 0.7,
+                labels =  c('Sediment addition/trapping','Increased landward propagules (dispersal or enrichment)','Sediment addition/trapping or Increased landward propagules'), border.alpha = 0, size = 0.3)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
 
