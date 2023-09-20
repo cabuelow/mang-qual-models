@@ -744,20 +744,21 @@ lmap <- tm_shape(world_mang) +
           legend.show = F, 
           size = 0.0015) +
   tm_layout(legend.outside = F,
-            legend.position = c(0.13, 0.01),
-            legend.width = 2,
+            legend.position = c(0.04, 0.01),
+            legend.width = 1,
             title.position = c(0.01,0.45),
-            legend.title.size = 0.45,
+            legend.title.size = 0.001,
             legend.text.size = 0.3,
             main.title =  "D) Forecast of landward net gain/neutrality or reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3', 'black', 'slateblue3'), alpha = 0.8,
-                labels =  c('Removal of barriers to landward migration', 'Increased landward propagules (dispersal or enrichment)', 
-                            'Removal of barriers to landward migration or Increased landward propagules', 'Improved hydrological connectivity or Increased landward propagules',
-                            'Improved hydrological connectivity or Increased landward propagules or Removal of barriers to landward migration'), border.alpha = 0, size = 0.3)
+  tm_add_legend('symbol', col =  c('white', 'white', 'white'), alpha = 0.1,
+                labels =  c('B = Removal of barriers to landward migration', 'L = Increased landward propagules (dispersal or enrichment)',
+                            'EC = Improved ecological connectivity'), border.alpha = 0, size = 0.3) +
+  tm_add_legend('symbol', col =  c('darkcyan', 'darkseagreen', 'darkorange3', 'black', 'slateblue3'), alpha = 0.8, is.portrait = F,
+                labels =  c('B', 'L', 'B or L', 'EC or L', 'EC or L or B'), border.alpha = 0, size = 0.3)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
 
@@ -793,17 +794,20 @@ smap <- tm_shape(world_mang) +
           legend.show = F, 
           size = 0.0015) +
   tm_layout(legend.outside = F,
-            legend.position = c(0.13, 0.01),
+            legend.position = c(0.04, 0.01),
             title.position = c(0.01,0.45),
-            legend.title.size = 0.45,
+            legend.width = 1,
+            legend.title.size = 0.001,
             legend.text.size = 0.3,
             main.title = "B) Forecast of seaward net gain/neutrality or reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col =  c('white', 'white'), alpha = 0.8,
+                labels =  c('S = Sediment addition/trapping', 'L = Increased landward propagules (dispersal or enrichment)'), border.alpha = 0, size = 0.3) +
   tm_add_legend('symbol', col =  c('plum4', 'darkseagreen', 'turquoise4'), alpha = 0.8,
-                labels =  c('Sediment addition/trapping','Increased landward propagules (dispersal or enrichment)','Sediment addition/trapping or Increased landward propagules'), border.alpha = 0, size = 0.3)
+                labels =  c('S','L','S or L'), border.alpha = 0, size = 0.3, is.portrait = F)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
 
