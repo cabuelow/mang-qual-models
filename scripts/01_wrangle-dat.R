@@ -172,7 +172,7 @@ dat[[9]] <- frain # if happy add to dat list
 
 cyc <- read.csv('outputs/processed-data/cyclone-tracks-wind_1996_2020.csv') %>% 
   filter(Type %in% typ$Type) %>% 
-  mutate(storms = ifelse(cyclone_tracks_1996_2020> quantile(.$cyclone_tracks_1996_2020, sens[i]/100), 1, 0)) %>% 
+  mutate(storms = ifelse(cyclone_tracks_1996_2020 > quantile(.$cyclone_tracks_1996_2020, sens[i]/100), 1, 0)) %>% 
   select(Type, storms)
 
 # map to check
@@ -186,7 +186,7 @@ dat[[10]] <- cyc # if happy add to dat list
 
 hdro <- read.csv('outputs/processed-data/historical-drought.csv') %>% 
   filter(Type %in% typ$Type) %>% 
-  mutate(hist_drought = ifelse(min_spei_1996_2020 < quantile(.$min_spei_1996_2020[.$min_spei_1996_2020 < 0] , 1-(sens[i]/100)), 1, 0)) %>% 
+  mutate(hist_drought = ifelse(min_spei_1996_2020 < quantile(.$min_spei_1996_2020[.$min_spei_1996_2020 < 0], 1-(sens[i]/100)), 1, 0)) %>% 
   select(Type, hist_drought)
 
 # map to check
