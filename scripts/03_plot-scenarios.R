@@ -44,7 +44,7 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
   theme(legend.position = 'bottom',
         legend.justification = 'left',
         strip.text.x = element_text(size = 9),
-        title = element_text(size = 9),
+        title = element_text(size = 8),
         axis.title = element_blank()) +
   ggtitle('A) Seaward mangrove') +
   guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5))
@@ -64,7 +64,7 @@ b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
         legend.justification = 'left',
         axis.text.y =  element_blank(),
         strip.text.x = element_text(size = 9),
-        title = element_text(size = 9),
+        title = element_text(size = 8),
         axis.title = element_blank()) +
   ggtitle('B) Landward mangrove') +
   guides(fill = guide_colourbar(title.position="top", title.hjust = 0.5))
@@ -72,5 +72,5 @@ b
 
 c <- a+b+plot_layout(widths = c(2, 1))
 c 
-ggsave('outputs/heatmap_outputs/mangrove_model_heatmap.png', width = 8.15, height = 4)
+ggsave('outputs/heatmap_outputs/mangrove_model_heatmap.png', width = 8, height = 4)
 
