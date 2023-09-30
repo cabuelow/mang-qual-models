@@ -30,7 +30,7 @@ press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(C
 # define names of above scenarios for plot labelling later
 press.labels <- c('Sea-level rise', 'Intense storms', 'Groundwater extraction', 'Coastal development', 'Erosion',
                   'Drought', 'Extreme rainfall', 'Sea-level rise & Intense storms', 'Sea-level rise & Groundwater extraction',
-               'Sea-level rise  & Coastal development', 'Sea-level rise & Erosion', 
+               'Sea-level rise & Coastal development', 'Sea-level rise & Erosion', 
                'Sea-level rise & Drought', 'Sea-level rise & Extreme rainfall')
 
 # define edge constraints - whether edge interaction strengths should be 'high', 'medium' or 'low'

@@ -24,7 +24,8 @@ dat2 <- dat %>%
          coastalsqueeze = strsplit(constraint_scenario, ', ')[[1]][3],
          var = recode(var, 'LandwardMang' = 'Landward mangrove', 'SeawardMang' = 'Seaward mangrove'),
          tide = recode(tide, 'Microtidal' = 'Micro- tidal', 'Mesotidal' = 'Meso- tidal', 'Macrotidal' = 'Macro- tidal')) %>% 
-  mutate(tide = factor(tide, levels = c('Micro- tidal', 'Meso- tidal', 'Macro- tidal')))
+  mutate(tide = factor(tide, levels = c('Micro- tidal', 'Meso- tidal', 'Macro- tidal')),
+         pressure = ifelse(pressure == 'Sea-level rise & Coastal development', paste0(pressure, ' (', coastalsqueeze, ')'), pressure))
 
 # plot
 
@@ -36,7 +37,8 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
-  facet_nested(~factor(model_scenario) + factor(coastalsqueeze)) +
+  facet_nested(~factor(model_scenario)) +
+  #facet_nested(~factor(model_scenario) + factor(coastalsqueeze)) +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
   theme_classic() +
   theme(legend.position = 'bottom',
@@ -55,7 +57,7 @@ b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
-  facet_wrap(~factor(coastalsqueeze)) +
+  #facet_wrap(~factor(coastalsqueeze)) +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
   theme_classic() +
   theme(legend.position = 'none',
@@ -70,5 +72,5 @@ b
 
 c <- a+b+plot_layout(widths = c(2, 1))
 c 
-ggsave('outputs/heatmap_outputs/mangrove_model_heatmap.png', width = 10.5, height = 4)
+ggsave('outputs/heatmap_outputs/mangrove_model_heatmap.png', width = 8.15, height = 4)
 
