@@ -20,7 +20,7 @@ tmp <- list()
 for(i in seq_along(sens)){
   
 #### coastal squeeze
-# TODO: replace below ifelses with casewhens where possible
+
 coast <- read.csv('outputs/processed-data/coastal-population.csv') %>% 
   filter(Type %in% typ$Type) %>% 
   select(-sum.pop_size_lecz_2020) %>% 
