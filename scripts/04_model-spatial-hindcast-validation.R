@@ -25,7 +25,7 @@ drivers <- read.csv('data/typologies/SLR_Data.csv')
 names(models) # names of available models
 chosen_model <- models$mangrove_model
 
-# remove erosion from validation?
+# remove erosion from validation (Y/N)?
 rm_e <- 'N'
 
 system.time( # takes ~ 2 hours
@@ -72,7 +72,7 @@ system.time(
   }
 )
 saveRDS(tmp, paste0('outputs/simulation-outcomes/scenario_matrices_', go,'_', rm_e, '.RDS'))
-#tmp <- readRDS('outputs/simulation-outcomes/scenario_matrices.RDS')
+#tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices_', go,'_', rm_e, '.RDS'))
 matrices <- lapply(tmp, function(x){x[[2]]})
 names(matrices) <- bio_dat$scenario
 matrix_index <- data.frame(index = 1:length(matrices), scenario = unlist(lapply(tmp, function(x){names(x)[1]})))
