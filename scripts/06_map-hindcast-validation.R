@@ -24,30 +24,22 @@ spatial_dat <- read.csv('outputs/master-dat.csv')
 drivers <- read.csv('data/typologies/SLR_Data.csv')
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
 results <- readRDS(paste0('outputs/validation/accuracy_', go,'_', rm_e, '.RDS'))
-accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
+#accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
 test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
-
-# filter and plot optimal accuracy estimates
-
-accuracy_sum <- accuracy %>% # summarise accuracy across folds
-  filter(mangrove != 'Seaward & Landward') %>% 
-  pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
-  mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
-  distinct() %>% 
-  group_by(mangrove, pressure_def, ambig_threshold, class, metric) %>% 
-  summarise(accuracy = mean(accuracy, na.rm = T)) %>% 
-  filter(pressure_def == press, ambig_threshold == thresh) %>% # look at accuracy for a given pressure and ambiguity threshold
-  mutate(metric = recode(metric, 
-                         'Producers_accuracy' = 'Producers accuracy',
+resamp_accuracy <- read.csv('outputs/validation/resampled_accuracy_summary.csv') %>% 
+  mutate(metric = recode(metric, 'Producers_accuracy' = 'Producers accuracy',
                          'Users_accuracy' = 'Users accuracy',
                          'Overall_accuracy' = 'Overall accuracy'))
 
-a <- ggplot(filter(accuracy_sum, class == 'Gain_neutrality & Loss')) +
-  geom_bar(aes(x = metric, y = accuracy, fill = mangrove), stat = 'identity', position='dodge') +
+# plot accuracy estimators
+
+a <- ggplot(filter(resamp_accuracy, class == 'Gain_neutrality & Loss'), aes(x = metric, y = median, fill = mangrove)) +
+  geom_bar(stat = 'identity', position='dodge') +
+  geom_errorbar(aes(ymin=perc_0.025, ymax=perc_0.975), width=0.01, colour="black", position=position_dodge(.9)) +
   xlab('') +
   ylab('') +
   ylim(c(0,100)) +
-  scale_fill_manual(values = c('black', 'gray')) +
+  scale_fill_manual(values = c('gray20', 'gray')) +
   scale_x_discrete(labels = function(x) 
     stringr::str_wrap(x, width = 10))+
   coord_flip() +
@@ -57,12 +49,13 @@ a <- ggplot(filter(accuracy_sum, class == 'Gain_neutrality & Loss')) +
         plot.title = element_text(size = 9),
         plot.margin = margin(c(0,0,0,0)))
 a
-b <- ggplot(filter(accuracy_sum, class == 'Gain_neutrality')) +
-  geom_bar(aes(x = metric, y = accuracy, fill = mangrove), stat = 'identity', position='dodge') +
+b <- ggplot(filter(resamp_accuracy, class == 'Gain_neutrality'), aes(x = metric, y = median, fill = mangrove)) +
+  geom_bar(stat = 'identity', position='dodge') +
+  geom_errorbar(aes(ymin=perc_0.025, ymax=perc_0.975), width=0.01, colour="black", position=position_dodge(.9)) +
   xlab('') +
   ylab('') +
   ylim(c(0,100)) +
-  scale_fill_manual(values = c('black', 'gray')) +
+  scale_fill_manual(values = c('gray20', 'gray')) +
   scale_x_discrete(labels = function(x) 
     stringr::str_wrap(x, width = 10))+
   coord_flip() +
@@ -72,12 +65,13 @@ b <- ggplot(filter(accuracy_sum, class == 'Gain_neutrality')) +
         plot.title = element_text(size = 9),
         plot.margin = margin(c(0,0,0,0)))
 b
-c <- ggplot(filter(accuracy_sum, class == 'Loss')) +
-  geom_bar(aes(x = metric, y = accuracy, fill = mangrove), stat = 'identity', position='dodge') +
+c <- ggplot(filter(resamp_accuracy, class == 'Loss'), aes(x = metric, y = median, fill = mangrove)) +
+  geom_bar(stat = 'identity', position='dodge') +
+  geom_errorbar(aes(ymin=perc_0.025, ymax=perc_0.975), width=0.01, colour="black", position=position_dodge(.9)) +
   xlab('') +
   ylab('Accuracy (%)') +
   ylim(c(0,100)) +
-  scale_fill_manual(values = c('black', 'gray')) +
+  scale_fill_manual(values = c('gray20', 'gray')) +
   scale_x_discrete(labels = function(x) 
     stringr::str_wrap(x, width = 10))+
   coord_flip() +
