@@ -75,7 +75,7 @@ shuffled_dat <- shuffled_dat %>%
 
 cl <- makeCluster(5)
 registerDoParallel(cl)
-system.time(
+system.time( # approx 2 hours
   results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret'), .errorhandling = 'remove') %dopar% {
         
         # get training units for a fold and pressure definition
