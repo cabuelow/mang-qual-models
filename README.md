@@ -23,19 +23,21 @@ Link to documents describing all spatial data processing:
 
 4.  04_spatial-model-hindcast-validation.R: fit and cross-validate spatial hindcasts
 
-5.  05_model-spatial-hindcast-uncertainty.R: quantify uncertainty in cross-validation accuracy estimators
+5.  05_spatial-model-hindcast-uncertainty.R: quantify uncertainty in cross-validation accuracy estimators
 
 6.  06_map-hindcast-validation.R: map the hindcasts
 
 7.  07_spatial-model-forecast.R: make calibrated forecasts and map
 
-8.  08_plot-sensitivity.R: plot sensitivity analyses
+8.  08_spatial-model-forecast-uncertainty.R: quantify 95% confidence intervals around forecast classes
 
-9.  helpers/models.R: a script that builds different models
+9.  09_plot-sensitivity.R: plot sensitivity analyses
 
-10.  helpers/helpers.R: a script with helper functions for simulating models
+10.  helpers/models.R: a script that builds different models
 
-11. helpers/spatial-helpers.R: a script with helper functions for simulating models spatially
+11.  helpers/helpers.R: a script with helper functions for simulating models
 
-12. misc-plotting.R: miscellaneous plotting and mapping
+12. helpers/spatial-helpers.R: a script with helper functions for simulating models spatially
+
+13. misc-plotting.R: miscellaneous plotting and mapping
 
