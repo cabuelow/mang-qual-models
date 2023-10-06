@@ -653,7 +653,8 @@ all_scen <- transplant %>% left_join(hydrology, by = 'Type') %>% left_join(sedim
   unite('Seaward_scenario_gain', Transplant_Seaward_gain, Hydrology_Seaward_gain, Sediment_Seaward_gain, Barriers_Seaward_gain, na.rm = T, sep = '_') %>% 
   unite('Seaward_scenario_reduced_risk', Transplant_Seaward_risk_reduced, Hydrology_Seaward_risk_reduced, Sediment_Seaward_risk_reduced, Barriers_Seaward_risk_reduced, na.rm = T, sep = '_') %>% 
   mutate_at(vars(Landward_scenario_gain, Landward_scenario_reduced_risk,
-                 Seaward_scenario_gain, Seaward_scenario_reduced_risk), ~ifelse(. == '', NA, .))
+                 Seaward_scenario_gain, Seaward_scenario_reduced_risk), ~ifelse(. == '', NA, .)) %>% 
+  select(Type, Landward_scenario_gain, Landward_scenario_reduced_risk, Seaward_scenario_gain, Seaward_scenario_reduced_risk)
 write.csv(all_scen, 'outputs/predictions/scenario-forecasts-all.csv', row.names = F)
 
 # summarise predictions
@@ -663,26 +664,42 @@ datsum <- all_scen %>%
   group_by(Landward_scenario_gain) %>% 
   summarise(n = n(), percent = 100*(n()/nrow(.)))
 datsum
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_summary-landward.csv'), row.names = F)   
+write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_summary-landward.csv'), row.names = F)   
 
 datsum <- all_scen %>% 
   group_by(Landward_scenario_reduced_risk) %>% 
   summarise(n = n(), percent = 100*(n()/nrow(.)))
 datsum
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_reduced_risk_summary-landward.csv'), row.names = F)   
+write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_reduced_risk_summary-landward.csv'), row.names = F)   
 
 # seaward
 datsum <- all_scen %>% 
   group_by(Seaward_scenario_gain) %>% 
   summarise(n = n(), percent = 100*(n()/nrow(.)))
 datsum
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_summary-seaward.csv'), row.names = F)   
+write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_gain_summary-seaward.csv'), row.names = F)   
 
 datsum <- all_scen %>% 
   group_by(Seaward_scenario_reduced_risk) %>% 
   summarise(n = n(), percent = 100*(n()/nrow(.)))
 datsum
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_reduced_risk_summary-seaward.csv'), row.names = F)   
+write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_reduced_risk_summary-seaward.csv'), row.names = F)   
+
+# landward and seaward
+
+datsum <- all_scen %>% 
+  mutate_at(c('Landward_scenario_gain', 'Landward_scenario_reduced_risk', 
+              'Seaward_scenario_gain','Seaward_scenario_reduced_risk'), ~ifelse(!is.na(.), 1, 0)) %>% 
+  mutate(gain = Landward_scenario_gain + Seaward_scenario_gain,
+         reduced_risk = Landward_scenario_reduced_risk + Seaward_scenario_reduced_risk) %>% 
+  mutate(gain = ifelse(gain > 0, 1, 0),
+         reduced_risk = ifelse(reduced_risk > 0, 1, 0),
+         reduced_risk_only = ifelse(gain == 0 & reduced_risk > 0, 1, 0)) %>% 
+  pivot_longer(c(gain:reduced_risk_only), names_to = 'type', values_to = 'change') %>% 
+  group_by(type) %>% 
+  summarise(n = sum(change), percent = 100*(sum(change)/((nrow(.)/3))))
+datsum
+write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, 'all_scenario_summary.csv'), row.names = F)   
 
 # map
 
