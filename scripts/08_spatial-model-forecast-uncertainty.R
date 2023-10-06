@@ -48,4 +48,4 @@ datsum <- spatial_pred_fit %>%
          n_upper95 = ifelse(n_upper95 > num_units, num_units, n_upper95)) %>% 
   mutate_at(c('n', 'n_lower95', 'n_upper95'), function(x){round((x/num_units)*100)})
 datsum
-write.csv('outputs/summary-stats/baseline-forecast_uncertainty.csv', row.names = F)
+write.csv(datsum, 'outputs/summary-stats/baseline-forecast_uncertainty.csv', row.names = F)
