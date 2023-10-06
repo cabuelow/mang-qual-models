@@ -1,28 +1,51 @@
-# calculate 95% confidence intervals around the number of units in each forecast class
+# calculate 95% confidence intervals for the number of units in each forecast class
 
-fit_summary <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', 'SeaLevelRise_summary_fit.csv'))
+library(tidyverse)
+go <- 1 # which coastal dev threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 65 # which ambiguity threshold?
+rm_e <- 'N' # remove erosion from validation? Y or N
+
 accuracy <- read.csv('outputs/validation/resampled_accuracy_summary.csv')
+spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_SeaLevelRise_fit.csv'))
+num_units <- nrow(filter(spatial_pred_fit, !is.na(Landward))) # total number of units for which we could make forecasts for (some unable to forecast due to lack of valid model, i.e., all matrix likelihoods sum to 0)
 
-fit_summary <- fit_summary %>% 
-  mutate(n =)
+# summarise number of units in each forecast class globally
 
+# baseline forecast
 
-
-spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '_fit.csv'))
-
-# summarise predictions
 datsum <- spatial_pred_fit %>% 
-  mutate(Landward = paste0('Landward_', .$Landward),
-         Seaward = paste0('Seaward_', .$Seaward)) %>% 
-  mutate(Landward_seaward = paste0(.$Landward, '.', .$Seaward)) %>% 
-  group_by(Landward_seaward) %>% 
-  summarise(n = n(), percent = 100*(n()/nrow(.)))
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '_summary_fit.csv'), row.names = F)    
-
-datsum <- spatial_pred_unfit %>% 
-  mutate(Landward = paste0('Landward_', .$Landward),
-         Seaward = paste0('Seaward_', .$Seaward)) %>% 
-  mutate(Landward_seaward = paste0(.$Landward, '.', .$Seaward)) %>% 
-  group_by(Landward_seaward) %>% 
-  summarise(n = n(), percent = 100*(n()/nrow(.)))
-write.csv(datsum, paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenarios[[i]][1], '_summary_unfit.csv'), row.names = F) 
+  pivot_longer(cols = c(Landward, Seaward), names_to = 'mangrove', values_to = 'forecast') %>% 
+  mutate(n = 1) %>% 
+  group_by(mangrove, forecast) %>% 
+  summarise(n = sum(n)) %>% 
+  filter(!is.na(forecast)) %>% # remove missing forecasts
+  mutate(n_lower95 = ifelse(mangrove == 'Landward' & forecast == 'Gain_neutrality', 
+                            round(n - n*filter(accuracy, mangrove == 'Landward' & class == 'Gain_neutrality' & metric == 'Users_accuracy')$error_rate_low), NA),
+         n_upper95 = ifelse(mangrove == 'Landward' & forecast == 'Gain_neutrality', 
+                            round(n + n*filter(accuracy, mangrove == 'Landward' & class == 'Gain_neutrality' & metric == 'Producers_accuracy')$error_rate_upp), NA),
+         n_lower95 = ifelse(mangrove == 'Landward' & forecast == 'Loss', 
+                            round(n - n*filter(accuracy, mangrove == 'Landward' & class == 'Loss' & metric == 'Users_accuracy')$error_rate_low), n_lower95),
+         n_upper95 = ifelse(mangrove == 'Landward' & forecast == 'Loss', 
+                            round(n + n*filter(accuracy, mangrove == 'Landward' & class == 'Loss' & metric == 'Producers_accuracy')$error_rate_upp), n_upper95),
+         n_lower95 = ifelse(mangrove == 'Seaward' & forecast == 'Gain_neutrality', 
+                            round(n - n*filter(accuracy, mangrove == 'Seaward' & class == 'Gain_neutrality' & metric == 'Users_accuracy')$error_rate_low), n_lower95),
+         n_upper95 = ifelse(mangrove == 'Seaward' & forecast == 'Gain_neutrality', 
+                            round(n + n*filter(accuracy, mangrove == 'Seaward' & class == 'Gain_neutrality' & metric == 'Producers_accuracy')$error_rate_upp), n_upper95),
+         n_lower95 = ifelse(mangrove == 'Seaward' & forecast == 'Loss', 
+                            round(n - n*filter(accuracy, mangrove == 'Seaward' & class == 'Loss' & metric == 'Users_accuracy')$error_rate_low), n_lower95),
+         n_upper95 = ifelse(mangrove == 'Seaward' & forecast == 'Loss', 
+                            round(n + n*filter(accuracy, mangrove == 'Seaward' & class == 'Loss' & metric == 'Producers_accuracy')$error_rate_upp), n_upper95)) %>% 
+  mutate(n_upper95 = ifelse(mangrove == 'Landward' & forecast == 'Ambiguous', 
+                            num_units - sum(filter(., mangrove == 'Landward')$n_lower95, na.rm = T), n_upper95),
+         n_lower95 = ifelse(mangrove == 'Landward' & forecast == 'Ambiguous', 
+                            num_units - sum(filter(., mangrove == 'Landward')$n_upper95, na.rm = T), n_lower95),
+         n_upper95 = ifelse(mangrove == 'Seaward' & forecast == 'Ambiguous', 
+                            num_units - sum(filter(., mangrove == 'Seaward')$n_lower95, na.rm = T), n_upper95),
+         n_lower95 = ifelse(mangrove == 'Seaward' & forecast == 'Ambiguous', 
+                            num_units - sum(filter(., mangrove == 'Seaward')$n_upper95, na.rm = T), n_lower95)) %>% 
+  mutate(n_lower95 = ifelse(n_lower95 < 0, 0, n_lower95),
+         n_upper95 = ifelse(n_upper95 > num_units, num_units, n_upper95)) %>% 
+  mutate_at(c('n', 'n_lower95', 'n_upper95'), function(x){round((x/num_units)*100)})
+datsum
+write.csv('outputs/summary-stats/baseline-forecast_uncertainty.csv', row.names = F)
