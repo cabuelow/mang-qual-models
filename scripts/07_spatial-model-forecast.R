@@ -690,11 +690,11 @@ write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions', go, '_', 
 datsum <- all_scen %>% 
   mutate_at(c('Landward_scenario_gain', 'Landward_scenario_reduced_risk', 
               'Seaward_scenario_gain','Seaward_scenario_reduced_risk'), ~ifelse(!is.na(.), 1, 0)) %>% 
-  mutate(gain = Landward_scenario_gain + Seaward_scenario_gain,
-         reduced_risk = Landward_scenario_reduced_risk + Seaward_scenario_reduced_risk) %>% 
-  mutate(gain = ifelse(gain > 0, 1, 0),
-         reduced_risk = ifelse(reduced_risk > 0, 1, 0),
-         reduced_risk_only = ifelse(gain == 0 & reduced_risk > 0, 1, 0)) %>% 
+  mutate(gain_sum = Landward_scenario_gain + Seaward_scenario_gain,
+         reduced_risk_sum = Landward_scenario_reduced_risk + Seaward_scenario_reduced_risk) %>% 
+  mutate(gain = ifelse(gain_sum > 0, 1, 0),
+         reduced_risk = ifelse(reduced_risk_sum > 0, 1, 0),
+         reduced_risk_only = ifelse(gain_sum == 0 & reduced_risk_sum > 0, 1, 0)) %>% 
   pivot_longer(c(gain:reduced_risk_only), names_to = 'type', values_to = 'change') %>% 
   group_by(type) %>% 
   summarise(n = sum(change), percent = 100*(sum(change)/((nrow(.)/3))))
