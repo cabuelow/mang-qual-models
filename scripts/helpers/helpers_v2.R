@@ -13,7 +13,7 @@ system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from,
   unstable <- 0
 
   while (stable < n.sims) {
-    z <- sampler$select(runif(1))
+    z <- sampler$select(0.5)
     W <- sampler$community()
     if (!stable.community(W)){
       unstable <- unstable + 1
@@ -72,7 +72,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
   S.press[k.perturb] <- -perturb
   
   while (stable < n.sims) {
-    z <- sampler$select(runif(1))
+    z <- sampler$select(0.5)
     W <- sampler$community()
     if (!stable.community(W) & !is.null(solve(W, S.press))){
       unstable <- unstable + 1

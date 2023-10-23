@@ -58,4 +58,3 @@ sim_mod <- function(x, # spatial unit
                             class = con.scenario, spatial = 'Y')
     return(sim)
   }
-#}
