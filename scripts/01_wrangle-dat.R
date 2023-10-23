@@ -305,6 +305,19 @@ qtm(typ2, dots.col = 'sea_net_change')
 qtm(typ2, dots.col = 'land_net_change') 
 dat[[16]] <- st_drop_geometry(typ2) # if happy add to dat list
 
+# arid vs. humid mangroves
+
+arid <- read.csv('outputs/processed-data/aridity.csv') %>% 
+  mutate(climate = ifelse(mean <= 0.5, 'arid', 'humid')) %>% 
+  select(Type, climate)
+
+# map to check
+
+typ2 <- typ %>% 
+  left_join(arid) 
+qtm(typ2, dots.col = 'climate')
+dat[[17]] <- arid
+
 # merge into final master database
 
 tmp[[i]] <- data.frame(pressure_def = i, Reduce(full_join, dat))
