@@ -22,7 +22,6 @@ dat2 <- dat %>%
   mutate(tide = strsplit(constraint_scenario, ', ')[[1]][1],
          coastalsqueeze = strsplit(constraint_scenario, ', ')[[1]][3],
          var = recode(var, 'LandwardMang' = 'Landward mangrove', 'SeawardMang' = 'Seaward mangrove')) %>% 
-  mutate(tide = factor(tide, levels = c('Microtidal', 'Mesotidal', 'Macrotidal'))) %>% 
   pivot_wider(id_cols = c(model_scenario, constraint_scenario, pressure, var, tide, coastalsqueeze, var), names_from = 'model', values_from = 'Prob_gain_neutral') %>% 
   mutate(model_cyc_pos = abs(model_cyc_pos - mangrove_model),
          model_cyc_seaward = abs(model_cyc_seaward - mangrove_model),
@@ -30,7 +29,12 @@ dat2 <- dat %>%
          model_rain = abs(model_rain - mangrove_model)) %>% 
   pivot_longer(cols = c(model_cyc_pos:model_rain), names_to = 'model', values_to = 'absolute_deviation') %>% 
   mutate(model = recode(model, 'model_cyc_pos' = 'A) Storms -> substrate', 'model_cyc_seaward' = 'B) Storms --* seaward', 
-                        'model_drought' = 'C) Drought -* Sediment', 'model_rain' = 'D) Rain -> Sediment'))
+                        'model_drought' = 'C) Drought -* Sediment', 'model_rain' = 'D) Rain -> Sediment')) %>% 
+  mutate(#pressure = ifelse(pressure == 'Sea-level rise & Coastal development', paste0(pressure, ' (', coastalsqueeze, ')'), pressure),
+         #pressure = ifelse(pressure == 'Sea-level rise & Intense storms & Coastal development', paste0(pressure, ' (', coastalsqueeze, ')'), pressure),
+         pressure = ifelse(pressure == 'Sea-level rise & Groundwater extraction', 'Sea-level rise & Subsidence (Groundwater extraction)', pressure),
+         pressure = ifelse(pressure == 'Groundwater extraction', 'Subsidence (Groundwater extraction)', pressure)) %>% 
+  filter(!pressure %in% c('Sea-level rise & Intense storms & Coastal development'))
 
 # plot
 
@@ -44,7 +48,7 @@ ggplot(filter(dat2, tide == 'Macrotidal' & model_scenario == 'High Sediment Supp
         legend.position = 'bottom') +
   guides(alpha = 'none')
 
-ggsave('outputs/sensitivity/sensitivity_structural-model-assumptions.png', height = 3, width = 8)
+ggsave('outputs/sensitivity/sensitivity_structural-model-assumptions.png', height = 3, width = 9)
 
 ##### sensitivity to pressure definition ######
 # pressure definition = 4 is the baseline

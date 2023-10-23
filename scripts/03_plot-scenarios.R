@@ -44,7 +44,9 @@ dat2 <- dat %>%
                                                 'Intense storms',
                                                 'Extreme rainfall',
                                                 'Erosion',
-                                                'Drought')))
+                                                'Drought'))) %>% 
+  filter(!pressure %in% c('Sea-level rise & Intense storms & Coastal development (Low coastal squeeze)',
+                                                'Sea-level rise & Intense storms & Coastal development (High coastal squeeze)'))
 
 # plot
 
