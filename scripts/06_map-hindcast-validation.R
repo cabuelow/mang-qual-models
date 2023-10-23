@@ -154,9 +154,10 @@ final_preds_unfit <- pred_dat %>%
   left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
   left_join(post_prob, by = c('scenario', 'nsim')) %>% 
   mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calculating the probability of gain/neutrality
-         SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang)) %>% 
-  mutate(LandwardMang = LandwardMang*1,
-         SeawardMang = SeawardMang*1) %>% 
+         SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang),
+         matrix_post_prob = 1) %>% 
+  mutate(LandwardMang = LandwardMang*matrix_post_prob,
+         SeawardMang = SeawardMang*matrix_post_prob) %>% 
   group_by(pressure_def, Type, land_net_change_obs, sea_net_change_obs) %>% 
   summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
             SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 
@@ -184,13 +185,13 @@ lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
   #tm_shape(filter(preds, is.na(Landward))) +
   #tm_dots('darkgrey', size = 0.001) +
-  tm_shape(filter(preds, Landward == 'Gain_neutrality' & !is.na(Landward))) +
-  tm_dots('Landward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.025) +
+  #tm_shape(filter(preds, Landward == 'Gain_neutrality' & !is.na(Landward))) +
+  #tm_dots('Landward', 
+   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+    #      alpha = 0.5, 
+     #     title = '',
+      #    legend.show = F, 
+       #   size = 0.025) +
   tm_shape(filter(preds, Landward == 'Ambiguous' & !is.na(Landward))) +
   tm_dots('Landward', 
           palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
@@ -198,9 +199,9 @@ lmap <- tm_shape(world_mang) +
           title = '',
           legend.show = F, 
           size = 0.0015) +
-  tm_shape(filter(preds, Landward == 'Loss' & !is.na(Landward))) +
-  tm_dots('Landward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
+  tm_shape(filter(preds, Landward != 'Ambiguous' & !is.na(Landward))) +
+  tm_dots('LandwardMang', 
+          palette = 'Spectral', 
           alpha = 0.5, 
           title = '',
           legend.show = F,

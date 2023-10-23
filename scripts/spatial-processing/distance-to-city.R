@@ -8,7 +8,7 @@ library(tmap)
 
 dist <- rast("data/Global_Travel_Time_to_Cities_2015/201501_Global_Travel_Time_to_Cities_2015.tif")
 
-typo <- st_read("data/typologies/Mangrove_Typology_v3_Composite_valid_EEZ_qgis.gpkg")
+typo <- st_read("data/typologies/v3.14/Mangrove_Typology_v3.14_Composite_valid_EEZ_qgis.gpkg")
 
 value <- exact_extract(dist, typo, c('mean', 'min', 'max', 'stdev'))
 results <- data.frame(Type_MRGID = typo$Type_MRGID, value)

@@ -25,7 +25,26 @@ dat2 <- dat %>%
          var = recode(var, 'LandwardMang' = 'Landward mangrove', 'SeawardMang' = 'Seaward mangrove'),
          tide = recode(tide, 'Microtidal' = 'Micro- tidal', 'Mesotidal' = 'Meso- tidal', 'Macrotidal' = 'Macro- tidal')) %>% 
   mutate(tide = factor(tide, levels = c('Micro- tidal', 'Meso- tidal', 'Macro- tidal')),
-         pressure = ifelse(pressure == 'Sea-level rise & Coastal development', paste0(pressure, ' (', coastalsqueeze, ')'), pressure))
+         pressure = ifelse(pressure == 'Sea-level rise & Coastal development', paste0(pressure, ' (', coastalsqueeze, ')'), pressure),
+         pressure = ifelse(pressure == 'Sea-level rise & Intense storms & Coastal development', paste0(pressure, ' (', coastalsqueeze, ')'), pressure),
+         pressure = ifelse(pressure == 'Sea-level rise & Groundwater extraction', 'Sea-level rise & Subsidence (Groundwater extraction)', pressure),
+         pressure = ifelse(pressure == 'Groundwater extraction', 'Subsidence (Groundwater extraction)', pressure)) %>% 
+  mutate(pressure = factor(pressure, levels = c('Sea-level rise & Coastal development (High coastal squeeze)',
+                                                'Sea-level rise & Coastal development (Low coastal squeeze)',
+                                                'Sea-level rise & Intense storms & Coastal development (Low coastal squeeze)',
+                                                'Sea-level rise & Intense storms & Coastal development (High coastal squeeze)',
+                                                'Sea-level rise & Subsidence (Groundwater extraction)',
+                                                'Sea-level rise & Intense storms',
+                                                'Sea-level rise & Extreme rainfall',
+                                                'Sea-level rise & Erosion',
+                                                'Sea-level rise & Drought',
+                                                'Sea-level rise',
+                                                'Coastal development',
+                                                'Subsidence (Groundwater extraction)',
+                                                'Intense storms',
+                                                'Extreme rainfall',
+                                                'Erosion',
+                                                'Drought')))
 
 # plot
 

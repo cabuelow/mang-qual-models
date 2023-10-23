@@ -26,12 +26,12 @@ node.labels(chosen_model) # get model nodes for reference
 press.scenarios <- list(c(SeaLevelRise=1), c(Cyclones=1), c(GroundSubsid=1), c(CoastalDev=1), c(Erosion=1), c(Drought=1), 
                         c(ExtremeRainfall=1), c(SeaLevelRise=1, Cyclones=1), c(SeaLevelRise=1, GroundSubsid=1), 
                         c(SeaLevelRise=1, CoastalDev=1), c(SeaLevelRise=1, Erosion=1),
-                        c(SeaLevelRise=1, Drought=1), c(SeaLevelRise=1, ExtremeRainfall=1))
+                        c(SeaLevelRise=1, Drought=1), c(SeaLevelRise=1, ExtremeRainfall=1), c(SeaLevelRise=1, Cyclones=1, CoastalDev=1))
 # define names of above scenarios for plot labelling later
 press.labels <- c('Sea-level rise', 'Intense storms', 'Groundwater extraction', 'Coastal development', 'Erosion',
                   'Drought', 'Extreme rainfall', 'Sea-level rise & Intense storms', 'Sea-level rise & Groundwater extraction',
                'Sea-level rise & Coastal development', 'Sea-level rise & Erosion', 
-               'Sea-level rise & Drought', 'Sea-level rise & Extreme rainfall')
+               'Sea-level rise & Drought', 'Sea-level rise & Extreme rainfall', 'Sea-level rise & Intense storms & Coastal development')
 
 # define edge constraints - whether edge interaction strengths should be 'high', 'medium' or 'low'
 edge.labels(chosen_model) # get model edges for reference

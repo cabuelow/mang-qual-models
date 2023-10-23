@@ -394,9 +394,10 @@ spatial_pred_unfit <- spatial_pred %>%
   left_join(naive_outcomes_restore, by = c('scenario', 'press')) %>% 
   left_join(post_prob, by = c('scenario', 'nsim')) %>% 
   mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calculating the probability of gain/neutrality
-         SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang)) %>% 
-  mutate(LandwardMang = LandwardMang*1,
-         SeawardMang = SeawardMang*1) %>% 
+         SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang),
+         matrix_post_prob = 1) %>% 
+  mutate(LandwardMang = LandwardMang*matrix_post_prob,
+         SeawardMang = SeawardMang*matrix_post_prob) %>% 
   group_by(pressure_def, Type, land_net_change_obs, sea_net_change_obs) %>% 
   summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
             SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 

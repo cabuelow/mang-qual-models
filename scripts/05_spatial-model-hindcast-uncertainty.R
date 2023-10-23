@@ -36,9 +36,12 @@ naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go, '_',
 
 nsamp <- 200 # number of random samples
 kfold <- 5 # number of folds
+fit <- c('N', 'Y') # 'Y' or 'No' for doing fitted vs. unfitted hindcasts
 
-tmp <- list()
 system.time(
+for(k in seq_along(fit)){
+  tmp <- list()
+  fitted <- fit[k]
 for(j in 1:nsamp){
   
 shuffled_dat <- spatial_dat %>% # shuffle the data and split
@@ -91,12 +94,14 @@ system.time( # approx 2 hours
         # get test units and make posterior predictions/hindcasts using posterior probability of each biomodel matrix
         test_units <- shuffled_dat %>% filter(k == i)
         
+        if(fitted == 'N'){
         # join naive hindcasts and posterior probabilities, calculate posterior hindcasts for test units
         test_post_hindcasts <- test_units %>% 
           left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
           left_join(train_post_prob, by = c('scenario', 'nsim')) %>% 
           mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calculating the probability of gain/neutrality
-                 SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang)) %>% 
+                 SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang),
+                 matrix_post_prob = 1) %>% 
           mutate(LandwardMang = LandwardMang*matrix_post_prob,
                  SeawardMang = SeawardMang*matrix_post_prob) %>% 
           group_by(pressure_def, Type, land_net_change_obs, sea_net_change_obs) %>% 
@@ -124,6 +129,41 @@ system.time( # approx 2 hours
                  land_net_change = ifelse(land_net_change_obs == -1, 'Loss', 'Gain_neutrality'),
                  sea_net_change = ifelse(sea_net_change_obs == -1, 'Loss', 'Gain_neutrality')) %>% 
           mutate(ambig_threshold = thresh)
+        }else{
+          # join naive hindcasts and posterior probabilities, calculate posterior hindcasts for test units
+          test_post_hindcasts <- test_units %>% 
+            left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
+            left_join(train_post_prob, by = c('scenario', 'nsim')) %>% 
+            mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calculating the probability of gain/neutrality
+                   SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang)) %>% 
+            mutate(LandwardMang = LandwardMang*matrix_post_prob,
+                   SeawardMang = SeawardMang*matrix_post_prob) %>% 
+            group_by(pressure_def, Type, land_net_change_obs, sea_net_change_obs) %>% 
+            summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
+                      SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 
+            mutate(Landward = case_when(is.na(LandwardMang) ~ NA,
+                                        LandwardMang >= thresh ~ 'Gain_neutrality',
+                                        LandwardMang < 100-thresh ~ 'Loss',
+                                        .default = 'Ambiguous'),
+                   Seaward = case_when(is.na(SeawardMang) ~ NA,
+                                       SeawardMang >= thresh ~ 'Gain_neutrality',
+                                       SeawardMang < 100-thresh ~ 'Loss',
+                                       .default = 'Ambiguous'),
+                   Change = case_when(LandwardMang >= thresh & SeawardMang >= thresh ~ "Gain",
+                                      LandwardMang < 100-thresh & SeawardMang < 100-thresh ~ "Loss",
+                                      Landward == 'Ambiguous' ~ "Ambiguous",
+                                      Seaward == 'Ambiguous' ~ "Ambiguous",
+                                      LandwardMang >= thresh & SeawardMang < 100-thresh ~ "Landward Gain & Seaward Loss",
+                                      LandwardMang < 100-thresh & SeawardMang >= thresh ~ "Landward Loss & Seaward Gain",
+                                      .default = NA),
+                   Change_obs = case_when(land_net_change_obs == 1 & sea_net_change_obs == 1 ~ "Gain",
+                                          land_net_change_obs == -1 & sea_net_change_obs == -1 ~ "Loss",
+                                          land_net_change_obs == 1 & sea_net_change_obs == -1 ~ "Landward Gain & Seaward Loss",
+                                          land_net_change_obs == -1 & sea_net_change_obs == 1 ~ "Landward Loss & Seaward Gain"),
+                   land_net_change = ifelse(land_net_change_obs == -1, 'Loss', 'Gain_neutrality'),
+                   sea_net_change = ifelse(sea_net_change_obs == -1, 'Loss', 'Gain_neutrality')) %>% 
+            mutate(ambig_threshold = thresh)
+        }
         
         test_set <- test_post_hindcasts %>% 
           filter(Landward != 'Ambiguous' & Seaward != 'Ambiguous')
@@ -151,9 +191,9 @@ system.time( # approx 2 hours
 stopCluster(cl)
 
 tmp[[j]] <- do.call(rbind, results)
-})
+}
 accuracy <- do.call(rbind, tmp)
-write.csv(accuracy, 'outputs/validation/sampling_distribution.csv', row.names = F)
+write.csv(accuracy, paste0('outputs/validation/sampling_distribution_fitted_', fitted, '.csv'), row.names = F)
 
 # get summary stats for each metric
 
@@ -171,6 +211,6 @@ accuracy_sum <- accuracy %>%
   mutate(error_rate_upp = ifelse(metric == 'Producers_accuracy', (100-perc_0.05)/100, 0),
          error_rate_low = ifelse(metric == 'Users_accuracy', (100-perc_0.05)/100, 0))
 
-write.csv(accuracy_sum, 'outputs/validation/resampled_accuracy_summary.csv', row.names = F)
-
+write.csv(accuracy_sum, paste0('outputs/validation/resampled_accuracy_summary_fitted_', fitted, '.csv'), row.names = F)
+})
 
