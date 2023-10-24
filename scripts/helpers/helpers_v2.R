@@ -3,8 +3,8 @@
 
 # simulate stable matrices, no perturbations
 
-system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, spatial,
-                              sampler = community.sampler_con1(constrainedigraph, required.groups, from, to, class, spatial = 'Y')) {
+system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, spatial, arid, prob,
+                              sampler = community.sampler_con1(constrainedigraph, required.groups, from, to, class, spatial = 'Y', arid)) {
   
   edges1 <- constrainedigraph$edges
   labels <- node.labels(edges1)
@@ -14,6 +14,7 @@ system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from,
 
   while (stable < n.sims) {
     z <- sampler$select(0.5)
+    z2 <- sampler$select2(prob)
     W <- sampler$community()
     if (!stable.community(W)){
       unstable <- unstable + 1
@@ -49,8 +50,8 @@ solver <- function(x, chosen_model, perturb){ # x is a biomodel matrix
 
 # this function simulates matrices and gets stable ones and handles perturbations
 
-system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, 
-                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial),  
+system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, arid, prob,
+                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial, arid),  
                               perturb, spatial) {
   
   edges1 <- constrainedigraph$edges
@@ -73,6 +74,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
   
   while (stable < n.sims) {
     z <- sampler$select(0.5)
+    z2 <- sampler$select2(prob)
     W <- sampler$community()
     if (!stable.community(W) & !is.null(solve(W, S.press))){
       unstable <- unstable + 1
@@ -155,7 +157,7 @@ constraint.order <- function(w,bounds) {
 # and allows relative strengths of edges to be constrained
 # based on 'community.ordering.sampler' function from Wotherspoon
 # does not handle perturbations
-community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), from, to, class, spatial)# from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), from, to, class, spatial, arid)# from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
   edges <- constrainedigraph$edges
   if (length(from) > 0){ # here add new column to edges with high, medium or low classification
@@ -195,11 +197,13 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
   n.omit <- max(0, expand)
   bounds <- bound.sets(constrainedigraph)
   zs <- rep(1, length(uncertain))
+  zss <- 1
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)
       r <- sign(r) * constraint.order(abs(r), bounds)
       r[uncertain] <- r[uncertain] * zs
+      r[3] <- r[3] * zss # here making land/sea propagule to land/sea mang links uncertain
       W[k.edges] <- r
       W
     }
@@ -222,14 +226,24 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
       zs
     }
   }
-  list(community = community, select = select, weights = function(W) {
+  select2 <- if (arid == 'Y') {
+    function(p2) {
+      zss <<- rbinom(2, 1, p2)
+    }
+  }  
+  else {
+    function(p2 = 0) {
+      zss
+    }
+  }
+  list(community = community, select = select, select2 = select2, weights = function(W) {
     W[k.edges]
   }, 
   weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
 }
 
 # this one does handle perturbations
-community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class, perturb, spatial) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class, perturb, spatial, arid) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
   edges <- constrainedigraph$edges
   if (length(from) > 0){ # here add new column to edges with high, medium or low classification
@@ -269,11 +283,13 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   n.omit <- max(0, expand)
   bounds <- bound.sets(constrainedigraph)
   zs <- rep(1, length(uncertain))
+  zss <- 1
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)
       r <- sign(r) * constraint.order(abs(r), bounds)
       r[uncertain] <- r[uncertain] * zs
+      r[3] <- r[3] * zss # here making land propagule to land mang link uncertain
       W[k.edges] <- r
       W
     }
@@ -296,10 +312,20 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
       zs
     }
   }
+  select2 <- if (arid == 'Y') {
+    function(p2) {
+      zss <<- rbinom(2, 1, p2)
+    }
+  }  
+  else {
+    function(p2 = 0) {
+      zss
+    }
+  }
   weights <- function(W) {
     W[k.edges]
   }
-  list(community = community, select = select, weights = weights, 
+  list(community = community, select = select, select2 = select2, weights = weights, 
        weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
 }
 

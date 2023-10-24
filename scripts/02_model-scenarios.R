@@ -82,7 +82,8 @@ for(k in seq_along(rel.edge.cons.scenarios)){
                               to = to_vec,
                               class = class.con,
                               perturb = press.scenarios[[i]],
-                              spatial = 'N')
+                              spatial = 'N',
+                              arid = 'N')
       out[[i]] <- sim$stableoutcome
       stability[[i]] <- sim$stability.df
       #weights[[i]] <- sim$stableweights
