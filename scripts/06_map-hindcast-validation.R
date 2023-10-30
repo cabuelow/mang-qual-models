@@ -10,10 +10,8 @@ source('scripts/helpers/spatial-helpers_v2.R')
 set.seed(123) # set random number generator to make results reproducible
 sf_use_s2(FALSE)
 
-go <- 1 # which coastal dev threshold?
 press <- 4 # which pressure definition threshold?
-thresh <- 65 # which ambiguity threshold?
-rm_e <- 'N' # remove erosion from validation? Y or N
+thresh <- 75 # which ambiguity threshold?
 
 # read in spatial data
 
@@ -23,11 +21,11 @@ world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 meow <- st_read('data/MEOW/meow_ecos.shp')
 spatial_dat <- read.csv('outputs/master-dat.csv')
 drivers <- read.csv('data/typologies/SLR_Data.csv')
-naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go,'_', rm_e,'.csv'))
-results <- readRDS(paste0('outputs/validation/accuracy_', go,'_', rm_e, '.RDS'))
+naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes.csv'))
+results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
 resamp_accuracy <- read.csv('outputs/validation/resampled_accuracy_summary.csv') %>% 
-  mutate(metric = recode(metric, 'Producers_accuracy' = 'Producers accuracy',
-                         'Users_accuracy' = 'Users accuracy',
+  mutate(metric = recode(metric, 'Producers_accuracy' = 'Producer accuracy',
+                         'Users_accuracy' = 'User accuracy',
                          'Overall_accuracy' = 'Overall accuracy'))
 
 # plot accuracy estimators
@@ -87,14 +85,14 @@ c
 d <- a/b/c + plot_layout(heights = c(0.5,1,1))
 d
 
-ggsave('outputs/validation/optimal-accuracy.png', width = 2.5, height = 4)
+ggsave(paste0('outputs/validation/optimal-accuracy_', press, '_', thresh, '.png'), width = 2.5, height = 4)
 
 # now make posterior predictions for each biophysical setting/pressure model using all the data (i.e. not split by kfolds)
 
 # prepare all data prediction dataset
 pred_dat <- spatial_dat %>% 
-  filter(Cdev_thresh == go & pressure_def == press) %>% 
-  dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, #ant_slr, 
+  filter(pressure_def == press) %>% 
+  dplyr::select(pressure_def, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, climate, cdev,#ant_slr, 
                 gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
   #mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% # here am removing antecedent sea level rise
   mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
@@ -106,16 +104,18 @@ pred_dat <- spatial_dat %>%
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
          sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
-         prop_estab_2 = paste0('Propestab_', .$prop_estab))
+         prop_estab_2 = paste0('Propestab_', .$prop_estab),
+         climate_2 = paste0('climate_', .$climate),
+         cdev_2 = paste0('cdev_', .$cdev))
 # reorder column names so always in same order regardless of filtering
-pred_dat <- pred_dat[,c('pressure_def', 'Type', 'csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 
+pred_dat <- pred_dat[,c('pressure_def', 'Type', 'csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 'climate', 'cdev',
                          'land_net_change_obs', 'sea_net_change_obs',  'vals_gwsub', 'vals_hist_drought',
                           'vals_hist_ext_rain', 'vals_storms', #'vals_ant_slr', 
                         'vals_csqueeze_1','press_no_press', 'press_gwsub',
                           'press_hist_drought', 'press_hist_ext_rain', 'press_storms', #'press_ant_slr',
-                          'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2')]
+                          'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2', 'climate_2','cdev_2')]
 pred_dat <- pred_dat %>% 
-  unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
+  unite('scenario', csqueeze_2:cdev_2, na.rm = T, sep = '.') %>% 
   unite('press',  press_gwsub:press_csqueeze_1, na.rm = T, sep = '.') %>% 
   mutate(press = ifelse(!is.na(press_no_press), 'none', press))
 
@@ -125,7 +125,7 @@ post_prob <- pred_dat %>%
   mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
   group_by(scenario, nsim) %>% 
   summarise(matrix_post_prob = mean(valid)) 
-write.csv(post_prob, paste0('outputs/validation/matrix-posterior-prob', go, '_', rm_e, '_', press, '_', thresh, '.csv'), row.names = F)
+write.csv(post_prob, paste0('outputs/validation/matrix-posterior-prob_', press, '_', thresh, '.csv'), row.names = F)
 
 # make predictions 
 final_preds <- pred_dat %>% 
@@ -147,8 +147,8 @@ final_preds <- pred_dat %>%
                              SeawardMang < 100-thresh ~ 'Loss',
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
-write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_', go, '_', rm_e, '_', press, '_', thresh,'.csv'), row.names = F)
-#final_preds <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', go, '_', rm_e, '_', press, '_', thresh,'.csv'))
+write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'.csv'), row.names = F)
+#final_preds <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'.csv'))
 
 final_preds_unfit <- pred_dat %>% 
   left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
@@ -170,44 +170,35 @@ final_preds_unfit <- pred_dat %>%
                              SeawardMang < 100-thresh ~ 'Loss',
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
-write.csv(final_preds_unfit, paste0('outputs/predictions/final-calibrated-predictions_', go, '_', rm_e, '_', press, '_', thresh,'_unfit.csv'), row.names = F)
-#final_preds_unfit <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', go, '_', rm_e, '_', press, '_', thresh,'_unfit.csv'))
+write.csv(final_preds_unfit, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'_unfit.csv'), row.names = F)
+#final_preds_unfit <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'_unfit.csv'))
 
 # map final 'all data' hindcasts
 
 preds <- typ_points %>% 
   left_join(final_preds) %>%
+  mutate_at(vars(LandwardMang, SeawardMang), ~ifelse(. >=100-thresh & . < thresh, 100-thresh, .)) %>% 
+  mutate_at(vars(LandwardMang, SeawardMang), ~./100) %>% 
   st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
 # map fit hindcasts
 
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  #tm_shape(filter(preds, is.na(Landward))) +
-  #tm_dots('darkgrey', size = 0.001) +
-  #tm_shape(filter(preds, Landward == 'Gain_neutrality' & !is.na(Landward))) +
-  #tm_dots('Landward', 
-   #       palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-    #      alpha = 0.5, 
-     #     title = '',
-      #    legend.show = F, 
-       #   size = 0.025) +
-  tm_shape(filter(preds, Landward == 'Ambiguous' & !is.na(Landward))) +
-  tm_dots('Landward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.0015) +
-  tm_shape(filter(preds, Landward != 'Ambiguous' & !is.na(Landward))) +
-  tm_dots('LandwardMang', 
-          palette = 'Spectral', 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F,
-          size = 0.001) +
+  tm_shape(filter(preds, is.na(Landward))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(preds) +
+  tm_bubbles('LandwardMang', 
+             palette = 'Spectral', 
+             midpoint = 0.5,
+             breaks = c(0,0.1,0.2,0.25,0.75,0.8,0.9,1),
+             size = 'LandwardMang',
+             scale = 0.3,
+             alpha = 0.5, 
+             border.alpha = 0,
+             legend.size.show = F,
+             legend.col.show = F) +
   tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.4,
@@ -216,40 +207,29 @@ lmap <- tm_shape(world_mang) +
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
-            legend.bg.alpha = 0.8) +
-  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col =  c( "#3288BD", "#66C2A5","#ABDDA4", "#FFFFBF","#FDAE61", "#F46D43", "#D53E4F"), 
+                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-85% Gain/Neutrality','Ambiguous','75-80% Loss', '80-90% Loss','90-100% Loss'), border.alpha = 0, size = 0.3)
 lmap
 
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  #tm_shape(filter(preds, is.na(Seaward))) +
-  #tm_dots('darkgrey', size = 0.001) +
-  tm_shape(filter(preds, Seaward == 'Gain_neutrality' & !is.na(Seaward))) +
-  tm_dots('Seaward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.025) +
-  tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Seaward))) +
-  tm_dots('Seaward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.0015) +
-  tm_shape(filter(preds, Seaward == 'Loss' & !is.na(Seaward))) +
-  tm_dots('Seaward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F,
-          size = 0.001) +
+  tm_shape(filter(preds, is.na(Seaward))) +
+  tm_dots('darkgrey', size = 0.001) +
+  tm_shape(preds) +
+  tm_bubbles('SeawardMang', 
+             palette = 'Spectral', 
+             midpoint = 0.5,
+             breaks = c(0,0.1,0.2,0.25,0.75,0.8,0.9,1),
+             size = 'SeawardMang',
+             scale = 0.3,
+             alpha = 0.5, 
+             border.alpha = 0,
+             legend.size.show = F,
+             legend.col.show = F) +
   tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.4,
@@ -258,45 +238,36 @@ smap <- tm_shape(world_mang) +
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
-            legend.bg.alpha = 0.8) +
-  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col =  c( "#3288BD", "#66C2A5","#ABDDA4", "#FFFFBF","#FDAE61", "#F46D43", "#D53E4F"), 
+                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-85% Gain/Neutrality','Ambiguous','75-80% Loss', '80-90% Loss','90-100% Loss'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
 
 # map unfit hindcasts
 
 preds <- typ_points %>% 
   left_join(final_preds_unfit) %>%
+  mutate_at(vars(LandwardMang, SeawardMang), ~ifelse(. >=100-thresh & . < thresh, 100-thresh, .)) %>% 
+  mutate_at(vars(LandwardMang, SeawardMang), ~./100) %>% 
   st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
 
 lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
-  #tm_shape(filter(preds, is.na(Landward))) +
+  #tm_shape(filter(preds, is.na(LandwardMang))) +
   #tm_dots('darkgrey', size = 0.001) +
-  tm_shape(filter(preds, Landward == 'Gain_neutrality' & !is.na(Landward))) +
-  tm_dots('Landward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.025) +
-  tm_shape(filter(preds, Landward == 'Ambiguous' & !is.na(Landward))) +
-  tm_dots('Landward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.0015) +
-  tm_shape(filter(preds, Landward == 'Loss' & !is.na(Landward))) +
-  tm_dots('Landward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F,
-          size = 0.001) +
+  tm_shape(preds) +
+  tm_bubbles('LandwardMang', 
+             palette = 'Spectral', 
+             midpoint = 0.5,
+             breaks = c(0,0.1,0.2,0.25,0.75,0.8,0.9,1),
+             size = 'LandwardMang',
+             scale = 0.3,
+             alpha = 0.5, 
+             border.alpha = 0,
+             legend.size.show = F,
+             legend.col.show = F) +
   tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.4,
@@ -305,40 +276,29 @@ lmap <- tm_shape(world_mang) +
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
-            legend.bg.alpha = 0.8) +
-  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col =  c( "#3288BD", "#66C2A5","#ABDDA4", "#FFFFBF","#FDAE61", "#F46D43", "#D53E4F"), 
+                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-85% Gain/Neutrality','Ambiguous','75-80% Loss', '80-90% Loss','90-100% Loss'), border.alpha = 0, size = 0.3)
 lmap
 
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
   #tm_shape(filter(preds, is.na(Seaward))) +
   #tm_dots('darkgrey', size = 0.001) +
-  tm_shape(filter(preds, Seaward == 'Gain_neutrality' & !is.na(Seaward))) +
-  tm_dots('Seaward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.025) +
-  tm_shape(filter(preds, Seaward == 'Ambiguous' & !is.na(Seaward))) +
-  tm_dots('Seaward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F, 
-          size = 0.0015) +
-  tm_shape(filter(preds, Seaward == 'Loss' & !is.na(Seaward))) +
-  tm_dots('Seaward', 
-          palette = c('Ambiguous' = 'lightgoldenrod', 'Loss' = 'firebrick4', 'Gain_neutrality' = 'deepskyblue4'), 
-          alpha = 0.5, 
-          title = '',
-          legend.show = F,
-          size = 0.001) +
+  tm_shape(preds) +
+  tm_bubbles('SeawardMang', 
+             palette = 'Spectral', 
+             midpoint = 0.5,
+             breaks = c(0,0.1,0.2,0.25,0.75,0.8,0.9,1),
+             size = 'SeawardMang',
+             scale = 0.3,
+             alpha = 0.5, 
+             border.alpha = 0,
+             legend.size.show = F,
+             legend.col.show = F) +
   tm_layout(legend.outside = F,
-            #legend.outside.position = 'bottom',
             legend.position = c(0.13, 0.01),
             title.position = c(0.01,0.45),
             legend.title.size = 0.4,
@@ -347,11 +307,11 @@ smap <- tm_shape(world_mang) +
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
-            legend.bg.alpha = 0.8) +
-  tm_add_legend('symbol', col =  c('firebrick4', 'lightgoldenrod', 'deepskyblue4'), 
-                labels =  c('Loss','Ambiguous', 'Gain/Neutrality'), border.alpha = 0, size = 0.3)
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col =  c( "#3288BD", "#66C2A5","#ABDDA4", "#FFFFBF","#FDAE61", "#F46D43", "#D53E4F"), 
+                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-85% Gain/Neutrality','Ambiguous','75-80% Loss', '80-90% Loss','90-100% Loss'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', go, '_', rm_e, '_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
 
 # wrangle hindcast matches and mismatches spatially
 
@@ -393,7 +353,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -417,7 +377,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', go, '_', rm_e, '_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
 
 # characterise mis-matches according to geomorphology, driver of loss, and marine ecoregion
 
@@ -570,3 +530,4 @@ land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
 
 land_m
 tmap_save(land_m, 'outputs/maps/landward-mismatch_ecoregion.png', width = 5, height = 1, dpi = 1000)
+

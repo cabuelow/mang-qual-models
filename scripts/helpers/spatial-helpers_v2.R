@@ -16,7 +16,10 @@ calc_accuracy <- function(x, x2){ # x is vector of predictions, x2 is reference 
 # simulate model matrices and store outcomes
 
 sim_mod <- function(x, # spatial unit
-                    numsims # number of simulations
+                    numsims, # number of simulations
+                    arid, # arid or humid?
+                    prob, # probability of landward propagule establishment when arid
+                    cdev # bounds of probability of coastal development - landward mangrove link
 ){ # define model relative edge constraints - which edge interaction strengths are greater than other
   # in all models the seaward mangrove -> substrate vol interaction strength is greater than the landward mangrove -> substrate vol interaction strength
   # under a high sediment supply scenario, the sediment -> subVol interaction strengths will be greater than 
@@ -55,6 +58,10 @@ sim_mod <- function(x, # spatial unit
     sim <- system.sim(numsims, constrainedigraph = model, 
                             from = from_vec,
                             to = to_vec,
-                            class = con.scenario, spatial = 'Y')
+                            class = con.scenario, 
+                            spatial = 'Y',
+                            arid = arid,
+                            prob = prob,
+                            cdev = cdev)
     return(sim)
   }

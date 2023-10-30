@@ -3,8 +3,8 @@
 
 # simulate stable matrices, no perturbations
 
-system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, spatial, arid, prob,
-                              sampler = community.sampler_con1(constrainedigraph, required.groups, from, to, class, spatial = 'Y', arid)) {
+system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, spatial, arid, prob, cdev,
+                              sampler = community.sampler_con1(constrainedigraph, required.groups, from, to, class, spatial = 'Y', arid, cdev)) {
   
   edges1 <- constrainedigraph$edges
   labels <- node.labels(edges1)
@@ -15,6 +15,7 @@ system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from,
   while (stable < n.sims) {
     z <- sampler$select(0.5)
     z2 <- sampler$select2(prob)
+    z3 <- sampler$select3(cdev[1], cdev[2])
     W <- sampler$community()
     if (!stable.community(W)){
       unstable <- unstable + 1
@@ -50,8 +51,8 @@ solver <- function(x, chosen_model, perturb){ # x is a biomodel matrix
 
 # this function simulates matrices and gets stable ones and handles perturbations
 
-system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, arid, prob,
-                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial, arid),  
+system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0), from, to, class, arid, prob, cdev,
+                              sampler = community.sampler_con2(constrainedigraph, required.groups, from, to, class, perturb, spatial, arid, cdev),  
                               perturb, spatial) {
   
   edges1 <- constrainedigraph$edges
@@ -75,6 +76,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
   while (stable < n.sims) {
     z <- sampler$select(0.5)
     z2 <- sampler$select2(prob)
+    z3 <- sampler$select3(cdev[1], cdev[2])
     W <- sampler$community()
     if (!stable.community(W) & !is.null(solve(W, S.press))){
       unstable <- unstable + 1
@@ -157,7 +159,7 @@ constraint.order <- function(w,bounds) {
 # and allows relative strengths of edges to be constrained
 # based on 'community.ordering.sampler' function from Wotherspoon
 # does not handle perturbations
-community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), from, to, class, spatial, arid)# from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), from, to, class, spatial, arid, cdev)# from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
   edges <- constrainedigraph$edges
   if (length(from) > 0){ # here add new column to edges with high, medium or low classification
@@ -198,12 +200,14 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
   bounds <- bound.sets(constrainedigraph)
   zs <- rep(1, length(uncertain))
   zss <- 1
+  zsss <- c(1,1)
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)
       r <- sign(r) * constraint.order(abs(r), bounds)
       r[uncertain] <- r[uncertain] * zs
-      r[3] <- r[3] * zss # here making land/sea propagule to land/sea mang links uncertain
+      r[3] <- r[3] * zss # here making land propagule to land mang link uncertain
+      r[c(9,10)] <- r[c(9,10)] * zsss # here making coastal development to landward & seaward mangrove uncertain
       W[k.edges] <- r
       W
     }
@@ -228,7 +232,7 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
   }
   select2 <- if (arid == 'Y') {
     function(p2) {
-      zss <<- rbinom(2, 1, p2)
+      zss <<- rbinom(1, 1, p2)
     }
   }  
   else {
@@ -236,14 +240,23 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
       zss
     }
   }
-  list(community = community, select = select, select2 = select2, weights = function(W) {
+  select3 <- if (n.omit > 0) {
+    function(p3, p4){
+      zsss <<- c(rbinom(1, 1, runif(1,p3,p4)), if(p3 == 0 & p4 == 0){0}else{rbinom(1,1,runif(1,0,0.33))}) # coastal development to seaward mangrove is always uncertain, i.e. has a low probability of 0 to 0.33
+    }
+  }else{
+    function(p3 = 0, p4 = 0){
+      zsss
+    }
+  }
+  list(community = community, select = select, select2 = select2, select3 = select3, weights = function(W) {
     W[k.edges]
   }, 
   weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
 }
 
 # this one does handle perturbations
-community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class, perturb, spatial, arid) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
+community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), from, to, class, perturb, spatial, arid, cdev) # from, to, and class arguments for constraining edges as 'High', "Med', or 'Low', just a vector
 {
   edges <- constrainedigraph$edges
   if (length(from) > 0){ # here add new column to edges with high, medium or low classification
@@ -284,12 +297,14 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   bounds <- bound.sets(constrainedigraph)
   zs <- rep(1, length(uncertain))
   zss <- 1
+  zsss <- c(1,1)
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)
       r <- sign(r) * constraint.order(abs(r), bounds)
       r[uncertain] <- r[uncertain] * zs
       r[3] <- r[3] * zss # here making land propagule to land mang link uncertain
+      r[c(9,10)] <- r[c(9,10)] * zsss # here making coastal development to landward & seaward mangrove uncertain
       W[k.edges] <- r
       W
     }
@@ -314,7 +329,7 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   }
   select2 <- if (arid == 'Y') {
     function(p2) {
-      zss <<- rbinom(2, 1, p2)
+      zss <<- rbinom(1, 1, p2)
     }
   }  
   else {
@@ -322,10 +337,19 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
       zss
     }
   }
+  select3 <- if (n.omit > 0) {
+    function(p3, p4){
+    zsss <<- c(rbinom(1, 1, runif(1,p3,p4)), if(p3 == 0 & p4 == 0){0}else{rbinom(1,1,runif(1,0,0.33))}) # coastal development to seaward mangrove is always uncertain, i.e. has a low probability of 0 to 0.33
+    }
+    }else{
+      function(p3 = 0, p4 = 0){
+    zsss
+      }
+  }
   weights <- function(W) {
     W[k.edges]
   }
-  list(community = community, select = select, select2 = select2, weights = weights, 
+  list(community = community, select = select, select2 = select2, select3 = select3, weights = weights, 
        weight.labels = weight.labels, uncertain.labels = weight.labels[uncertain])
 }
 

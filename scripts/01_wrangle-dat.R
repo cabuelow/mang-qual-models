@@ -325,24 +325,28 @@ tmp[[i]] <- data.frame(pressure_def = i, Reduce(full_join, dat))
 }
 tempdat <- do.call(rbind, tmp)
 
-cs <- list('None', c('None', 'Low'), c('None', 'Low', 'Medium')) # when does pop. pressure = coastal development?
-tmp <- list()
-for(i in seq_along(cs)){
-tmp[[i]] <- tempdat %>% 
+#cs <- list('None', c('None', 'Low'), c('None', 'Low', 'Medium')) # when does pop. pressure != coastal development?
+#tmp <- list()
+#for(i in seq_along(cs)){
+mast.dat <- tempdat %>% 
+#tmp[[i]] <- tempdat %>% 
   mutate(land_net_change_obs = ifelse(land_net_change == 'Gain_neutrality', 1, -1),
          sea_net_change_obs = ifelse(sea_net_change == 'Gain_neutrality', 1, -1)) %>% 
-  mutate(csqueeze_1 = ifelse(csqueeze %in% cs[[i]], 0, 1), # this is for coastal development pressure
+  mutate(csqueeze_1 = ifelse(csqueeze %in% 'None', 0, 1), # this is for coastal development pressure
+         #fut_csqueeze_1 = ifelse(csqueeze != fut_csqueeze, 1, 0), # only if population density increases do we assume future coastal development will occur
+         cdev = csqueeze,
+         fut_cdev = fut_csqueeze,
          csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H', 'None' = 'H'), # note counterintuitive notation here
-         fut_csqueeze_1 = ifelse(fut_csqueeze %in% cs[[i]], 0, 1), 
+         fut_csqueeze_1 = ifelse(fut_csqueeze %in% 'None', 0, 1), 
          fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H', 'None' = 'H'), # note counterintuitive notation here
          sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
          fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
          prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
          Tidal_Class = recode(Tidal_Class, 'Micro' = 'H', 'Meso' = 'M', 'Macro' = 'L')) %>% 
-  mutate(Geomorphology = sub("\\_.*", "", Type),
-         Cdev_thresh = i)
-}
-mast.dat <- do.call(rbind, tmp)
+  mutate(Geomorphology = sub("\\_.*", "", Type))
+         #Cdev_thresh = i)
+#}
+#mast.dat <- do.call(rbind, tmp)
 
 # save
 

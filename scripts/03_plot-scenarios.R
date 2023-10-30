@@ -57,6 +57,7 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
                        name = 'Probability of Loss (red) or Gain/Neutrality (blue)',
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
+                       limit = c(0, 100),
                        labels = c("-100", "-75", "50", '75', '100')) +
   facet_nested(~factor(model_scenario)) +
   #facet_nested(~factor(model_scenario) + factor(coastalsqueeze)) +
@@ -77,7 +78,9 @@ b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
                        name = 'Probability of Loss (red) or Gain/Neutrality (blue)', 
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
-                       labels = c("-100", "-75", "50", '75', '100')) +
+                       limit = c(0, 100),
+                       labels = c("-100", "-75", "50", '75', '100')
+                       ) +
   #facet_wrap(~factor(coastalsqueeze)) +
   scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
   theme_classic() +

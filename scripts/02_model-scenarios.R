@@ -83,7 +83,8 @@ for(k in seq_along(rel.edge.cons.scenarios)){
                               class = class.con,
                               perturb = press.scenarios[[i]],
                               spatial = 'N',
-                              arid = 'N')
+                              arid = 'N',
+                              cdev = c(1, 1)) # here assume that coastal development to landward link is not uncertain (has a 100% probability)
       out[[i]] <- sim$stableoutcome
       stability[[i]] <- sim$stability.df
       #weights[[i]] <- sim$stableweights

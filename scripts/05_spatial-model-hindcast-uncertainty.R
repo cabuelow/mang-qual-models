@@ -22,32 +22,26 @@ names(models) # names of available models
 chosen_model <- models$mangrove_model
 
 # set optimal thresholds
-go <- 1 # which coastal dev threshold?
 press <- 4 # which pressure definition threshold?
-thresh <- 65 # which ambiguity threshold?
-rm_e <- 'N' # remove erosion from validation (Y/N)?
+thresh <- 75 # which ambiguity threshold?
 
 # read in and wrangle data
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
-spatial_dat <- read.csv('outputs/master-dat.csv') %>% filter(Cdev_thresh == go & pressure_def == press)
-naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', go, '_', rm_e,'.csv'))
+spatial_dat <- read.csv('outputs/master-dat.csv') %>% filter(pressure_def == press)
+naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes.csv'))
 
 # randomly resample and split data into training and test folds
 
 nsamp <- 200 # number of random samples
 kfold <- 5 # number of folds
-fit <- c('N', 'Y') # 'Y' or 'No' for doing fitted vs. unfitted hindcasts
+tmp <- list()
 
-system.time(
-for(k in seq_along(fit)){
-  tmp <- list()
-  fitted <- fit[k]
+system.time( # takes 3.6 hours
 for(j in 1:nsamp){
-  
 shuffled_dat <- spatial_dat %>% # shuffle the data and split
   left_join(data.frame(Type = .[1:length(unique(.$Type)),]$Type[sample(1:length(unique(.$Type)))],
                        k = c(rep(1:kfold, each = round(length(unique(.$Type))/kfold)),1:kfold)[1:length(unique(.$Type))]), by = 'Type') %>% 
-  dplyr::select(pressure_def, k, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, #ant_slr, 
+  dplyr::select(pressure_def, k, Type, csqueeze, csqueeze_1, sed_supp, Tidal_Class, prop_estab, climate, cdev, #ant_slr, 
                 gwsub, hist_drought, hist_ext_rain, storms, land_net_change_obs, sea_net_change_obs) %>% 
   #mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
@@ -59,15 +53,17 @@ shuffled_dat <- spatial_dat %>% # shuffle the data and split
   mutate(csqueeze_2 = paste0('Csqueeze_', .$csqueeze),
          sed_supp_2 = paste0('Sedsupp_', .$sed_supp),
          Tidal_Class_2 = paste0('TidalClass_', .$Tidal_Class),
-         prop_estab_2 = paste0('Propestab_', .$prop_estab))
+         prop_estab_2 = paste0('Propestab_', .$prop_estab),
+         climate_2 = paste0('climate_', .$climate),
+         cdev_2 = paste0('cdev_', .$cdev))
 # reorder column names so always in same order regardless of filtering
-shuffled_dat <- shuffled_dat[,c('pressure_def', 'k', 'Type', 'csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 'land_net_change_obs', 'sea_net_change_obs',
+shuffled_dat <- shuffled_dat[,c('pressure_def', 'k', 'Type', 'csqueeze', 'sed_supp', 'Tidal_Class', 'prop_estab', 'climate', 'cdev', 'land_net_change_obs', 'sea_net_change_obs',
                                 'vals_gwsub', 'vals_hist_drought', 'vals_hist_ext_rain', 'vals_storms', #'vals_ant_slr', 
                                 'vals_csqueeze_1', 'press_no_press', 'press_gwsub',
                                 'press_hist_drought', 'press_hist_ext_rain', 'press_storms', #'press_ant_slr',
-                                'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2')]
+                                'press_csqueeze_1', 'csqueeze_2', 'sed_supp_2', 'Tidal_Class_2', 'prop_estab_2', 'climate_2', 'cdev_2')]
 shuffled_dat <- shuffled_dat %>% 
-  unite('scenario', csqueeze_2:prop_estab_2, na.rm = T, sep = '.') %>% 
+  unite('scenario', csqueeze_2:cdev_2, na.rm = T, sep = '.') %>% 
   unite('press', press_gwsub:press_csqueeze_1, na.rm = T, sep = '.') %>% 
   mutate(press = ifelse(!is.na(press_no_press), 'none', press))
 
@@ -78,7 +74,7 @@ shuffled_dat <- shuffled_dat %>%
 
 cl <- makeCluster(5)
 registerDoParallel(cl)
-system.time( # approx 2 hours
+system.time( # approx 12.9 hours
   results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret'), .errorhandling = 'remove') %dopar% {
         
         # get training units for a fold and pressure definition
@@ -93,43 +89,7 @@ system.time( # approx 2 hours
         
         # get test units and make posterior predictions/hindcasts using posterior probability of each biomodel matrix
         test_units <- shuffled_dat %>% filter(k == i)
-        
-        if(fitted == 'N'){
-        # join naive hindcasts and posterior probabilities, calculate posterior hindcasts for test units
-        test_post_hindcasts <- test_units %>% 
-          left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
-          left_join(train_post_prob, by = c('scenario', 'nsim')) %>% 
-          mutate(LandwardMang = ifelse(LandwardMang == -1, 0, LandwardMang), # here turn losses into a 0 so just calculating the probability of gain/neutrality
-                 SeawardMang = ifelse(SeawardMang == -1, 0, SeawardMang),
-                 matrix_post_prob = 1) %>% 
-          mutate(LandwardMang = LandwardMang*matrix_post_prob,
-                 SeawardMang = SeawardMang*matrix_post_prob) %>% 
-          group_by(pressure_def, Type, land_net_change_obs, sea_net_change_obs) %>% 
-          summarise(LandwardMang = (sum(LandwardMang)/sum(matrix_post_prob))*100,
-                    SeawardMang = (sum(SeawardMang)/sum(matrix_post_prob))*100) %>% 
-          mutate(Landward = case_when(is.na(LandwardMang) ~ NA,
-                                      LandwardMang >= thresh ~ 'Gain_neutrality',
-                                      LandwardMang < 100-thresh ~ 'Loss',
-                                      .default = 'Ambiguous'),
-                 Seaward = case_when(is.na(SeawardMang) ~ NA,
-                                     SeawardMang >= thresh ~ 'Gain_neutrality',
-                                     SeawardMang < 100-thresh ~ 'Loss',
-                                     .default = 'Ambiguous'),
-                 Change = case_when(LandwardMang >= thresh & SeawardMang >= thresh ~ "Gain",
-                                    LandwardMang < 100-thresh & SeawardMang < 100-thresh ~ "Loss",
-                                    Landward == 'Ambiguous' ~ "Ambiguous",
-                                    Seaward == 'Ambiguous' ~ "Ambiguous",
-                                    LandwardMang >= thresh & SeawardMang < 100-thresh ~ "Landward Gain & Seaward Loss",
-                                    LandwardMang < 100-thresh & SeawardMang >= thresh ~ "Landward Loss & Seaward Gain",
-                                    .default = NA),
-                 Change_obs = case_when(land_net_change_obs == 1 & sea_net_change_obs == 1 ~ "Gain",
-                                        land_net_change_obs == -1 & sea_net_change_obs == -1 ~ "Loss",
-                                        land_net_change_obs == 1 & sea_net_change_obs == -1 ~ "Landward Gain & Seaward Loss",
-                                        land_net_change_obs == -1 & sea_net_change_obs == 1 ~ "Landward Loss & Seaward Gain"),
-                 land_net_change = ifelse(land_net_change_obs == -1, 'Loss', 'Gain_neutrality'),
-                 sea_net_change = ifelse(sea_net_change_obs == -1, 'Loss', 'Gain_neutrality')) %>% 
-          mutate(ambig_threshold = thresh)
-        }else{
+
           # join naive hindcasts and posterior probabilities, calculate posterior hindcasts for test units
           test_post_hindcasts <- test_units %>% 
             left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
@@ -163,7 +123,6 @@ system.time( # approx 2 hours
                    land_net_change = ifelse(land_net_change_obs == -1, 'Loss', 'Gain_neutrality'),
                    sea_net_change = ifelse(sea_net_change_obs == -1, 'Loss', 'Gain_neutrality')) %>% 
             mutate(ambig_threshold = thresh)
-        }
         
         test_set <- test_post_hindcasts %>% 
           filter(Landward != 'Ambiguous' & Seaward != 'Ambiguous')
@@ -191,9 +150,9 @@ system.time( # approx 2 hours
 stopCluster(cl)
 
 tmp[[j]] <- do.call(rbind, results)
-}
+})
 accuracy <- do.call(rbind, tmp)
-write.csv(accuracy, paste0('outputs/validation/sampling_distribution_fitted_', fitted, '.csv'), row.names = F)
+write.csv(accuracy, paste0('outputs/validation/sampling_distribution.csv'), row.names = F)
 
 # get summary stats for each metric
 
@@ -211,6 +170,5 @@ accuracy_sum <- accuracy %>%
   mutate(error_rate_upp = ifelse(metric == 'Producers_accuracy', (100-perc_0.05)/100, 0),
          error_rate_low = ifelse(metric == 'Users_accuracy', (100-perc_0.05)/100, 0))
 
-write.csv(accuracy_sum, paste0('outputs/validation/resampled_accuracy_summary_fitted_', fitted, '.csv'), row.names = F)
-})
+write.csv(accuracy_sum, paste0('outputs/validation/resampled_accuracy_summary.csv'), row.names = F)
 

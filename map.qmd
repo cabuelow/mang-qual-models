@@ -69,7 +69,7 @@ mapview(typ, zcol = 'ant_slr', layer.name = 'Antecdent sea-level rise', cex = 0.
 
 **Future sea-level rise**
 
-[Long term (2081-2100) sea-level rise (m) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The raster pixel value closest to the centroid of each mangrove typological unit was obtained. Typological units with future sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
+[Medium term (2040-2060) sea-level rise (m) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The raster pixel value closest to the centroid of each mangrove typological unit was obtained. Typological units with future sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -108,7 +108,7 @@ Historical drought conditions were estimated for each mangrove typological unit 
 
 **Future drought**
 
-[Long term (2081-2100) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove typological unit was calculated. Mangrove typological units with greater than a 50th percentile decrease in SPI values were considered at risk from drought.
+[Medium term (2040-2060) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove typological unit was calculated. Mangrove typological units with greater than a 50th percentile decrease in SPI values were considered at risk from drought.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
