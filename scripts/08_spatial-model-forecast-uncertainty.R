@@ -1,13 +1,11 @@
 # calculate 95% confidence intervals for the number of units in each forecast class
 
 library(tidyverse)
-go <- 1 # which coastal dev threshold?
-press <- 4 # which pressure definition threshold?
-thresh <- 65 # which ambiguity threshold?
-rm_e <- 'N' # remove erosion from validation? Y or N
+press <- 5 # which pressure definition threshold?
+thresh <- 80 # which ambiguity threshold?
 
 accuracy <- read.csv('outputs/validation/resampled_accuracy_summary.csv')
-spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_SeaLevelRise_fit.csv'))
+spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_SeaLevelRise_fit.csv'))
 num_units <- nrow(filter(spatial_pred_fit, !is.na(Landward))) # total number of units for which we could make forecasts for (some unable to forecast due to lack of valid model, i.e., all matrix likelihoods sum to 0)
 
 # summarise number of units in each forecast class globally

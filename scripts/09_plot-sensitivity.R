@@ -2,7 +2,6 @@
 
 library(tidyverse)
 library(ggh4x)
-#library(patchwork)
 
 dat <- readRDS('outputs/simulation-outcomes/outcomes.rds') # sensitivity to structural model assumptions
 dat_press <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') # sensitivity to pressure definition

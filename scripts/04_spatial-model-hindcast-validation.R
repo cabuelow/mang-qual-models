@@ -74,7 +74,7 @@ system.time(
     }else if(bio_dat[k,'cdev'] == 'High'){
       cdevel <- c(0.67,1)
     }
-    tmp[[k]] <- sim_mod(bio_dat[k,], nsim, arid = aridity, prob = 0.1, cdev = cdevel)
+    tmp[[k]] <- sim_mod(bio_dat[k,], nsim, arid = aridity, prob = c(0.1, 0.5), cdev = cdevel)
     names(tmp[[k]]) <- bio_dat[k,]$scenario
   }
 )
@@ -318,3 +318,4 @@ accuracy_sum %>%
 ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged.png'), width = 10, height = 4.5)
 
 # end here
+

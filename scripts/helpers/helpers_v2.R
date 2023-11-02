@@ -14,7 +14,7 @@ system.sim <- function (n.sims, constrainedigraph, required.groups = c(0), from,
 
   while (stable < n.sims) {
     z <- sampler$select(0.5)
-    z2 <- sampler$select2(prob)
+    z2 <- sampler$select2(prob[1], prob[2])
     z3 <- sampler$select3(cdev[1], cdev[2])
     W <- sampler$community()
     if (!stable.community(W)){
@@ -75,7 +75,7 @@ system.sim_press <- function (n.sims, constrainedigraph, required.groups = c(0),
   
   while (stable < n.sims) {
     z <- sampler$select(0.5)
-    z2 <- sampler$select2(prob)
+    z2 <- sampler$select2(prob[1], prob[2])
     z3 <- sampler$select3(cdev[1], cdev[2])
     W <- sampler$community()
     if (!stable.community(W) & !is.null(solve(W, S.press))){
@@ -199,14 +199,14 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
   n.omit <- max(0, expand)
   bounds <- bound.sets(constrainedigraph)
   zs <- rep(1, length(uncertain))
-  zss <- 1
+  zss <- c(1,1)
   zsss <- c(1,1)
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)
       r <- sign(r) * constraint.order(abs(r), bounds)
       r[uncertain] <- r[uncertain] * zs
-      r[3] <- r[3] * zss # here making land propagule to land mang link uncertain
+      r[c(3,4)] <- r[c(3,4)] * zss # here making land/sea propagule to land/sea mang link uncertain
       r[c(9,10)] <- r[c(9,10)] * zsss # here making coastal development to landward & seaward mangrove uncertain
       W[k.edges] <- r
       W
@@ -231,18 +231,18 @@ community.sampler_con1 <- function (constrainedigraph, required.groups = c(0), f
     }
   }
   select2 <- if (arid == 'Y') {
-    function(p2) {
-      zss <<- rbinom(1, 1, p2)
+    function(p2,p3) {
+      zss <<- c(rbinom(1, 1, p2), rbinom(1, 1, p3)) # if arid, use the probability of establishment for landward mangroves in arid environment, and higher for seaward mangroves
     }
   }  
   else {
-    function(p2 = 0) {
-      zss
+    function(p2, p3) {
+      zss <<- c(rbinom(1, 1, p3), rbinom(1, 1, p3)) # if not arid, set probability of establishment to same for both landward and seaward mangroves
     }
   }
   select3 <- if (n.omit > 0) {
-    function(p3, p4){
-      zsss <<- c(rbinom(1, 1, runif(1,p3,p4)), if(p3 == 0 & p4 == 0){0}else{rbinom(1,1,runif(1,0,0.33))}) # coastal development to seaward mangrove is always uncertain, i.e. has a low probability of 0 to 0.33
+    function(p4, p5){
+      zsss <<- c(rbinom(1, 1, runif(1,p4,p5)), if(p4 == 0 & p5 == 0){0}else{rbinom(1,1,runif(1,0,0.33))}) # coastal development to seaward mangrove is always uncertain, i.e. has a low probability of 0 to 0.33
     }
   }else{
     function(p3 = 0, p4 = 0){
@@ -296,14 +296,14 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
   n.omit <- max(0, expand)
   bounds <- bound.sets(constrainedigraph)
   zs <- rep(1, length(uncertain))
-  zss <- 1
+  zss <- c(1,1)
   zsss <- c(1,1)
   community <- if (n.omit > 0) {
     function() {
       r <- runif(n.edges, lower, upper)
       r <- sign(r) * constraint.order(abs(r), bounds)
       r[uncertain] <- r[uncertain] * zs
-      r[3] <- r[3] * zss # here making land propagule to land mang link uncertain
+      r[c(3,4)] <- r[c(3,4)] * zss # here making land/sea propagule to land/sea mang link uncertain
       r[c(9,10)] <- r[c(9,10)] * zsss # here making coastal development to landward & seaward mangrove uncertain
       W[k.edges] <- r
       W
@@ -328,21 +328,21 @@ community.sampler_con2 <- function (constrainedigraph, required.groups = c(0), f
     }
   }
   select2 <- if (arid == 'Y') {
-    function(p2) {
-      zss <<- rbinom(1, 1, p2)
+    function(p2,p3) {
+      zss <<- c(rbinom(1, 1, p2), rbinom(1, 1, p3)) # if arid, use the probability of establishment for landward mangroves in arid environment, and higher for seaward mangroves
     }
   }  
   else {
-    function(p2 = 0) {
-      zss
+    function(p2, p3) {
+      zss <<- c(rbinom(1, 1, p3), rbinom(1, 1, p3)) # if not arid, set probability of establishment to same for both landward and seaward mangroves
     }
   }
   select3 <- if (n.omit > 0) {
-    function(p3, p4){
-    zsss <<- c(rbinom(1, 1, runif(1,p3,p4)), if(p3 == 0 & p4 == 0){0}else{rbinom(1,1,runif(1,0,0.33))}) # coastal development to seaward mangrove is always uncertain, i.e. has a low probability of 0 to 0.33
+    function(p4, p5){
+    zsss <<- c(rbinom(1, 1, runif(1,p4,p5)), if(p4 == 0 & p5 == 0){0}else{rbinom(1,1,runif(1,0,0.33))}) # coastal development to seaward mangrove is always uncertain, i.e. has a low probability of 0 to 0.33
     }
     }else{
-      function(p3 = 0, p4 = 0){
+      function(p4 = 0, p5 = 0){
     zsss
       }
   }

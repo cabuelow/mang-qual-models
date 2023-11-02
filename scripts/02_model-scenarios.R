@@ -84,6 +84,7 @@ for(k in seq_along(rel.edge.cons.scenarios)){
                               perturb = press.scenarios[[i]],
                               spatial = 'N',
                               arid = 'N',
+                              prob = c(0.1, 0.5), # her assume probability of propagule establishment is 50% in all environments, and only 10% for landward propagules in arid environments
                               cdev = c(1, 1)) # here assume that coastal development to landward link is not uncertain (has a 100% probability)
       out[[i]] <- sim$stableoutcome
       stability[[i]] <- sim$stability.df

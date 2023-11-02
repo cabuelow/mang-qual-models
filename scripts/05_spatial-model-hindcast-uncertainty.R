@@ -22,8 +22,8 @@ names(models) # names of available models
 chosen_model <- models$mangrove_model
 
 # set optimal thresholds
-press <- 4 # which pressure definition threshold?
-thresh <- 75 # which ambiguity threshold?
+press <- 5 # which pressure definition threshold?
+thresh <- 80 # which ambiguity threshold?
 
 # read in and wrangle data
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
@@ -36,8 +36,8 @@ nsamp <- 200 # number of random samples
 kfold <- 5 # number of folds
 tmp <- list()
 
-system.time( # takes 3.6 hours
-for(j in 1:nsamp){
+system.time( # approx 2 hours
+for(j in 1:nsamp){ 
 shuffled_dat <- spatial_dat %>% # shuffle the data and split
   left_join(data.frame(Type = .[1:length(unique(.$Type)),]$Type[sample(1:length(unique(.$Type)))],
                        k = c(rep(1:kfold, each = round(length(unique(.$Type))/kfold)),1:kfold)[1:length(unique(.$Type))]), by = 'Type') %>% 
@@ -74,7 +74,7 @@ shuffled_dat <- shuffled_dat %>%
 
 cl <- makeCluster(5)
 registerDoParallel(cl)
-system.time( # approx 12.9 hours
+system.time(
   results <- foreach(i = 1:kfold, .packages = c('tidyverse', 'caret'), .errorhandling = 'remove') %dopar% {
         
         # get training units for a fold and pressure definition
