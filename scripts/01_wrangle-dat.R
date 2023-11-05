@@ -38,12 +38,12 @@ coast <- read.csv('outputs/processed-data/coastal-population.csv') %>%
   mutate(fut_csqueeze = ifelse(log(sum.pop_size_lecz_2060) < quantile(log(.$sum.pop_size_lecz_2060[.$sum.pop_size_lecz_2060>0]), 0.33), 'Low', fut_csqueeze)) %>% 
   mutate(fut_csqueeze = ifelse(sum.pop_size_lecz_2060 == 0, 'None', fut_csqueeze)) %>% 
   select(Type, csqueeze, fut_csqueeze) %>% 
-  mutate(fut_csqueeze = ifelse(csqueeze == 'Low' & fut_csqueeze == 'None', 'Low', fut_csqueeze), # here assuming that any coastal development in the past can't be reversed
-         fut_csqueeze = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'None', 'Medium', fut_csqueeze),
-         fut_csqueeze = ifelse(csqueeze == 'High' & fut_csqueeze == 'None', 'High', fut_csqueeze),
-         fut_csqueeze = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'Low', 'Medium', fut_csqueeze),
-         fut_csqueeze = ifelse(csqueeze == 'High' & fut_csqueeze == 'Low', 'High', fut_csqueeze),
-         fut_csqueeze = ifelse(csqueeze == 'High' & fut_csqueeze == 'Medium', 'High', fut_csqueeze))
+  mutate(fut_barriers = ifelse(csqueeze == 'Low' & fut_csqueeze == 'None', 'Low', fut_csqueeze), # here assuming that any coastal development in the past can't be reversed
+         fut_barriers = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'None', 'Medium', fut_barriers),
+         fut_barriers = ifelse(csqueeze == 'High' & fut_csqueeze == 'None', 'High', fut_barriers),
+         fut_barriers = ifelse(csqueeze == 'Medium' & fut_csqueeze == 'Low', 'Medium', fut_barriers),
+         fut_barriers = ifelse(csqueeze == 'High' & fut_csqueeze == 'Low', 'High', fut_barriers),
+         fut_barriers = ifelse(csqueeze == 'High' & fut_csqueeze == 'Medium', 'High', fut_barriers))
 
 # map to check
 
@@ -51,6 +51,7 @@ typ2 <- typ %>%
   left_join(coast)
 qtm(typ2, dots.col = 'csqueeze') 
 qtm(typ2, dots.col = 'fut_csqueeze')
+qtm(typ2, dots.col = 'fut_barriers')
 dat[[1]] <- coast # if happy add to dat list
 
 #### sediment supply
@@ -329,11 +330,11 @@ mast.dat <- tempdat %>%
   mutate(land_net_change_obs = ifelse(land_net_change == 'Gain_neutrality', 1, -1),
          sea_net_change_obs = ifelse(sea_net_change == 'Gain_neutrality', 1, -1)) %>% 
   mutate(csqueeze_1 = ifelse(csqueeze %in% 'None', 0, 1), # this is for coastal development pressure
+         fut_csqueeze_1 = ifelse(fut_csqueeze %in% 'None', 0, 1), 
          cdev = csqueeze,
          fut_cdev = fut_csqueeze,
          csqueeze = recode(csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H', 'None' = 'H'), # note counterintuitive notation here
-         fut_csqueeze_1 = ifelse(fut_csqueeze %in% 'None', 0, 1), 
-         fut_csqueeze = recode(fut_csqueeze, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H', 'None' = 'H'), # note counterintuitive notation here
+         fut_csqueeze = recode(fut_barriers, 'Medium' = 'M', 'High' = 'L', 'Low' = 'H', 'None' = 'H'), # note counterintuitive notation here
          sed_supp = recode(sed_supp, 'Medium' = 'M', 'Low' = 'L', 'High' = 'H'), 
          fut_dams = ifelse(fut_dams == 1, 'L', sed_supp), 
          prop_estab = recode(prop_estab, 'Medium' = 'M', 'High' = 'H', 'Low' = 'L'),
