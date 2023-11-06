@@ -511,6 +511,32 @@ lmap <- tm_shape(world_mang) +
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
 
+lmap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray88') +
+  #tm_shape(filter(preds, is.na(Landward))) +
+  #tm_dots('darkgrey', size = 0.001) +
+  tm_shape(preds_fit) +
+  tm_dots('Landward', 
+             palette = c('Loss' = pal[1], 'Ambiguous' = pal[5], 'Gain_neutrality' = pal[10]), 
+             alpha = 0.5, 
+             size = 0.0015,
+             border.alpha = 0,
+             legend.show = F) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.001),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.35,
+            legend.text.size = 0.25,
+            main.title = 'B) Landward baseline forecast',
+            main.title.size = 0.4,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col = rev(pal[c(1,5,10)]),
+                labels =  c('Gain/Neutrality', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
+lmap
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit_class.png'), width = 5, height = 1, dpi = 5000)
+
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
   #tm_shape(filter(preds, is.na(Seaward))) +
@@ -540,6 +566,32 @@ smap <- tm_shape(world_mang) +
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
+
+smap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray88') +
+  #tm_shape(filter(preds, is.na(Landward))) +
+  #tm_dots('darkgrey', size = 0.001) +
+  tm_shape(preds_fit) +
+  tm_dots('Seaward', 
+          palette = c('Loss' = pal[1], 'Ambiguous' = pal[5], 'Gain_neutrality' = pal[10]), 
+          alpha = 0.5, 
+          size = 0.0015,
+          border.alpha = 0,
+          legend.show = F) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.001),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.35,
+            legend.text.size = 0.25,
+            main.title = 'A) Seaward baseline forecast',
+            main.title.size = 0.4,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col = rev(pal[c(1,5,10)]),
+                labels =  c('Gain/Neutrality', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
+smap
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit_class.png'), width = 5, height = 1, dpi = 5000)
 
 # unfit
 lmap <- tm_shape(world_mang) +
