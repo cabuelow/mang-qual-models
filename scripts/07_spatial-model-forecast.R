@@ -30,9 +30,9 @@ post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob_', press,
 
 spatial_pred <- spatial_dat %>% # here renaming future pressures as historical pressures so can join to posterior hindcasts
   filter(pressure_def == press) %>% 
-  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, climate, cdev, #fut_slr, 
+  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, climate, fut_cdev, #fut_slr, 
                 fut_gwsub, fut_drought, fut_ext_rain, fut_storms, land_net_change_obs, sea_net_change_obs) %>%
-  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, #ant_slr = fut_slr, 
+  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, cdev = fut_cdev, #ant_slr = fut_slr, 
          gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
   mutate(no_press = gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   #mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
@@ -165,13 +165,14 @@ chosen_model <- models$mangrove_model # choose correct network model
 # find future biophysical and pressure scenarios
 slr_lenient <- spatial_dat %>% filter(pressure_def == 1) %>% select(Type, fut_slr) # subset data for 'very lenient' future slr
 
-dat <- spatial_dat %>% # get unique biophysical/pressure combinations historically, given 5 different pressure definitions
+# get unique biophysical/pressure combinations historically, given 5 different pressure definitions
+dat <- spatial_dat %>% 
   filter(pressure_def == press) %>% 
   select(-fut_slr) %>% # remove future slr and replace with 'very lenient' fut slr
   left_join(slr_lenient, by = 'Type') %>% 
-  dplyr::select(pressure_def, Type, fut_csqueeze, fut_csqueeze_1, fut_dams, Tidal_Class, prop_estab, climate, cdev, fut_slr, 
+  dplyr::select(pressure_def, Type, fut_csqueeze, fut_csqueeze_1, fut_dams, Tidal_Class, prop_estab, climate, fut_cdev, fut_slr, 
                 fut_gwsub, fut_drought, fut_ext_rain, fut_storms) %>%
-  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, 
+  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, cdev = fut_cdev, ant_slr = fut_slr, 
          gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>% 
   mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
@@ -357,9 +358,9 @@ spatial_pred <- spatial_dat %>% # here renaming future pressures as historical p
   filter(pressure_def == press) %>% 
   select(-fut_slr) %>% # remove future slr and replace with 'very lenient' fut slr
   left_join(slr_lenient, by = 'Type') %>% 
-  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, climate, cdev, fut_slr, 
+  dplyr::select(pressure_def, Type, fut_dams, fut_csqueeze, fut_csqueeze_1, Tidal_Class, prop_estab, climate, fut_cdev, fut_slr, 
                 fut_gwsub, fut_drought, fut_ext_rain, fut_storms, land_net_change_obs, sea_net_change_obs) %>%
-  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, ant_slr = fut_slr, 
+  rename(sed_supp = fut_dams, csqueeze = fut_csqueeze, csqueeze_1 = fut_csqueeze_1, cdev = fut_cdev, ant_slr = fut_slr, 
          gwsub = fut_gwsub, hist_drought = fut_drought, hist_ext_rain = fut_ext_rain, storms = fut_storms) %>%
   mutate(no_press = ant_slr + gwsub + hist_drought + hist_ext_rain + storms + csqueeze_1) %>% 
   mutate(no_press = ifelse(no_press == 0, 1, 0)) %>% 
@@ -739,14 +740,14 @@ smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
   tm_shape(filter(scenario_change, !is.na(Seaward_scenario_gain))) +
   tm_dots('Seaward_scenario_gain', 
-          palette = c('Sediment' = 'plum4',  'Hydrology' = 'darkgoldenrod2', 'Hydrology_Sediment' = 'hotpink3', 'Plant_Hydrology_Sediment' = 'midnightblue'), 
+          palette = c('Sediment' = 'plum4',  'Hydrology' = 'darkgoldenrod2', 'Hydrology_Sediment' = 'hotpink3', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Sediment' = 'midnightblue'), 
           alpha = 0.5, 
           title = '',
           legend.show = F, 
           size = 0.015) +
   tm_shape(filter(scenario_change, !is.na(Seaward_scenario_reduced_risk))) +
   tm_dots('Seaward_scenario_reduced_risk', 
-          palette = c('Sediment' = 'plum4',  'Hydrology' = 'darkgoldenrod2', 'Hydrology_Sediment' = 'hotpink3', 'Plant_Hydrology_Sediment' = 'midnightblue'), 
+          palette = c('Sediment' = 'plum4',  'Hydrology' = 'darkgoldenrod2', 'Hydrology_Sediment' = 'hotpink3','Plant_Hydrology' = 'black', 'Plant_Hydrology_Sediment' = 'midnightblue'), 
           alpha = 0.5, 
           title = '',
           legend.show = F, 
@@ -765,8 +766,8 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('white', 'white'), alpha = 0.8,
                 labels =  c('S = Sediment addition/trapping', 
                             'EC = Improved ecological connectivity', 'L = Increased landward propagules (dispersal or enrichment)'), border.alpha = 0, size = 0.3) +
-  tm_add_legend('symbol', col =  c('plum4', 'darkgoldenrod2', 'hotpink3', 'midnightblue'), alpha = 0.8,
-                labels =  c('S', 'EC', 'S or EC', 'S or EC or L'), border.alpha = 0, size = 0.3, is.portrait = F)
+  tm_add_legend('symbol', col =  c('plum4', 'darkgoldenrod2',  'hotpink3', 'black', 'midnightblue'), alpha = 0.8,
+                labels =  c('S', 'EC', 'S or EC', 'L or EC', 'S or EC or L'), border.alpha = 0, size = 0.3, is.portrait = F)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
 
