@@ -213,7 +213,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 5000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -243,7 +243,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 5000)
 
 # map unfit hindcasts
 
@@ -282,7 +282,7 @@ lmap <- tm_shape(world_mang) +
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
 
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -312,7 +312,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
 
 # wrangle hindcast matches and mismatches spatially
 
@@ -354,7 +354,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 5000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -378,7 +378,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', press, '_', thresh, '.png'), width = 5, height = 1, dpi = 5000)
 
 # characterise mis-matches according to geomorphology, driver of loss, and marine ecoregion
 
@@ -449,7 +449,7 @@ land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
             legend.height = 0.2,
             main.title = 'B) Landward')
 land_m
-tmap_save(land_m, 'outputs/maps/landward-mismatch.png', width = 5, height = 1, dpi = 1000)
+tmap_save(land_m, 'outputs/maps/landward-mismatch.png', width = 5, height = 1, dpi = 5000)
 
 sea_geo <- preds_df %>% 
   group_by(Seaward_match, Class) %>% 
@@ -502,7 +502,7 @@ sea_m <- tm_shape(st_crop(World, st_bbox(sea_eco_sf))) +
   tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 sea_m
-tmap_save(sea_m, 'outputs/maps/seaward-mismatch_ecoregion.png', width = 5, height = 1, dpi = 1000)
+tmap_save(sea_m, 'outputs/maps/seaward-mismatch_ecoregion.png', width = 5, height = 1, dpi = 5000)
 
 land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
   tm_fill('grey88') +
@@ -530,5 +530,5 @@ land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
                 labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
 
 land_m
-tmap_save(land_m, 'outputs/maps/landward-mismatch_ecoregion.png', width = 5, height = 1, dpi = 1000)
+tmap_save(land_m, 'outputs/maps/landward-mismatch_ecoregion.png', width = 5, height = 1, dpi = 5000)
 

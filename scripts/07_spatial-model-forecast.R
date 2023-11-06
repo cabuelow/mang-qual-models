@@ -77,7 +77,7 @@ spatial_pred <- spatial_pred %>%
                              .default = 'Ambiguous')) %>% 
   mutate(ambig_threshold = thresh)
 write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions_', press, '_', thresh, '.csv'), row.names = F)
-#spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '.csv'))
+#spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions_', press, '_', thresh, '.csv'))
 
 # summarise predictions
 datsum <- ungroup(spatial_pred) %>% 
@@ -127,7 +127,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -157,7 +157,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
 
 # now take biophysical matrices and solve with future SLR and 
 chosen_model <- models$mangrove_model # choose correct network model
@@ -509,7 +509,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -539,7 +539,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
 
 # unfit
 lmap <- tm_shape(world_mang) +
@@ -570,7 +570,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_unfit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_unfit.png'), width = 5, height = 1, dpi = 5000)
 
 smap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
@@ -600,7 +600,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col = rev(pal[1:10]),
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_unfit.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_unfit.png'), width = 5, height = 1, dpi = 5000)
 }
 
 # get the landward and seaward forecasts for each scenario, and show where the additional gains or reduced risk of loss would be
@@ -733,7 +733,7 @@ lmap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('darkcyan', 'yellowgreen','darkgoldenrod2', 'darkorchid4',  'deeppink4', 'black'), alpha = 0.8, is.portrait = F,
                 labels =  c('B', 'L', 'EC', 'B or EC', 'L or EC', 'L or B or EC'), border.alpha = 0, size = 0.3)
 lmap
-tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
 
 # seaward
 smap <- tm_shape(world_mang) +
@@ -769,7 +769,7 @@ smap <- tm_shape(world_mang) +
   tm_add_legend('symbol', col =  c('plum4', 'darkgoldenrod2',  'hotpink3', 'black', 'midnightblue'), alpha = 0.8,
                 labels =  c('S', 'EC', 'S or EC', 'L or EC', 'S or EC or L'), border.alpha = 0, size = 0.3, is.portrait = F)
 smap
-tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 1000)
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
 
 # end here
 
