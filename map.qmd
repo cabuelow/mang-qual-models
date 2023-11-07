@@ -21,7 +21,7 @@ library(mapview)
 library(sf)
 library(tidyverse)
 
-dat <- read.csv('outputs/master-dat.csv') %>% filter(Cdev_thresh == 1 & pressure_def == 3)
+dat <- read.csv('outputs/master-dat.csv') %>% filter(pressure_def == 3)
 typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_slr:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
@@ -59,7 +59,7 @@ Antecedent sea-level rise is mapped in the left pane, future projected sea-level
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'ant_slr', layer.name = 'Antecdent sea-level rise', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_slr', layer.name = 'Future sea-level rise', cex = 0.9, lwd = 0)
+mapview(select(typ, ant_slr), zcol = 'ant_slr', layer.name = 'Antecdent sea-level rise', cex = 2, lwd = 0) | mapview(select(typ, fut_slr), zcol = 'fut_slr', layer.name = 'Future sea-level rise', cex = 2, lwd = 0)
 
 ```
 
@@ -79,7 +79,7 @@ Current coastal development (2020) is mapped in the left pane, future projected 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'csqueeze', layer.name = 'Coastal development', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_csqueeze', layer.name = 'Future coastal development', cex = 0.9, lwd = 0)
+mapview(select(typ, 'csqueeze'), zcol = 'csqueeze', layer.name = 'Coastal development', cex = 2, lwd = 0) | mapview(select(typ, 'fut_csqueeze'), zcol = 'fut_csqueeze', layer.name = 'Future coastal development', cex = 2, lwd = 0)
 ```
 
 **Coastal development**
@@ -98,7 +98,7 @@ Historical drought conditions (1996-2020) is mapped in the left pane, future pro
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'hist_drought', layer.name = 'Historical drought', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_drought', layer.name = 'Future drought', cex = 0.9, lwd = 0)
+mapview(select(typ, hist_drought), zcol = 'hist_drought', layer.name = 'Historical drought', cex = 2, lwd = 0) | mapview(select(typ, fut_drought), zcol = 'fut_drought', layer.name = 'Future drought', cex = 2, lwd = 0)
 
 ```
 
@@ -118,7 +118,7 @@ Historical extreme rainfall (1996-2020) is mapped in the left pane, future proje
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'hist_ext_rain', layer.name = 'Historical extreme rainfall', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_ext_rain', layer.name = 'Future extreme rainfall', cex = 0.9, lwd = 0)
+mapview(select(typ, hist_ext_rain), zcol = 'hist_ext_rain', layer.name = 'Historical extreme rainfall', cex = 2, lwd = 0) | mapview(select(typ, fut_ext_rain), zcol = 'fut_ext_rain', layer.name = 'Future extreme rainfall', cex = 2, lwd = 0)
 
 ```
 
@@ -138,7 +138,7 @@ Historical Intense tropical storms (1996-2020) is mapped in the left pane, and f
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'storms', layer.name = 'Historical intense tropical storms', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_storms', layer.name = 'Future intense tropical storms', cex = 0.9, lwd = 0)
+mapview(select(typ, storms), zcol = 'storms', layer.name = 'Historical intense tropical storms', cex = 2, lwd = 0) | mapview(select(typ, fut_storms), zcol = 'fut_storms', layer.name = 'Future intense tropical storms', cex = 2, lwd = 0)
 
 ```
 
@@ -152,13 +152,13 @@ The annual frequency of intense tropical storms under future climate conditions 
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
-### Tidal range and propaule establishment capacity {#tidal-range}
+### Tidal range and ecological connectivity {#tidal-range}
 
-Tidal range (macro, meso or micro) is mapped in the left pane, propagule establishment capacity on the right.
+Tidal range (macro, meso or micro) is mapped in the left pane, ecological connectivity on the right.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(typ, zcol = 'Tidal_Class', layer.name = 'Tidal range', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'prop_estab', layer.name = 'Propagule establishment capacity', cex = 0.9, lwd = 0)
+mapview(select(typ, Tidal_Class), zcol = 'Tidal_Class', layer.name = 'Tidal range', cex = 2, lwd = 0) | mapview(select(typ, prop_estab), zcol = 'prop_estab', layer.name = 'Propagule establishment capacity', cex = 2, lwd = 0)
 
 ```
 
@@ -166,9 +166,9 @@ mapview(typ, zcol = 'Tidal_Class', layer.name = 'Tidal range', cex = 0.9, lwd = 
 
 Tidal range was estimated for each mangrove typological unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). Typological units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and typological units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (*under review*).
 
-**Progpagule establishment capacity**
+**Ecological connectivity**
 
-Propagule establishment capacity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having 'high', 'medium', or 'low' establishment capacity using terciles, where large average distance values corresponded to low establishment capacity and vice versa.
+Ecological connectivity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having 'high', 'medium', or 'low' connectivity using terciles, where large average distance values corresponded to low connectivity and vice versa.
 :::
 
 Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.

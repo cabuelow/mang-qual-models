@@ -33,17 +33,15 @@ library(tidyverse)
 #return(accuracy_list)
 #}
 
-go <- 1 # which coastal dev threshold?
-press <- 4 # which pressure definition threshold?
-thresh <- 65 # which ambiguity threshold?
-rm_e <- 'N' # remove erosion from validation? Y or N
+press <- 5 # which pressure definition threshold?
+thresh <- 80 # which ambiguity threshold?
 scenario <- 'SeaLevelRise'
 
-dat <- read.csv('outputs/master-dat.csv') %>% filter(Cdev_thresh == go & pressure_def == press) %>% select(Type:prop_estab)
-results <- readRDS(paste0('outputs/validation/accuracy_', go,'_', rm_e, '.RDS'))
+dat <- read.csv('outputs/master-dat.csv') %>% filter(pressure_def == 3) %>% select(Type:prop_estab)
+results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
 accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
-test_hindcasts <- do.call(rbind, lapply(results, function(x)x[[2]]))
-forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', go, '_', rm_e, '_', press, '_', thresh, '_', scenario, '_fit.csv'))
+hindcasts <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'.csv'))
+forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_fit.csv'))
 all_scen <- read.csv('outputs/predictions/scenario-forecasts-all.csv')
 typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
@@ -59,18 +57,35 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroid
   mutate_at(vars(csqueeze:prop_estab), as.factor) %>% 
   mutate_at(vars(csqueeze:sed_supp, prop_estab), ~factor(., levels = c('High', 'Medium', 'Low')))
 preds_hind <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% # join hindcasts to spatial data
-  left_join(filter(test_hindcasts, pressure_def == press, ambig_threshold == thresh)) %>% 
+  left_join(hindcasts) %>% 
+  mutate(land_net_change = ifelse(land_net_change_obs == -1, 'Loss', 'Gain_neutrality'),
+         sea_net_change = ifelse(sea_net_change_obs == -1, 'Loss', 'Gain_neutrality'))%>% 
   mutate(Seaward_match = case_when(Seaward == 'Ambiguous' ~ 'Ambiguous',
-                                   is.na(SeawardMang) ~'No Prediction',
-                                   Seaward == sea_net_change ~'Match', 
-                                   Seaward != sea_net_change ~ 'MisMatch'),
-         Landward_match = case_when(Landward == 'Ambiguous' ~ 'Ambiguous',
-                                    is.na(LandwardMang) ~'No Prediction',
-                                    Landward == land_net_change ~'Match', 
-                                    Landward != land_net_change ~ 'MisMatch'))
+                                     is.na(SeawardMang) ~'No Hindcast',
+                                     Seaward == sea_net_change ~'Match', 
+                                     Seaward != sea_net_change ~ 'Mis-match'),
+          Landward_match = case_when(Landward == 'Ambiguous' ~ 'Ambiguous',
+                                      is.na(LandwardMang) ~'No Hindcast',
+                                      Landward == land_net_change ~'Match', 
+                                      Landward != land_net_change ~ 'Mis-match')) 
 preds_fore <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(forecasts)
-scenario_change <- typ %>% left_join(all_scen) %>% select(Seaward_scenario_gain, Seaward_scenario_reduced_risk, Landward_scenario_gain, Landward_scenario_reduced_risk)
+scenario_change <- typ %>% left_join(all_scen) %>% select(Seaward_scenario_gain, Seaward_scenario_reduced_risk, Landward_scenario_gain, Landward_scenario_reduced_risk) %>% 
+  mutate(Seaward_scenario_gain = case_when(Seaward_scenario_gain == 'Hydrology_Sediment' ~ 'Increase connectivity or sediment',
+                                          Seaward_scenario_gain == 'Plant_Hydrology_Sediment' ~ 'Increase connectivity or sediment or landward propagules', 
+                                          Seaward_scenario_gain == 'Plant_Hydrology' ~ 'Increase connectivity or landward propagules', 
+                                          Seaward_scenario_gain == 'Sediment' ~ 'Increase sediment', 
+                                          Seaward_scenario_gain == 'Hydrology' ~ 'Increase connectivity',
+                                         .default = NA),
+         Seaward_scenario_reduced_risk = case_when(Seaward_scenario_reduced_risk == 'Hydrology_Sediment' ~ 'Increase connectivity or sediment',
+                                          Seaward_scenario_reduced_risk== 'Plant_Hydrology_Sediment' ~ 'Increase connectivity or sediment or landward propagules', 
+                                          Seaward_scenario_gain == 'Plant_Hydrology' ~ 'Increase connectivity or landward propagules', 
+                                          Seaward_scenario_reduced_risk == 'Sediment' ~ 'Increase sediment', 
+                                          Seaward_scenario_reduced_risk == 'Hydrology' ~ 'Increase connectivity',
+                                         .default = NA),
+         Landward_scenario_gain = case_when(Landward_scenario_gain == 'Plant' ~ 'Increase landward propagules',
+                                             Landward_scenario_gain == 'Barriers' ~ 'Remove barriers', Landward_scenario_gain == 'Plant_Hydrology_Barriers' ~ 'Increase landward propagules or connectivity or remove barriers', Landward_scenario_gain == 'Hydrology_Barriers' ~ 'Remove barriers or increase connectivity', Landward_scenario_gain == 'Plant_Hydrology' ~ 'Increase landward propagules or connectivity', Landward_scenario_gain == 'Hydrology' ~ 'Increase connectivity', .default = NA),   Landward_scenario_reduced_risk = case_when(Landward_scenario_reduced_risk == 'Plant' ~ 'Increase landward propagules',
+                                             Landward_scenario_reduced_risk== 'Barriers' ~ 'Remove barriers', Landward_scenario_reduced_risk == 'Plant_Hydrology_Barriers' ~ 'Increase landward propagules or connectivity or remove barriers', Landward_scenario_reduced_risk== 'Hydrology_Barriers' ~ 'Remove barriers to landward migration or increase connectivity', Landward_scenario_reduced_risk == 'Plant_Hydrology' ~ 'Increase landward propagules or connectivity', Landward_scenario_reduced_risk == 'Hydrology' ~ 'Increase connectivity', .default = NA))
 
 ```
 
@@ -96,7 +111,7 @@ Conceptual diagram of the network model that makes qualitative predictions of ma
 Historical subsidence from groundwater extraction (2010) is mapped in the left pane, future subsidence from groundwater extraction (2040) on the right.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
-mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 0.9, lwd = 0) | mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 0.9, lwd = 0)
+mapview(typ, zcol = 'gwsub', layer.name = 'Historical subsidence', cex = 2, lwd = 0) | mapview(typ, zcol = 'fut_gwsub', layer.name = 'Future subsidence', cex = 2, lwd = 0)
 ```
 
 **Historical subsidence**
@@ -115,7 +130,7 @@ Sediment supply is mapped in the left pane, future dams either planned or under 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
-mapview(filter(typ, !is.na(sed_supp)), zcol = 'sed_supp', layer.name = 'Sediment supply', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(typ, !is.na(fut_dams)), zcol = 'fut_dams', layer.name = 'Future dams upstream', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(typ, !is.na(sed_supp)), zcol = 'sed_supp', layer.name = 'Sediment supply', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(mutate(filter(typ, !is.na(fut_dams)), fut_dams = factor(fut_dams, levels = c('Present', 'Absent'))), zcol = 'fut_dams', layer.name = 'Future dams upstream', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 
 ```
 
@@ -135,7 +150,7 @@ Historical satellite remote sensing observations of seaward mangrove loss or gai
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(preds_hind, zcol = 'sea_net_change', layer.name = 'Seaward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(preds_hind, zcol = 'land_net_change', layer.name = 'Landward extent change', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(preds_hind, zcol = 'sea_net_change', layer.name = 'Seaward extent change', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(preds_hind, zcol = 'land_net_change', layer.name = 'Landward extent change', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 
 ```
 
@@ -149,7 +164,7 @@ Matches and mis-matches between hindcasts and historical observations of mangrov
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(preds_hind, zcol = 'Seaward_match', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(preds_hind, zcol = 'Landward_match', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(preds_hind, zcol = 'Seaward_match', layer.name = 'Seaward', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(preds_hind, zcol = 'Landward_match', layer.name = 'Landward', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 ```
 :::
 
@@ -160,28 +175,28 @@ Forecasts of seaward mangrove extent change are mapped in the left pane, landwar
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
-mapview(filter(preds_fore, !is.na(Seaward)), zcol = 'Seaward', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(preds_fore, !is.na(Landward)), zcol = 'Landward', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(preds_fore, !is.na(Seaward)), zcol = 'Seaward', layer.name = 'Seaward', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(preds_fore, !is.na(Landward)), zcol = 'Landward', layer.name = 'Landward', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 ```
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
 ### Scenario-based forecasts of mangrove gain/neutrality with management or restoration
 
-Scenario-based forecasts of landward gain/neutrality with management or restoration are mapped in the left pane, seaward on the right.
+Scenario-based forecasts of seaward gain/neutrality with management or restoration are mapped in the left pane, landward on the right.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
- mapview(filter(scenario_change, !is.na(Landward_scenario_gain)), zcol = 'Landward_scenario_gain', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Seaward_scenario_gain)), zcol = 'Seaward_scenario_gain', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(scenario_change, !is.na(Seaward_scenario_gain)), zcol = 'Seaward_scenario_gain', layer.name = 'Seaward', cex = 2, lwd = 0, min.rad = 10, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Landward_scenario_gain)), zcol = 'Landward_scenario_gain', layer.name = 'Landward', cex = 2, lwd = 0, min.rad = 50, map.type = 'Esri.WorldGrayCanvas')
 ```
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
 ### Scenario-based forecasts of mangrove reduced certainty of loss with management or restoration
 
-Scenario-based forecasts of landward reduced certainty of loss with management or restoration are mapped in the left pane, seaward on the right.
+Scenario-based forecasts of seaward reduced certainty of loss with management or restoration are mapped in the left pane, landward on the right.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, results=TRUE}
 
- mapview(filter(scenario_change, !is.na(Landward_scenario_reduced_risk)), zcol = 'Landward_scenario_reduced_risk', layer.name = 'Landward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Seaward_scenario_reduced_risk)), zcol = 'Seaward_scenario_reduced_risk', layer.name = 'Seaward', cex = 0.9, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
+mapview(filter(scenario_change, !is.na(Seaward_scenario_reduced_risk)), zcol = 'Seaward_scenario_reduced_risk', layer.name = 'Seaward', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas') | mapview(filter(scenario_change, !is.na(Landward_scenario_reduced_risk)), zcol = 'Landward_scenario_reduced_risk', layer.name = 'Landward', cex = 2, lwd = 0, map.type = 'Esri.WorldGrayCanvas')
 ```
 :::
