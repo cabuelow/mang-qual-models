@@ -6,3 +6,7 @@
   netlify:
     - id: 472011d6-9dfe-4da3-b770-e65900e9d48f
       url: 'https://mangrove-climate-risk-mapping-2.netlify.app'
+- source: Fig4-interact.qmd
+  netlify:
+    - id: 2609d931-adda-47bd-b1b3-f0bcf868adda
+      url: 'https://fluffy-daifuku-97157c.netlify.app'
