@@ -110,7 +110,7 @@ land <- tm_shape(Baseline_forecast) +
            midpoint = 50,
            breaks = seq(0,100,10),
            size = 'Probability of Landward Gain/Neutrality',
-           scale = 0.25,
+           scale = 1,
            alpha = 0.5,
            legend.col.show = T) +
    tm_shape(Baseline_forecast_class_landward) +
