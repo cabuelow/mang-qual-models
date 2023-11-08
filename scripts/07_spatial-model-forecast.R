@@ -506,7 +506,7 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
+  tm_add_legend('symbol', col = rev(pal[1:10]), title = 'Probability',
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
@@ -562,7 +562,7 @@ smap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
@@ -773,14 +773,15 @@ lmap <- tm_shape(world_mang) +
             legend.position = c(0.04, 0.01),
             legend.width = 1,
             title.position = c(0.01,0.45),
-            legend.title.size = 0.001,
+            legend.title.size = 0.35,
             legend.text.size = 0.25,
             main.title =  "D) Landward scenario-based forecast of net gain/neutrality or reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col =  c('white', 'white', 'white'), alpha = 0.1,
+  tm_add_legend('symbol', col =  c('white', 'white', 'white'), alpha = 0.1, 
+                title = 'Action',
                 labels =  c('B = Removal of barriers to landward migration', 'L = Increased landward propagules (assisted dispersal or enrichment)',
                             'EC = Improved ecological connectivity (assuming natural recruitment of propagules)'), border.alpha = 0, size = 0.3) +
   tm_add_legend('symbol', col =  c('darkcyan', 'yellowgreen','darkgoldenrod2', 'darkorchid4',  'deeppink4', 'black'), alpha = 0.8, is.portrait = F,
@@ -809,14 +810,14 @@ smap <- tm_shape(world_mang) +
             legend.position = c(0.04, 0.01),
             title.position = c(0.01,0.45),
             legend.width = 1,
-            legend.title.size = 0.001,
+            legend.title.size = 0.35,
             legend.text.size = 0.25,
             main.title = "B) Seaward scenario-based forecast of net gain/neutrality or reduced certainty of loss relative to baseline",
             main.title.size = 0.4,
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col =  c('white', 'white'), alpha = 0.8,
+  tm_add_legend('symbol', col =  c('white', 'white'), alpha = 0.8, title = 'Action',
                 labels =  c('S = Sediment addition/trapping', 'L = Increased landward propagules (assisted dispersal or enrichment)',  'EC = Improved ecological connectivity (assuming natural recruitment of propagules)'), border.alpha = 0, size = 0.3) +
   tm_add_legend('symbol', col =  c('plum4', 'darkgoldenrod2',  'hotpink3', 'black', 'midnightblue'), alpha = 0.8,
                 labels =  c('S', 'EC', 'S or EC', 'L or EC', 'S or EC or L'), border.alpha = 0, size = 0.25, is.portrait = F)
