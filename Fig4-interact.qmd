@@ -33,6 +33,8 @@ forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', press, 
 all_scen <- read.csv('outputs/predictions/scenario-forecasts-all.csv')
 Baseline_forecast <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(forecasts)
+Baseline_forecast_class_seaward <- filter(Baseline_forecast, !is.na(Seaward))
+Baseline_forecast_class_landward <- filter(Baseline_forecast, !is.na(Landward))
 scenario <- typ %>% left_join(all_scen) %>% mutate(Seaward_scenario_gain = case_when(Seaward_scenario_gain == 'Hydrology_Sediment' ~ 'Increase connectivity or sediment',
                                           Seaward_scenario_gain == 'Plant_Hydrology_Sediment' ~ 'Increase connectivity or sediment or landward propagules', 
                                           Seaward_scenario_gain == 'Plant_Hydrology' ~ 'Increase connectivity or landward propagules', 
@@ -54,7 +56,7 @@ Seaward_Scenario_forecast_Gain_neutrality <- scenario %>% filter(!is.na(Seaward_
 Seaward_Scenario_forecast_reduced_risk <- scenario %>% filter(!is.na(Seaward_scenario_reduced_risk))
 ```
 
-**Click on the layered diamonds in the top left corner of each map** to turn scenario-based forecast layers on or off. 
+**Click on the layered diamonds in the top left corner of each map** to turn scenario-based forecast layers on or off.
 
 #### Seaward forecasts
 
@@ -70,6 +72,11 @@ sea <- tm_shape(Baseline_forecast) +
            scale = 1,
            alpha = 0.5,
            legend.col.show = T) +
+  tm_shape(Baseline_forecast_class_seaward) +
+  tm_dots('Seaward', 
+          palette = c('Loss' = pal[1], 'Ambiguous' = pal[5], 'Gain_neutrality' = pal[10]), 
+          alpha = 0.5, 
+          size = 0.02) +
   tm_shape(Seaward_Scenario_forecast_Gain_neutrality) +
   tm_dots('Seaward_scenario_gain', 
           palette = c('Increase sediment' = 'plum4',  'Increase connectivity' = 'darkgoldenrod2', 'Increase connectivity or sediment' = 'hotpink3', 'Increase connectivity or landward propagules' = 'black', 'Increase connectivity or sediment or landward propagules' = 'midnightblue'), 
@@ -87,7 +94,8 @@ sea <- tm_shape(Baseline_forecast) +
 
 sea %>% 
   tmap_leaflet() %>%
-  leaflet::hideGroup("Seaward_Scenario_forecast_Gain_neutrality") %>% 
+    leaflet::hideGroup("Baseline_forecast_class_seaward") %>% 
+    leaflet::hideGroup("Seaward_Scenario_forecast_Gain_neutrality") %>% 
     leaflet::hideGroup("Seaward_Scenario_forecast_reduced_risk")
 ```
 
@@ -105,6 +113,11 @@ land <- tm_shape(Baseline_forecast) +
            scale = 0.25,
            alpha = 0.5,
            legend.col.show = T) +
+   tm_shape(Baseline_forecast_class_landward) +
+  tm_dots('Landward', 
+          palette = c('Loss' = pal[1], 'Ambiguous' = pal[5], 'Gain_neutrality' = pal[10]), 
+          alpha = 0.5, 
+          size = 0.02) +
   tm_shape(Landward_Scenario_forecast_Gain_neutrality) +
   tm_dots('Landward_scenario_gain', 
           palette = c('Remove barriers' = 'darkcyan', 'Increase landward propagules' = 'yellowgreen', 'Increase connectivity' = 'darkgoldenrod2', 'Remove barriers or increase connectivity' = 'darkorchid4', 'Increase landward propagules or connectivity' = 'deeppink4', 'Increase landward propagules or connectivity or remove barriers' = 'black'), 
@@ -122,6 +135,7 @@ land <- tm_shape(Baseline_forecast) +
 
 land %>% 
   tmap_leaflet() %>%
+   leaflet::hideGroup("Baseline_forecast_class_landward") %>% 
   leaflet::hideGroup("Landward_Scenario_forecast_Gain_neutrality") %>% 
     leaflet::hideGroup("Landward_Scenario_forecast_reduced_risk")
 ```

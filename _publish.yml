@@ -9,4 +9,4 @@
 - source: Fig4-interact.qmd
   netlify:
     - id: 2609d931-adda-47bd-b1b3-f0bcf868adda
-      url: 'https://fluffy-daifuku-97157c.netlify.app'
+      url: 'https://mangrove-forecasts.netlify.app'
