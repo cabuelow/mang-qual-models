@@ -69,7 +69,7 @@ sea <- tm_shape(Baseline_forecast) +
            midpoint = 50,
            breaks = seq(0,100,10),
            size = 'Probability of Seaward Gain/Neutrality',
-           scale = 1,
+           scale = 0.3,
            alpha = 0.5,
            legend.col.show = T) +
   tm_shape(Baseline_forecast_class_seaward) +
@@ -110,7 +110,7 @@ land <- tm_shape(Baseline_forecast) +
            midpoint = 50,
            breaks = seq(0,100,10),
            size = 'Probability of Landward Gain/Neutrality',
-           scale = 1,
+           scale = 0.3,
            alpha = 0.5,
            legend.col.show = T) +
    tm_shape(Baseline_forecast_class_landward) +
