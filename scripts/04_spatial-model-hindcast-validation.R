@@ -17,7 +17,7 @@ sf_use_s2(FALSE)
 
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
 world <- data("World")
-spatial_dat <- read.csv('outputs/master-dat.csv')
+spatial_dat <- read.csv('data/master-dat.csv')
 drivers <- read.csv('data/typologies/SLR_Data.csv')
 
 # which model do you want to run?

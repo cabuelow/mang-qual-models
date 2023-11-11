@@ -27,7 +27,7 @@ thresh <- 80 # which ambiguity threshold?
 
 # read in and wrangle data
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
-spatial_dat <- read.csv('outputs/master-dat.csv') %>% filter(pressure_def == press)
+spatial_dat <- read.csv('data/master-dat.csv') %>% filter(pressure_def == press)
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes.csv'))
 
 # randomly resample and split data into training and test folds

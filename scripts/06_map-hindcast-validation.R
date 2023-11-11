@@ -21,7 +21,7 @@ typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_c
 world <- data("World")
 world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)  
 meow <- st_read('data/MEOW/meow_ecos.shp')
-spatial_dat <- read.csv('outputs/master-dat.csv')
+spatial_dat <- read.csv('data/master-dat.csv')
 drivers <- read.csv('data/typologies/SLR_Data.csv')
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes.csv'))
 results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
