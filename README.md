@@ -1,10 +1,10 @@
-### Qualitative forecasts of mangrove extent change with network models
+### Probabilistic forecasts of the direction of future change in mangrove extent using network models
 
-This repository provides code for reproducing results and figures in Buelow et al. (*in prep*), 'Forecasting mangrove futures under climate change'.
+This repository provides code for reproducing results and figures in Buelow et al. (*in prep*), 'Mangrove persistence under climate change doubles with management and restoration'.
 
 The codebase draws heavily from the R package [{QPress}](https://github.com/SWotherspoon/QPress).
 
-Link to documents describing all spatial data processing:
+Link to webpages where you can interactively view all spatial data underpinning the analysis, and read the steps taken to process the spatial data:
 
 -   [Part 1 here](https://mangrove-climate-risk-mapping.netlify.app/)
 -   [Part 2 here](https://mangrove-climate-risk-mapping-2.netlify.app/)
@@ -27,7 +27,7 @@ Link to documents describing all spatial data processing:
 
 6.  06_map-hindcast-validation.R: map the hindcasts
 
-7.  07_spatial-model-forecast.R: make calibrated forecasts and map
+7.  07_spatial-model-forecast.R: make forecasts and map
 
 8.  08_spatial-model-forecast-uncertainty.R: quantify 95% confidence intervals around forecast classes
 
