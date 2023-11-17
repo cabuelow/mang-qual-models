@@ -1,8 +1,8 @@
 # calculate 95% confidence intervals for the number of units in each forecast class
 
 library(tidyverse)
-press <- 5 # which pressure definition threshold?
-thresh <- 80 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 75 # which ambiguity threshold?
 
 accuracy <- read.csv('outputs/validation/resampled_accuracy_summary.csv')
 spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_SeaLevelRise_fit.csv'))

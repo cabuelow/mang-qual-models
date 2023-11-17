@@ -21,8 +21,8 @@ pal <- brewer.pal(11, 'Spectral') # color palette
 
 # import the final set of calibrated posterior hindcasts for each biophysical/pressure scenario 
 # using optimal pressure definition and calibrated ambiguity threshold
-press <- 5 # which pressure definition threshold?
-thresh <- 80 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 75 # which ambiguity threshold?
 naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes.csv'))
 post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob_', press, '_', thresh, '.csv'))
 
@@ -825,3 +825,4 @@ smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
 
 # end here
+

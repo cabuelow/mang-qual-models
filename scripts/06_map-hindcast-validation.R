@@ -11,8 +11,8 @@ source('scripts/helpers/spatial-helpers_v2.R')
 set.seed(123) # set random number generator to make results reproducible
 sf_use_s2(FALSE)
 
-press <- 5 # which pressure definition threshold?
-thresh <- 80 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 75 # which ambiguity threshold?
 pal <- brewer.pal(11, 'Spectral') # colour palette
 
 # read in spatial data

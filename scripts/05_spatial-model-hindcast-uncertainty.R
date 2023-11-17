@@ -1,7 +1,6 @@
 # quantify uncertainty in model hindcast accuracy using optimal thresholds
 # randomly sample sites into 5 folds 200 times (which is 5*200 = 1000 test-training pairs, recommended as stable by Lyons et al. 2018)
 # and obtain sampling distribution of each accuracy estimators (overall, producers, users)
-# can use median and +/- 0.025 and 0.975 percentiles to estimate 95% confidence intervals around accuracy estimate
 # propagate uncertainty to estimates of number of units of loss, gain/neutrality, or ambiguity
 # by taking the 95th percentiles of the commission and omission errors for each class, e.g.,
 # num_gain_units(upper) = num_gain_units + (num_gain_units * omission_error(95 percentile)) # omission error is the rate of false negatives, so predictions of a class we are missing, so is the upper
@@ -22,8 +21,8 @@ names(models) # names of available models
 chosen_model <- models$mangrove_model
 
 # set optimal thresholds
-press <- 5 # which pressure definition threshold?
-thresh <- 80 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 75 # which ambiguity threshold?
 
 # read in and wrangle data
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
