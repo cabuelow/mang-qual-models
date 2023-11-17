@@ -37,7 +37,7 @@ press <- 5 # which pressure definition threshold?
 thresh <- 80 # which ambiguity threshold?
 scenario <- 'SeaLevelRise'
 
-dat <- read.csv('outputs/master-dat.csv') %>% filter(pressure_def == 3) %>% select(Type:prop_estab)
+dat <- read.csv('data/master-dat.csv') %>% filter(pressure_def == 3) %>% select(Type:prop_estab)
 results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
 accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
 hindcasts <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'.csv'))

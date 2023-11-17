@@ -21,7 +21,7 @@ library(mapview)
 library(sf)
 library(tidyverse)
 
-dat <- read.csv('outputs/master-dat.csv') %>% filter(pressure_def == 3)
+dat <- read.csv('data/master-dat.csv') %>% filter(pressure_def == 3)
 typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_slr:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 
@@ -104,7 +104,7 @@ mapview(select(typ, hist_drought), zcol = 'hist_drought', layer.name = 'Historic
 
 **Historical drought**
 
-Historical drought conditions were estimated for each mangrove typological unit from 1996-2020 using the [Standardized Precipitation-Evapotranspiration index](https://spei.csic.es/) (SPEI; raster with 0.5° resolution) (Beguria et al., 2022). The SPEI index is a standardised variable where values greater or less than 0 indicate anomalies from the mean. Raster pixels with SPEI values representing conditions over a 12-month time scale for each year between 1996 and 2020 were averaged within each typological unit to obtain average annual SPEI values. Typological units that did not directly intersect with the SPEI raster were buffered by 10 kilometres to obtain average annual SPEI values. All other units received a value of 0 (i.e., mean conditions). Drought was considered present between 1996 and 2020 if the minimum SPEI value for a unit was more than the 50th percentile of standard deviations below the mean.
+Historical drought conditions were estimated for each mangrove typological unit from 1996-2020 using the [Standardized Precipitation-Evapotranspiration index](https://spei.csic.es/)(SPEI; raster with 0.5° resolution, 12-month time-scale) (Beguria et al., 2022). The SPEI index is a standardised variable where values greater or less than 0 indicate anomalies from the mean, and negative values indicate drought. Raster pixels with monthly SPEI values for each year between 1996 and 2020 were averaged within each typological unit to obtain average monthly SPEI values. Typological units that did not directly intersect with the SPEI raster were buffered by 10 kilometers to obtain average monthly SPEI values. All other units received a value of 0 (i.e., mean conditions). Drought was considered present between 1996 and 2020 if the minimum SPEI value for a unit was below the 50th percentile of minimum SPEI values across all units.
 
 **Future drought**
 
@@ -124,11 +124,11 @@ mapview(select(typ, hist_ext_rain), zcol = 'hist_ext_rain', layer.name = 'Histor
 
 **Historical extreme rainfall**
 
-Same as above for **Historical drought**, except extreme rainfall was considered present between 1996 and 2020 if the maximum SPEI value for a unit was more than 1.5 standard deviations above the mean.
+Same as above for **Historical drought**, except extreme rainfall was considered present between 1996 and 2020 if the maximum SPEI value for a unit was greater than the 50th percentile of maximum SPEI values across all units.
 
 **Future extreme rainfall**
 
-Same as above for **Future drought**, except mangrove typological units with greater than 50th percentile increase in SPI values were considered at risk from extreme rainfall.
+Same as above for **Future drought**, except mangrove typological units with greater than a 50th percentile increase in SPI values were considered at risk from extreme rainfall.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
