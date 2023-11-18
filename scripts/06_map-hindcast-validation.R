@@ -210,7 +210,7 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
+  tm_add_legend('symbol', col = rev(pal[1:10]), title = 'Probability',
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 5000)
@@ -240,7 +240,7 @@ smap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data.png'), width = 5, height = 1, dpi = 5000)
@@ -278,10 +278,9 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
-
 tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
 
 smap <- tm_shape(world_mang) +
@@ -309,7 +308,7 @@ smap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
                 labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
