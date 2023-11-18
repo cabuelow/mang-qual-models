@@ -38,11 +38,11 @@ typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroid
   mutate_at(vars(csqueeze:sed_supp, prop_estab), ~factor(., levels = c('High', 'Medium', 'Low')))
 ```
 
-This webpage provides an overview of the data used to paramaterise a qualitative network model of mangrove extent change in response climatic and other anthropogenic impacts. Predictions are mapped using 'typological units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5), updated [here](https://zenodo.org/record/8340259)).
+This webpage provides an overview of the data used to define climatic and anthropogenic pressures present in a qualitative network model of mangrove net change. Predictions are mapped using 'forest units' representing patches of mangrove forest with similar geomorphology (i.e., deltaic, lagoonal, open coast, or estuarine; [Worthington et al. 2020](https://www.nature.com/articles/s41598-020-71194-5), and updated [here](https://zenodo.org/record/8340259)).
 
-Sections below provide an overview of the network model structure and the processing of global datasets to mangrove typological units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
+Sections below provide an overview of the network model structure and the processing of global datasets to mangrove forest units. Historical data on climatic and anthropogenic impacts is used for hind-casting and validation of the network models, future data on impacts is used for forecasting.
 
-**Sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, and **intense storms** are found on this page.
+**Sea-level rise**, **coastal development**, **drought**, **extreme rainfall**, **intense storms** and **climate** are found on this page.
 
 Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
 
@@ -52,10 +52,12 @@ Conceptual diagram of the network model that makes qualitative predictions of ma
 
 ![Figure 1. Mangrove network model](images/network.png)
 
+**Note, drag the pane separator in the middle of the maps to compare between two mapped variables, e.g., historical vs. future conditions**
+
 ::: {.callout-tip icon="false" collapse="true"}
 ### Sea-level rise {#sea-level-rise}
 
-Antecedent sea-level rise is mapped in the left pane, future projected sea-level rise on the right. **Note, drag the pane separator in the middle of the map to compare antecedent and future SLR**
+Antecedent sea-level rise is mapped in the left pane, future projected sea-level rise on the right.
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
 
@@ -65,11 +67,11 @@ mapview(select(typ, ant_slr), zcol = 'ant_slr', layer.name = 'Antecdent sea-leve
 
 **Antecedent sea-level rise**
 
-[Regional mean sea level trends (mm/yr, 1993-2015)](https://catalogue.ceda.ac.uk/uuid/3ac333b828b54e3495c7749f5bce2fe3) were estimated for each mangrove typological unit by obtaining the raster pixel value (resolution of 1/4°) closest to the centroid of each unit. Extreme values were truncated at \> \|5\|mm yr-1 (Worthington et al. (*in review*)). Typological units with sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
+[Regional mean sea level trends (mm/yr, 1993-2015)](https://catalogue.ceda.ac.uk/uuid/3ac333b828b54e3495c7749f5bce2fe3) were estimated for each mangrove forest unit by obtaining the raster pixel value (resolution of 1/4°) closest to the centroid of each unit. Extreme values were truncated at \> \|5\|mm yr-1 (Worthington et al. (*in review*). Units with sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
 
 **Future sea-level rise**
 
-[Medium term (2040-2060) sea-level rise (m) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The raster pixel value closest to the centroid of each mangrove typological unit was obtained. Typological units with future sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
+[Medium term (2040-2060) sea-level rise (m) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove forest unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The raster pixel value closest to the centroid of each mangrove forest unit was obtained. Units with future sea-level rise values above the 50th percentile were considered at risk from future sea-level rise impacts.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -84,11 +86,11 @@ mapview(select(typ, 'csqueeze'), zcol = 'csqueeze', layer.name = 'Coastal develo
 
 **Coastal development**
 
-[Human population density](https://sedac.ciesin.columbia.edu/data/set/grump-v1-population-count/data-download) in the lower elevation coastal zone (10m elevation above mean sea level (CIESIN, 2021)) for the year 2020 (raster of \~1km resolution) (CIESIN, 2018) was used as a proxy for coastal infrastructure that reduces space available for mangroves to migrate landward. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/)) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no LECZ within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles, or as 'none' if population density was 0.
+[Human population density](https://sedac.ciesin.columbia.edu/data/set/grump-v1-population-count/data-download) in the lower elevation coastal zone (10m elevation above mean sea level (CIESIN, 2021)) for the year 2020 (raster of \~1km resolution) (CIESIN, 2018) was used as a proxy for coastal infrastructure that reduces space available for mangroves to migrate landward. Total population size within the lower elevation coastal zone (LECZ) of each mangrove forest unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/)) variable description for how mangrove catchments were delineated.) For forest units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no LECZ within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles, or as 'none' if population density was 0.
 
 **Future coastal development**
 
-[Projected human population size](https://figshare.com/s/9a94ae958d6a45684382) by the year 2100 (SSP5; raster of 1km resolution) (Merkens et al., 2016) located within 10m elevation above mean sea level (lower elevation coastal zone; (CIESIN, 2021)) was used as a proxy for the future development of coastal infrastructure that reduces space available for mangroves to migrate landward with climate change. Total population size within the lower elevation coastal zone (LECZ) of each mangrove typological unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/) variable description for how mangrove catchments were delineated.) For typological units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no lower elevation coastal zone within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles on logged values, or as 'none' if population density was 0. If the future coastal development in a typological unit was was projected to be lower than historical (i.e., a unit classified as 'medium' coastal development was projected to have 'low' coastal development), it was set to the historical category, assuming that any coastal development limiting landward migration of mangroves historically will not be removed in the future.
+[Projected human population size](https://figshare.com/s/9a94ae958d6a45684382) by the year 2100 (SSP5; raster of 1km resolution) (Merkens et al., 2016) located within 10m elevation above mean sea level (lower elevation coastal zone; (CIESIN, 2021)) was used as a proxy for the future development of coastal infrastructure that reduces space available for mangroves to migrate landward with climate change. Total population size within the lower elevation coastal zone (LECZ) of each mangrove forest unit's catchment was calculated and divided by the total area of the LECZ in that catchment to obtain a density estimate. (See [sediment supply](https://mangrove-climate-risk-mapping-2.netlify.app/) variable description for how mangrove catchments were delineated.) For forest units without a mangrove catchment, a 50km buffer was used to calculate population density in the LECZ nearby the unit. If there was no lower elevation coastal zone within the 50km buffer, the unit was assigned the maximum population density estimate from across all units to indicate there is no space available for mangroves to migrate landward. Units were then classified as 'high', 'medium' or 'low' coastal squeeze using terciles on logged values, or as 'none' if population density was 0. If the future coastal development in a forest unit was was projected to be lower than historical (i.e., a unit classified as 'medium' coastal development was projected to have 'low' coastal development), it was set to the historical category, assuming that any coastal development limiting landward migration of mangroves historically will not be removed in the future.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -104,11 +106,11 @@ mapview(select(typ, hist_drought), zcol = 'hist_drought', layer.name = 'Historic
 
 **Historical drought**
 
-Historical drought conditions were estimated for each mangrove typological unit from 1996-2020 using the [Standardized Precipitation-Evapotranspiration index](https://spei.csic.es/)(SPEI; raster with 0.5° resolution, 12-month time-scale) (Beguria et al., 2022). The SPEI index is a standardised variable where values greater or less than 0 indicate anomalies from the mean, and negative values indicate drought. Raster pixels with monthly SPEI values for each year between 1996 and 2020 were averaged within each typological unit to obtain average monthly SPEI values. Typological units that did not directly intersect with the SPEI raster were buffered by 10 kilometers to obtain average monthly SPEI values. All other units received a value of 0 (i.e., mean conditions). Drought was considered present between 1996 and 2020 if the minimum SPEI value for a unit was below the 50th percentile of minimum SPEI values across all units.
+Historical drought conditions were estimated for each mangrove forest unit from 1996-2020 using the [Standardized Precipitation-Evapotranspiration index](https://spei.csic.es/)(SPEI; raster with 0.5° resolution; 12-month time-scale) (Beguria et al., 2022). The SPEI index is a standardised variable where values greater or less than 0 indicate anomalies from the mean, and negative values indicate drought conditions. Raster pixels with monthly SPEI values for each year between 1996 and 2020 were averaged within each forest unit to obtain average monthly SPEI values. Forest units that did not directly intersect with the SPEI raster were buffered by 10 kilometers to obtain average monthly SPEI values. All other units received a value of 0 (i.e., mean conditions). Drought was considered present between 1996 and 2020 if the minimum SPEI value for a unit was less than the 50th percentile of minimum SPEI values across all units.
 
 **Future drought**
 
-[Medium term (2040-2060) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove typological unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove typological unit was calculated. Mangrove typological units with greater than a 50th percentile decrease in SPI values were considered at risk from drought.
+[Medium term (2040-2060) projections of percent change in the Standardised Precipitation Index (SPI) relative to baseline (1995-2014) conditions](https://interactive-atlas.ipcc.ch) for each mangrove forest unit was estimated from an ensemble mean of CMIP6 projections under scenario SSP5-8.5 (raster with 1° resolution) (Gutierrez et al., 2021). The average value of raster pixels intersecting with each mangrove forest unit was calculated. Mangrove forest units with a negative SPI percent change value less than the 50th percentile were considered at risk from drought.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -128,7 +130,7 @@ Same as above for **Historical drought**, except extreme rainfall was considered
 
 **Future extreme rainfall**
 
-Same as above for **Future drought**, except mangrove typological units with greater than a 50th percentile increase in SPI values were considered at risk from extreme rainfall.
+Same as above for **Future drought**, except mangrove forest units with a positive SPI value greater than the 50th percentile were considered at risk from extreme rainfall.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -144,11 +146,11 @@ mapview(select(typ, storms), zcol = 'storms', layer.name = 'Historical intense t
 
 **Historical intense tropical storms**
 
-The number of tropical cyclones within a 200 km radius buffer from the centroid of each mangrove typological unit was calculated between 1996 and 2020 using the [IBTrACS database](https://climatedataguide.ucar.edu/climate-data/ibtracs-tropical-cyclone-best-track-data) (Knapp et al., 2010). As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Damage from intense tropical storms was considered present if the number of tropical cyclones intersecting a unit's buffer was greater than the 50th percentile.
+The number of tropical cyclones within a 200 km radius buffer from the centroid of each mangrove forest unit was calculated between 1996 and 2020 using the [IBTrACS database](https://climatedataguide.ucar.edu/climate-data/ibtracs-tropical-cyclone-best-track-data) (Knapp et al., 2010). As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Damage from intense tropical storms was considered present if the number of tropical cyclones intersecting a unit's buffer was greater than the 50th percentile.
 
 **Future intense tropical storms**
 
-The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove typological unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove typological unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of a cyclone occurring by 2050 was greater than the 50th percentile.
+The annual frequency of intense tropical storms under future climate conditions within a 200 km radius of the centroid of each mangrove forest unit was calculated. As noted by (Hagger et al., 2022), a 200 km radius buffer represents the distance from a tropical cyclone's eye within which a mangrove forest is likely to experience damage (Holland et al., 2010). Annual tropical storm frequency was obtained by estimating the median number of [synthetic tropical cyclone tracks projected per year for 10000 years under four different climate models from the HighResMIP (CMCC, CNRM, ECEARTH and HADGEM) at a resolution of 10 metres under scenario SSP5-8.5 (2015-2050) (Bloemendaal et al., 2022)](https://www.science.org/doi/10.1126/sciadv.abm8438). The annual frequency of future cyclones (f~cyclone~) was used to calculate the probability of a cyclone damaging a mangrove forest unit by the year 2050 with the following equation: $$p_{cyclone} = 1 - (1 - f_{cyclone})^{(2050-2023)}$$ Damage from future intense tropical storms was considered present if probability of a cyclone occurring by 2050 was greater than the 50th percentile.
 :::
 
 ::: {.callout-tip icon="false" collapse="true"}
@@ -164,11 +166,27 @@ mapview(select(typ, Tidal_Class), zcol = 'Tidal_Class', layer.name = 'Tidal rang
 
 **Tidal range**
 
-Tidal range was estimated for each mangrove typological unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). Typological units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and typological units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (*under review*).
+Tidal range was estimated for each mangrove forest unit using principal lunar semidiurnal or M2 tidal amplitude from the [Finite Element Solution global tide model (FES2014; raster with 1/16° resolution) (Carrere et al., 2015)](https://www.aviso.altimetry.fr). forest units were split into individual forest patches, and each patch was assigned a tidal amplitude value from the raster pixel nearest to the centroid of the patch (with smallest value set 0.01m). Tidal amplitude for each unit was calculated as the mean of patch values, weighted by patch area relative to total unit area. Tidal range was estimated as the amplitude multiplied by 2, and forest units were classified as microtidal (0-2m), mesotidal (\>2-4m) and macrotidal (\>4m). Processing was the same as in Worthington et al. (*under review*).
 
 **Ecological connectivity**
 
-Ecological connectivity in each mangrove typological unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In typological units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Typological units were classified as having 'high', 'medium', or 'low' connectivity using terciles, where large average distance values corresponded to low connectivity and vice versa.
+Ecological connectivity in each mangrove forest unit was measured as the average minimum Euclidean distance (m) between the edges of extant mangrove forest patches in the year 2020 and the edges of patches lost between 1996 and 2019 [(Bunting et al., 2022)](https://zenodo.org/record/6894273#.ZEXlTuxBxuU), standardised by total area of the unit (ha). In forest units where there was either no historical loss from 1996-2019 or no extant mangroves in 2020, the unit was assigned the maximum average distance calculated across all units. Units were classified as having 'high', 'medium', or 'low' connectivity using terciles, where large average distance values corresponded to low connectivity and vice versa.
 :::
 
-Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove extent change, and hindcasts and forecasts of mangrove extent change.
+::: {.callout-tip icon="false" collapse="true"}
+### Climate
+
+Arid vs. humid climate.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, results=TRUE}
+
+mapview(select(typ, climate), zcol = 'climate', layer.name = 'Climate', cex = 2, lwd = 0)
+
+```
+
+**Climate**
+
+Mangrove forests were classified as 'arid' or 'humid' according to aridity index values representative of average annual conditions between 1970-2000 [(Zomer et al., 2022)](https://www.nature.com/articles/s41597-022-01493-1). The mean of all aridity index raster pixel values (1km resolution) intersecting each mangrove forest unit was taken to obtain a single value for each unit. For units that did not directly intersect the aridity raster, a 50-kilometre buffer was used to obtain a mean aridity index value. Following a generalised climate classification scheme (UNEP 1997), we classified all units with a mean aridity index value less than or equal to 0.5 as 'arid', and those greater than 0.5 as 'humid'.
+:::
+
+Go [here to see part 2](https://mangrove-climate-risk-mapping-2.netlify.app/), which provides information on subsidence, sediment supply, future dams, historical landward and seaward mangrove net change, and hindcasts and forecasts of mangrove net change.
