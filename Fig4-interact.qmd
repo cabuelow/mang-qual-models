@@ -22,8 +22,8 @@ library(sf)
 library(tidyverse)
 library(RColorBrewer)
 library(leaflet)
-press <- 5 # which pressure definition threshold?
-thresh <- 80 # which ambiguity threshold?
+press <- 4 # which pressure definition threshold?
+thresh <- 75 # which ambiguity threshold?
 scenario <- 'SeaLevelRise'
 pal <- brewer.pal(11, 'Spectral') # color palette
 typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') 
@@ -67,7 +67,8 @@ sea <- tm_shape(Baseline_forecast) +
   tm_bubbles('Probability of Seaward Gain/Neutrality',
            palette = pal[1:10], 
            midpoint = 50,
-           breaks = seq(0,100,10),
+           #breaks = seq(0,100,10),
+           breaks = c(0,10,25,30,40,50,60,70,75,90,100),
            size = 'Probability of Seaward Gain/Neutrality',
            scale = 0.3,
            alpha = 0.5,
@@ -108,7 +109,8 @@ land <- tm_shape(Baseline_forecast) +
   tm_bubbles('Probability of Landward Gain/Neutrality',
            palette = pal[1:10], 
            midpoint = 50,
-           breaks = seq(0,100,10),
+           #breaks = seq(0,100,10),
+          breaks = c(0,10,25,30,40,50,60,70,75,90,100),
            size = 'Probability of Landward Gain/Neutrality',
            scale = 0.3,
            alpha = 0.5,
@@ -120,14 +122,14 @@ land <- tm_shape(Baseline_forecast) +
           size = 0.02) +
   tm_shape(Landward_Scenario_forecast_Gain_neutrality) +
   tm_dots('Landward_scenario_gain', 
-          palette = c('Remove barriers' = 'darkcyan', 'Increase landward propagules' = 'yellowgreen', 'Increase connectivity' = 'darkgoldenrod2', 'Remove barriers or increase connectivity' = 'darkorchid4', 'Increase landward propagules or connectivity' = 'deeppink4', 'Increase landward propagules or connectivity or remove barriers' = 'black'), 
+          palette = c('Remove barriers' = 'darkcyan', 'Increase landward propagules' = 'yellowgreen', 'Increase connectivity' = 'darkgoldenrod2', 'Remove barriers or increase connectivity' = 'darkorchid4', 'Increase landward propagules or connectivity' = 'black', 'Increase landward propagules or connectivity or remove barriers' = 'deeppink4'), 
           alpha = 0.5, 
           title = '',
           legend.show = T, 
           size = 0.03) +
   tm_shape(Landward_Scenario_forecast_reduced_risk) +
   tm_dots('Landward_scenario_reduced_risk', 
-         palette = c('Remove barriers' = 'darkcyan', 'Increase landward propagules' = 'yellowgreen', 'Increase connectivity' = 'darkgoldenrod2', 'Plant_Barriers' = 'darkorange3', 'Remove barriers or increase connectivity' = 'darkorchid4', 'Increase landward propagules or connectivity' = 'deeppink4', 'Increase landward propagules or connectivity or remove barriers' = 'black'), 
+         palette = c('Remove barriers' = 'darkcyan', 'Increase landward propagules' = 'yellowgreen', 'Increase connectivity' = 'darkgoldenrod2', 'Plant_Barriers' = 'darkorange3', 'Remove barriers or increase connectivity' = 'darkorchid4', 'Increase landward propagules or connectivity' = 'black', 'Increase landward propagules or connectivity or remove barriers' = 'deeppink4'), 
           alpha = 0.5, 
           title = '',
           legend.show = T, 
