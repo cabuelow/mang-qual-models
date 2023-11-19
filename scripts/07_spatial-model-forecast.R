@@ -124,8 +124,9 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
-                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
 
@@ -154,8 +155,9 @@ smap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
-                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh,'_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
 
@@ -489,7 +491,8 @@ lmap <- tm_shape(world_mang) +
   tm_bubbles('LandwardMang', 
            palette = pal[1:10], 
            midpoint = 0.5,
-           breaks = seq(0,1,0.1),
+           #breaks = seq(0,1,0.1),
+           breaks = c(0,0.1,0.25,0.3,0.4,0.5,0.6,0.7,0.75,0.9,1),
            size = 'LandwardMang',
            scale = 0.25,
            alpha = 0.5, 
@@ -506,8 +509,9 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]), title = 'Probability',
-                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
 
@@ -545,7 +549,8 @@ smap <- tm_shape(world_mang) +
   tm_bubbles('SeawardMang', 
              palette = pal[1:10], 
              midpoint = 0.5,
-             breaks = seq(0,1,0.1),
+             #breaks = seq(0,1,0.1),
+             breaks = c(0,0.1,0.25,0.3,0.4,0.5,0.6,0.7,0.75,0.9,1),
              size = 'SeawardMang',
              scale = 0.25,
              alpha = 0.5, 
@@ -563,7 +568,8 @@ smap <- tm_shape(world_mang) +
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
   tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+                labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_fit.png'), width = 5, height = 1, dpi = 5000)
 
@@ -602,7 +608,8 @@ lmap <- tm_shape(world_mang) +
   tm_bubbles('LandwardMang', 
              palette = pal[1:10],
              midpoint = 0.5,
-             breaks = seq(0,1,0.1),
+             #breaks = seq(0,1,0.1),
+             breaks = c(0,0.1,0.25,0.3,0.4,0.5,0.6,0.7,0.75,0.9,1),
              size = 'LandwardMang',
              scale = 0.25,
              alpha = 0.5, 
@@ -619,8 +626,9 @@ lmap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
-                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_unfit.png'), width = 5, height = 1, dpi = 5000)
 
@@ -632,7 +640,8 @@ smap <- tm_shape(world_mang) +
   tm_bubbles('SeawardMang', 
              palette = pal[1:10],
              midpoint = 0.5,
-             breaks = seq(0,1,0.1),
+             #breaks = seq(0,1,0.1),
+             breaks = c(0,0.1,0.25,0.3,0.4,0.5,0.6,0.7,0.75,0.9,1),
              size = 'SeawardMang',
              scale = 0.25,
              alpha = 0.5, 
@@ -649,8 +658,9 @@ smap <- tm_shape(world_mang) +
             frame = T,
             legend.bg.color = 'white',
             legend.bg.alpha = 0) +
-  tm_add_legend('symbol', col = rev(pal[1:10]),
-                labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
 smap
 tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_unfit.png'), width = 5, height = 1, dpi = 5000)
 }
@@ -757,14 +767,14 @@ lmap <- tm_shape(world_mang) +
   tm_fill(col = 'gray88') +
   tm_shape(filter(scenario_change, !is.na(Landward_scenario_gain))) +
   tm_dots('Landward_scenario_gain', 
-          palette = c('Barriers' = 'darkcyan', 'Plant' = 'yellowgreen', 'Hydrology' = 'darkgoldenrod2', 'Plant_Barriers' = 'darkorange3', 'Hydrology_Barriers' = 'darkorchid4', 'Plant_Hydrology' = 'deeppink4', 'Plant_Hydrology_Barriers' = 'black', 'Plant_Hydrology_Sediment_Barriers' = 'navyblue'), 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'yellowgreen', 'Hydrology' = 'darkgoldenrod2', 'Plant_Barriers' = 'darkorange3', 'Hydrology_Barriers' = 'darkorchid4', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'deeppink4', 'Plant_Hydrology_Sediment_Barriers' = 'navyblue'), 
           alpha = 0.5, 
           title = '',
           legend.show = F, 
           size = 0.015) +
   tm_shape(filter(scenario_change, !is.na(Landward_scenario_reduced_risk))) +
   tm_dots('Landward_scenario_reduced_risk', 
-          palette = c('Barriers' = 'darkcyan', 'Plant' = 'yellowgreen', 'Hydrology' = 'darkgoldenrod2', 'Plant_Barriers' = 'darkorange3', 'Hydrology_Barriers' = 'darkorchid4', 'Plant_Hydrology' = 'deeppink4', 'Plant_Hydrology_Barriers' = 'black', 'Plant_Hydrology_Sediment_Barriers' = 'navyblue'), 
+          palette = c('Barriers' = 'darkcyan', 'Plant' = 'yellowgreen', 'Hydrology' = 'darkgoldenrod2', 'Plant_Barriers' = 'darkorange3', 'Hydrology_Barriers' = 'darkorchid4', 'Plant_Hydrology' = 'black', 'Plant_Hydrology_Barriers' = 'deeppink4', 'Plant_Hydrology_Sediment_Barriers' = 'navyblue'), 
           alpha = 0.5, 
           title = '',
           legend.show = F, 
@@ -784,7 +794,7 @@ lmap <- tm_shape(world_mang) +
                 title = 'Action',
                 labels =  c('B = Removal of barriers to landward migration', 'L = Increased landward propagules (assisted dispersal or enrichment)',
                             'EC = Improved ecological connectivity (assuming natural recruitment of propagules)'), border.alpha = 0, size = 0.3) +
-  tm_add_legend('symbol', col =  c('darkcyan', 'yellowgreen','darkgoldenrod2', 'darkorchid4',  'deeppink4', 'black'), alpha = 0.8, is.portrait = F,
+  tm_add_legend('symbol', col =  c('darkcyan', 'yellowgreen','darkgoldenrod2', 'darkorchid4', 'black',  'deeppink4'), alpha = 0.8, is.portrait = F,
                 labels =  c('B', 'L', 'EC', 'B or EC', 'L or EC', 'L or B or EC'), border.alpha = 0, size = 0.25)
 lmap
 tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
