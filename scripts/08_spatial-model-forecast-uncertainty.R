@@ -9,10 +9,10 @@ thresh <- 75 # which ambiguity threshold?
 
 for(i in seq_along(names(models))){
   
-  chosen_model <- names(models[i]) # which model do you want to run?
+  chosen_model_name <- names(models[i]) # which model do you want to run?
   
-  accuracy <- read.csv(paste0('outputs/validation/resampled_accuracy_summary_', chosen_model, '.csv'))
-  spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', chosen_model, '_SeaLevelRise_fit.csv'))
+  accuracy <- read.csv(paste0('outputs/validation/resampled_accuracy_summary_', chosen_model_name, '.csv'))
+  spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', chosen_model_name, '_SeaLevelRise_fit.csv'))
   num_units <- nrow(filter(spatial_pred_fit, !is.na(Landward))) # total number of units for which we could make forecasts for (some unable to forecast due to lack of valid model, i.e., all matrix likelihoods sum to 0)
   
   # summarise number of units in each forecast class globally
@@ -53,6 +53,6 @@ for(i in seq_along(names(models))){
            n_upper95 = ifelse(n_upper95 > num_units, num_units, n_upper95)) %>% 
     mutate_at(c('n', 'n_lower95', 'n_upper95'), function(x){round((x/num_units)*100)})
   datsum
-  write.csv(datsum, paste0('outputs/summary-stats/baseline-forecast_uncertainty_', chosen_model, '.csv'), row.names = F)
+  write.csv(datsum, paste0('outputs/summary-stats/baseline-forecast_uncertainty_', chosen_model_name, '.csv'), row.names = F)
   
 }

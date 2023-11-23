@@ -26,9 +26,10 @@ thresh <- 75 # which ambiguity threshold?
 
 for(i in seq_along(names(models))){
   
-  chosen_model <- names(models[i]) # which model do you want to run?
-  naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model, '.csv'))
-  post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob_', press, '_', thresh, '_', chosen_model, '.csv'))
+  chosen_model <- models[[i]]
+  chosen_model_name <- names(models[i]) # which model do you want to run?
+  naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'))
+  post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob_', press, '_', thresh, '_', chosen_model_name, '.csv'))
   
   # make posterior forecasts using naive hindcasts and posterior probabilities, without future sea level rise
   
@@ -80,7 +81,7 @@ for(i in seq_along(names(models))){
                                SeawardMang < 100-thresh ~ 'Loss',
                                .default = 'Ambiguous')) %>% 
     mutate(ambig_threshold = thresh)
-  write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions_', press, '_', thresh,'_', chosen_model, '.csv'), row.names = F)
+  write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions_', press, '_', thresh,'_', chosen_model_name, '.csv'), row.names = F)
   #spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions_', press, '_', thresh, '.csv'))
   
   # summarise predictions
@@ -90,7 +91,7 @@ for(i in seq_along(names(models))){
     mutate(Landward_seaward = paste0(.$Landward, '.', .$Seaward)) %>% 
     group_by(Landward_seaward) %>% 
     summarise(n = n(), percent = 100*(n()/nrow(.)))
-  write.csv(datsum, paste0('outputs/predictions/forecast-predictions_', press, '_', thresh, '_', chosen_model, '_summary.csv'), row.names = F)    
+  write.csv(datsum, paste0('outputs/predictions/forecast-predictions_', press, '_', thresh, '_', chosen_model_name, '_summary.csv'), row.names = F)    
   
   # map final 'all data' forecasts
   
@@ -132,7 +133,7 @@ for(i in seq_along(names(models))){
                   labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   lmap
-  tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_', chosen_model, '_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_', chosen_model_name, '_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
   
   smap <- tm_shape(world_mang) +
     tm_fill(col = 'gray88') +
@@ -163,10 +164,10 @@ for(i in seq_along(names(models))){
                   labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   smap
-  tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_', chosen_model, '_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_', chosen_model_name, '_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
   
   # now take biophysical matrices and solve with future SLR and 
-  chosen_model <- models$mangrove_model # choose correct network model
+  chosen_model_name <- models$mangrove_model # choose correct network model
   
   # find future biophysical and pressure scenarios
   slr_lenient <- spatial_dat %>% filter(pressure_def == 1) %>% select(Type, fut_slr) # subset data for 'very lenient' future slr
@@ -205,7 +206,7 @@ for(i in seq_along(names(models))){
   
   # get hindcast matrices
   
-  tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices_', chosen_model, '.RDS'))
+  tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices_', chosen_model_name, '.RDS'))
   matrices <- lapply(tmp, function(x){x[[2]]})
   matrix_index <- data.frame(index = 1:length(matrices), scenario = unlist(lapply(tmp, function(x){names(x)[1]})))
   
@@ -235,7 +236,7 @@ for(i in seq_along(names(models))){
       names(tmp[[k]]) <- bio_dat[k,]$scenario
     }
   )
-  saveRDS(tmp, paste0('outputs/simulation-outcomes/scenario_matrices_forecast_', chosen_model, '.RDS'))
+  saveRDS(tmp, paste0('outputs/simulation-outcomes/scenario_matrices_forecast_', chosen_model_name, '.RDS'))
   #tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices_forecast.RDS'))
   matrices_forecast <- lapply(tmp, function(x){x[[2]]})
   matrix_index_forecast <- data.frame(index = (max(matrix_index$index)+1):(max(matrix_index$index)+length(matrices_forecast)), scenario = unlist(lapply(tmp, function(x){names(x)[1]})))
@@ -277,7 +278,7 @@ for(i in seq_along(names(models))){
         }
         stopCluster(cl)
         results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
-        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh, '_', chosen_model, '.csv'), row.names = F)
+        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh, '_', chosen_model_name, '.csv'), row.names = F)
       }else if(scn[1] %in% c('LandwardAvailableProp','SubVol')){
         cl <- makeCluster(5)
         registerDoParallel(cl)
@@ -299,7 +300,7 @@ for(i in seq_along(names(models))){
         }
         stopCluster(cl)
         results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
-        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh, '_', chosen_model, '.csv'), row.names = F)
+        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh, '_', chosen_model_name, '.csv'), row.names = F)
       }else if(scn[1] == 'Coastalsqueeze'){
         cl <- makeCluster(5)
         registerDoParallel(cl)
@@ -323,7 +324,7 @@ for(i in seq_along(names(models))){
         }
         stopCluster(cl)
         results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
-        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh,'_', chosen_model, '.csv'), row.names = F)
+        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh,'_', chosen_model_name, '.csv'), row.names = F)
       }else if(scn[1] == 'SeaLevelRise'){
         cl <- makeCluster(5)
         registerDoParallel(cl)
@@ -345,7 +346,7 @@ for(i in seq_along(names(models))){
         }
         stopCluster(cl)
         results <- do.call(rbind, results) #%>% pivot_wider(names_from = 'node', values_from = 'outcome')
-        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh, '_', chosen_model,'.csv'), row.names = F)
+        write.csv(results, paste0('outputs/predictions/naive_outcomes_scenario_', scn[1], '_', press, '_', thresh, '_', chosen_model_name,'.csv'), row.names = F)
       }
     })
   
@@ -355,7 +356,7 @@ for(i in seq_along(names(models))){
     
     scenario <- scenarios[[i]][1]
     
-    naive_outcomes_restore <- read.csv(paste0('outputs/predictions/naive_outcomes_scenario_', scenario, '_', press, '_', thresh, '_', chosen_model, '.csv')) %>% 
+    naive_outcomes_restore <- read.csv(paste0('outputs/predictions/naive_outcomes_scenario_', scenario, '_', press, '_', thresh, '_', chosen_model_name, '.csv')) %>% 
       pivot_wider(names_from = 'node', values_from = 'outcome')
     
     # make posterior forecast for each future scenario, using matrix calibrated posterior probabilities
@@ -399,8 +400,8 @@ for(i in seq_along(names(models))){
                                                                        press = rep(d$press, each = nsim),
                                                                        LandwardMang = 1, # assuming no pressure means neutral
                                                                        SeawardMang = 1))
-    write.csv(naive_outcomes_restore, paste0('outputs/validation/naive_outcomes_restore_', press, '_', thresh, '_', scenario,'_', chosen_model, '.csv'), row.names = F)
-    naive_outcomes_restore <- read.csv(paste0('outputs/validation/naive_outcomes_restore_', press, '_', thresh, '_', scenario,'_', chosen_model, '.csv'))
+    write.csv(naive_outcomes_restore, paste0('outputs/validation/naive_outcomes_restore_', press, '_', thresh, '_', scenario,'_', chosen_model_name, '.csv'), row.names = F)
+    naive_outcomes_restore <- read.csv(paste0('outputs/validation/naive_outcomes_restore_', press, '_', thresh, '_', scenario,'_', chosen_model_name, '.csv'))
     
     spatial_pred_fit <- spatial_pred %>% 
       left_join(naive_outcomes_restore, by = c('scenario', 'press')) %>% 
@@ -423,8 +424,8 @@ for(i in seq_along(names(models))){
                                  .default = 'Ambiguous')) %>% 
       mutate(ambig_threshold = thresh)
     if(scenario == 'SubVol'){spatial_pred_fit <- spatial_pred_fit %>% mutate(Class = sub('\\_.*', '', Type)) %>% mutate(Seaward = ifelse(Class == 'OpenCoast', 'Loss', Seaward))} # in subvol scenario, only allow reduced risk of loss or gain/neutrality in geomorphologies other than open coast
-    write.csv(spatial_pred_fit, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_', chosen_model,'_fit.csv'), row.names = F)
-    spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model, '_fit.csv'))
+    write.csv(spatial_pred_fit, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_', chosen_model_name,'_fit.csv'), row.names = F)
+    spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model_name, '_fit.csv'))
     
     spatial_pred_unfit <- spatial_pred %>% 
       left_join(naive_outcomes_restore, by = c('scenario', 'press')) %>% 
@@ -447,8 +448,8 @@ for(i in seq_along(names(models))){
                                  .default = 'Ambiguous')) %>% 
       mutate(ambig_threshold = thresh)
     if(scenario == 'SubVol'){spatial_pred_unfit <- spatial_pred_unfit %>% mutate(Class = sub('\\_.*', '', Type)) %>% mutate(Seaward = ifelse(Class == 'OpenCoast', 'Loss', Seaward))} # in subvol scenario, only allow reduced risk of loss or gain/neutrality in geomorphologies other than open coast
-    write.csv(spatial_pred_unfit, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_', chosen_model,'_unfit.csv'), row.names = F)
-    spatial_pred_unfit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model, '_unfit.csv'))
+    write.csv(spatial_pred_unfit, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_', chosen_model_name,'_unfit.csv'), row.names = F)
+    spatial_pred_unfit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model_name, '_unfit.csv'))
     titlea_fit <- c('C) Seaward forecast with increased propagules - fit', 'D) Seaward forecast with improved hydrology - fit','E) Seaward forecast with sediment addition - fit', 'F) Seaward forecast with removal of coastal barriers - fit', 'A) Seaward baseline forecast')
     titleb_fit <- c('D) Landward forecast with increased propagules - fit', 'D) Landward forecast with improved hydrology - fit', 'F) Landward forecast with sediment addition - fit', 'H) Landward forecast with removal of coastal barriers - fit', 'C) Landward baseline forecast')
     titlea_unfit <- c('C) Seaward forecast with increased propagules - unfit', 'D) Seaward forecast with improved hydrology - unfit', 'E) Seaward forecast with sediment addition - unfit', 'G) Seaward forecast with removal of coastal barriers - unfit', 'A) Seaward baseline forecast - unfit')
@@ -461,7 +462,7 @@ for(i in seq_along(names(models))){
       mutate(Landward_seaward = paste0(.$Landward, '.', .$Seaward)) %>% 
       group_by(Landward_seaward) %>% 
       summarise(n = n(), percent = 100*(n()/nrow(.)))
-    write.csv(datsum, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model, '_summary_fit.csv'), row.names = F)    
+    write.csv(datsum, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model_name, '_summary_fit.csv'), row.names = F)    
     
     datsum <- spatial_pred_unfit %>% 
       mutate(Landward = paste0('Landward_', .$Landward),
@@ -469,7 +470,7 @@ for(i in seq_along(names(models))){
       mutate(Landward_seaward = paste0(.$Landward, '.', .$Seaward)) %>% 
       group_by(Landward_seaward) %>% 
       summarise(n = n(), percent = 100*(n()/nrow(.)))
-    write.csv(datsum, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model, '_summary_unfit.csv'), row.names = F) 
+    write.csv(datsum, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model_name, '_summary_unfit.csv'), row.names = F) 
     
     # map final 'all data' forecasts
     
@@ -517,7 +518,7 @@ for(i in seq_along(names(models))){
                     labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                                 '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     lmap
-    tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model, '_fit.png'), width = 5, height = 1, dpi = 5000)
+    tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_fit.png'), width = 5, height = 1, dpi = 5000)
     
     lmap <- tm_shape(world_mang) +
       tm_fill(col = 'gray88') +
@@ -543,7 +544,7 @@ for(i in seq_along(names(models))){
       tm_add_legend('symbol', col = rev(pal[c(1,5,10)]),
                     labels =  c('Gain/Neutrality', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
     lmap
-    tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model, '_fit_class.png'), width = 5, height = 1, dpi = 5000)
+    tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_fit_class.png'), width = 5, height = 1, dpi = 5000)
     
     smap <- tm_shape(world_mang) +
       tm_fill(col = 'gray88') +
@@ -575,7 +576,7 @@ for(i in seq_along(names(models))){
                     labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                                 '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     smap
-    tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_', chosen_model,'_fit.png'), width = 5, height = 1, dpi = 5000)
+    tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_', chosen_model_name,'_fit.png'), width = 5, height = 1, dpi = 5000)
     
     smap <- tm_shape(world_mang) +
       tm_fill(col = 'gray88') +
@@ -601,7 +602,7 @@ for(i in seq_along(names(models))){
       tm_add_legend('symbol', col = rev(pal[c(1,5,10)]),
                     labels =  c('Gain/Neutrality', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
     smap
-    tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model, '_fit_class.png'), width = 5, height = 1, dpi = 5000)
+    tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_fit_class.png'), width = 5, height = 1, dpi = 5000)
     
     # unfit
     lmap <- tm_shape(world_mang) +
@@ -634,7 +635,7 @@ for(i in seq_along(names(models))){
                     labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                                 '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     lmap
-    tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model, '_unfit.png'), width = 5, height = 1, dpi = 5000)
+    tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_unfit.png'), width = 5, height = 1, dpi = 5000)
     
     smap <- tm_shape(world_mang) +
       tm_fill(col = 'gray88') +
@@ -666,37 +667,37 @@ for(i in seq_along(names(models))){
                     labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                                 '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     smap
-    tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_', chosen_model,'_unfit.png'), width = 5, height = 1, dpi = 5000)
+    tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_', chosen_model_name,'_unfit.png'), width = 5, height = 1, dpi = 5000)
   }
   
   # get the landward and seaward forecasts for each scenario, and show where the additional gains or reduced risk of loss would be
   
   scenarios <- list('LandwardAvailableProp', 'Hydrology', 'SubVol', 'Coastalsqueeze')
-  baseline <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', 'SeaLevelRise','_', chosen_model, '_fit.csv')) %>%
+  baseline <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', 'SeaLevelRise','_', chosen_model_name, '_fit.csv')) %>%
     filter(!is.na(Landward) & !is.na(Seaward)) %>% 
     rename('Landward_base' = 'LandwardMang', 'Seaward_base' = 'SeawardMang')
-  transplant <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[1]][1],'_', chosen_model, '_fit.csv')) %>% 
+  transplant <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[1]][1],'_', chosen_model_name, '_fit.csv')) %>% 
     filter(!is.na(Landward) & !is.na(Seaward)) %>% 
     inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
     mutate(Transplant_Landward_gain = ifelse(Landward_base < thresh & LandwardMang > thresh, 'Plant', NA),
            Transplant_Landward_risk_reduced = ifelse(Landward_base < 100-thresh & LandwardMang > 50 & LandwardMang < thresh, 'Plant', NA),
            Transplant_Seaward_gain = ifelse(Seaward_base < thresh & SeawardMang > thresh, 'Plant', NA),
            Transplant_Seaward_risk_reduced = ifelse(Seaward_base < 100-thresh & SeawardMang > 50 & SeawardMang < thresh, 'Plant', NA))
-  hydrology <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[2]][1], '_', chosen_model,'_fit.csv')) %>% 
+  hydrology <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[2]][1], '_', chosen_model_name,'_fit.csv')) %>% 
     filter(!is.na(Landward) & !is.na(Seaward)) %>% 
     inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
     mutate(Hydrology_Landward_gain = ifelse(Landward_base < thresh & LandwardMang > thresh, 'Hydrology', NA),
            Hydrology_Landward_risk_reduced = ifelse(Landward_base < 100-thresh & LandwardMang > 50 & LandwardMang < thresh,  'Hydrology', NA),
            Hydrology_Seaward_gain = ifelse(Seaward_base < thresh & SeawardMang > thresh, 'Hydrology', NA),
            Hydrology_Seaward_risk_reduced = ifelse(Seaward_base < 100-thresh & SeawardMang > 50 & SeawardMang < thresh, 'Hydrology', NA))
-  sediment <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[3]][1], '_', chosen_model,'_fit.csv')) %>% 
+  sediment <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[3]][1], '_', chosen_model_name,'_fit.csv')) %>% 
     filter(!is.na(Landward) & !is.na(Seaward)) %>% 
     inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
     mutate(Sediment_Landward_gain = ifelse(Landward_base < thresh & LandwardMang > thresh, 'Sediment', NA),
            Sediment_Landward_risk_reduced = ifelse(Landward_base < 100-thresh & LandwardMang > 50 & LandwardMang < thresh, 'Sediment', NA),
            Sediment_Seaward_gain = ifelse(Seaward_base < thresh & SeawardMang > thresh, 'Sediment', NA),
            Sediment_Seaward_risk_reduced = ifelse(Seaward_base < 100-thresh & SeawardMang > 50 & SeawardMang < thresh, 'Sediment', NA))
-  barriers <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[4]][1], '_', chosen_model,'_fit.csv')) %>% 
+  barriers <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[4]][1], '_', chosen_model_name,'_fit.csv')) %>% 
     filter(!is.na(Landward) & !is.na(Seaward)) %>% 
     inner_join(select(baseline,Landward_base, Seaward_base, Type)) %>% 
     mutate(Barriers_Landward_gain = ifelse(Landward_base < thresh & LandwardMang > thresh, 'Barriers', NA),
@@ -712,8 +713,8 @@ for(i in seq_along(names(models))){
     mutate_at(vars(Landward_scenario_gain, Landward_scenario_reduced_risk,
                    Seaward_scenario_gain, Seaward_scenario_reduced_risk), ~ifelse(. == '', NA, .)) %>% 
     select(Type, Landward_scenario_gain, Landward_scenario_reduced_risk, Seaward_scenario_gain, Seaward_scenario_reduced_risk)
-  write.csv(all_scen, paste0('outputs/predictions/scenario-forecasts-all_', chosen_model, '.csv'), row.names = F)
-  all_scen <- read.csv(paste0('outputs/predictions/scenario-forecasts-all_', chosen_model, '.csv'))
+  write.csv(all_scen, paste0('outputs/predictions/scenario-forecasts-all_', chosen_model_name, '.csv'), row.names = F)
+  all_scen <- read.csv(paste0('outputs/predictions/scenario-forecasts-all_', chosen_model_name, '.csv'))
   
   # summarise predictions
   
@@ -722,26 +723,26 @@ for(i in seq_along(names(models))){
     group_by(Landward_scenario_gain) %>% 
     summarise(n = n(), percent = 100*(n()/nrow(.)))
   datsum
-  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model, 'all_scenario_gain_summary-landward.csv'), row.names = F)   
+  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model_name, 'all_scenario_gain_summary-landward.csv'), row.names = F)   
   
   datsum <- all_scen %>% 
     group_by(Landward_scenario_reduced_risk) %>% 
     summarise(n = n(), percent = 100*(n()/nrow(.)))
   datsum
-  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model, 'all_scenario_reduced_risk_summary-landward.csv'), row.names = F)   
+  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model_name, 'all_scenario_reduced_risk_summary-landward.csv'), row.names = F)   
   
   # seaward
   datsum <- all_scen %>% 
     group_by(Seaward_scenario_gain) %>% 
     summarise(n = n(), percent = 100*(n()/nrow(.)))
   datsum
-  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model, 'all_scenario_gain_summary-seaward.csv'), row.names = F)   
+  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model_name, 'all_scenario_gain_summary-seaward.csv'), row.names = F)   
   
   datsum <- all_scen %>% 
     group_by(Seaward_scenario_reduced_risk) %>% 
     summarise(n = n(), percent = 100*(n()/nrow(.)))
   datsum
-  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model, 'all_scenario_reduced_risk_summary-seaward.csv'), row.names = F)   
+  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh,'_', chosen_model_name, 'all_scenario_reduced_risk_summary-seaward.csv'), row.names = F)   
   
   # landward and seaward
   
@@ -757,7 +758,7 @@ for(i in seq_along(names(models))){
     group_by(type) %>% 
     summarise(n = sum(change), percent = 100*(sum(change)/((nrow(.)/3))))
   datsum
-  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh, '_', chosen_model,'all_scenario_summary.csv'), row.names = F)   
+  write.csv(datsum, paste0('outputs/summary-stats/forecast-predictions_', press, '_', thresh, '_', chosen_model_name,'all_scenario_summary.csv'), row.names = F)   
   
   # map
   
@@ -801,7 +802,7 @@ for(i in seq_along(names(models))){
     tm_add_legend('symbol', col =  c('darkcyan', 'yellowgreen','darkgoldenrod2', 'darkorchid4', 'black',  'deeppink4'), alpha = 0.8, is.portrait = F,
                   labels =  c('B', 'L', 'EC', 'B or EC', 'L or EC', 'L or B or EC'), border.alpha = 0, size = 0.25)
   lmap
-  tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh,'_', chosen_model, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh,'_', chosen_model_name, '_all-data', '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
   
   # seaward
   smap <- tm_shape(world_mang) +
@@ -836,7 +837,7 @@ for(i in seq_along(names(models))){
     tm_add_legend('symbol', col =  c('plum4', 'darkgoldenrod2',  'hotpink3', 'black', 'midnightblue'), alpha = 0.8,
                   labels =  c('S', 'EC', 'S or EC', 'L or EC', 'S or EC or L'), border.alpha = 0, size = 0.25, is.portrait = F)
   smap
-  tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data','_', chosen_model, '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data','_', chosen_model_name, '_gain_reduced_risk_scenario.png'), width = 5, height = 1, dpi = 5000)
   
 }
 

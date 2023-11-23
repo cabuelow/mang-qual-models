@@ -28,10 +28,11 @@ drivers <- read.csv('data/typologies/SLR_Data.csv')
 
 for(i in seq_along(names(models))){
   
-  chosen_model <- names(models[i]) # which model do you want to run?
-  naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model, '.csv'))
-  results <- readRDS(paste0('outputs/validation/accuracy_', chosen_model, '.RDS'))
-  resamp_accuracy <- read.csv('outputs/validation/resampled_accuracy_summary_', chosen_model, '.csv') %>% 
+  chosen_model <- models[[i]]
+  chosen_model_name <- names(models[i]) # which model do you want to run?
+  naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'))
+  results <- readRDS(paste0('outputs/validation/accuracy_', chosen_model_name, '.RDS'))
+  resamp_accuracy <- read.csv('outputs/validation/resampled_accuracy_summary_', chosen_model_name, '.csv') %>% 
     mutate(metric = recode(metric, 'Producers_accuracy' = 'Producer accuracy',
                            'Users_accuracy' = 'User accuracy',
                            'Overall_accuracy' = 'Overall accuracy'))
@@ -93,7 +94,7 @@ for(i in seq_along(names(models))){
   d <- a/b/c + plot_layout(heights = c(0.5,1,1))
   d
   
-  ggsave(paste0('outputs/validation/optimal-accuracy_', press, '_', thresh, '_', chosen_model, '.png'), width = 2.5, height = 4)
+  ggsave(paste0('outputs/validation/optimal-accuracy_', press, '_', thresh, '_', chosen_model_name, '.png'), width = 2.5, height = 4)
   
   # now make posterior predictions for each biophysical setting/pressure model using all the data (i.e. not split by kfolds)
   
@@ -133,7 +134,7 @@ for(i in seq_along(names(models))){
     mutate(valid = ifelse(land_net_change_obs == LandwardMang & sea_net_change_obs == SeawardMang, 1, 0)) %>% 
     group_by(scenario, nsim) %>% 
     summarise(matrix_post_prob = mean(valid)) 
-  write.csv(post_prob, paste0('outputs/validation/matrix-posterior-prob_', press, '_', thresh, '_', chosen_model, '.csv'), row.names = F)
+  write.csv(post_prob, paste0('outputs/validation/matrix-posterior-prob_', press, '_', thresh, '_', chosen_model_name, '.csv'), row.names = F)
   
   # make predictions 
   final_preds <- pred_dat %>% 
@@ -155,7 +156,7 @@ for(i in seq_along(names(models))){
                                SeawardMang < 100-thresh ~ 'Loss',
                                .default = 'Ambiguous')) %>% 
     mutate(ambig_threshold = thresh)
-  write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model, '.csv'), row.names = F)
+  write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model_name, '.csv'), row.names = F)
   #final_preds <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'.csv'))
   
   final_preds_unfit <- pred_dat %>% 
@@ -178,7 +179,7 @@ for(i in seq_along(names(models))){
                                SeawardMang < 100-thresh ~ 'Loss',
                                .default = 'Ambiguous')) %>% 
     mutate(ambig_threshold = thresh)
-  write.csv(final_preds_unfit, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model, '_unfit.csv'), row.names = F)
+  write.csv(final_preds_unfit, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model_name, '_unfit.csv'), row.names = F)
   #final_preds_unfit <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'_unfit.csv'))
   
   # map final 'all data' hindcasts
@@ -224,7 +225,7 @@ for(i in seq_along(names(models))){
   #             labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
   #                        '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   lmap
-  tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_', chosen_model, '_all-data.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_', chosen_model_name, '_all-data.png'), width = 5, height = 1, dpi = 5000)
   
   smap <- tm_shape(world_mang) +
     tm_fill(col = 'gray88') +
@@ -256,7 +257,7 @@ for(i in seq_along(names(models))){
                   labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   smap
-  tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh,'_', chosen_model, '_all-data.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh,'_', chosen_model_name, '_all-data.png'), width = 5, height = 1, dpi = 5000)
   
   # map unfit hindcasts
   
@@ -296,7 +297,7 @@ for(i in seq_along(names(models))){
                   labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   lmap
-  tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh,'_', chosen_model, '_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh,'_', chosen_model_name, '_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
   
   smap <- tm_shape(world_mang) +
     tm_fill(col = 'gray88') +
@@ -328,7 +329,7 @@ for(i in seq_along(names(models))){
                   labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   smap
-  tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_', chosen_model,'_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_', chosen_model_name,'_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
   
   # wrangle hindcast matches and mismatches spatially
   
@@ -370,7 +371,7 @@ for(i in seq_along(names(models))){
     tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                   labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
   lmap
-  tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', press, '_', thresh,'_', chosen_model, '.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_match_', press, '_', thresh,'_', chosen_model_name, '.png'), width = 5, height = 1, dpi = 5000)
   
   smap <- tm_shape(world_mang) +
     tm_fill(col = 'gray88') +
@@ -394,7 +395,7 @@ for(i in seq_along(names(models))){
     tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                   labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
   smap
-  tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', press, '_', thresh, '_', chosen_model,'.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_match_', press, '_', thresh, '_', chosen_model_name,'.png'), width = 5, height = 1, dpi = 5000)
   
   # characterise mis-matches according to geomorphology, driver of loss, and marine ecoregion
   
@@ -433,7 +434,7 @@ for(i in seq_along(names(models))){
               legend.height = 0.2,
               main.title = 'A) Seaward')
   sea_m
-  tmap_save(sea_m, paste0('outputs/maps/seaward-mismatch_', chosen_model, '.png'), width = 5, height = 1, dpi = 1000)
+  tmap_save(sea_m, paste0('outputs/maps/seaward-mismatch_', chosen_model_name, '.png'), width = 5, height = 1, dpi = 1000)
   
   land_eco <- preds_df %>% 
     filter(Landward_match != 'Ambiguous') %>% 
@@ -465,7 +466,7 @@ for(i in seq_along(names(models))){
               legend.height = 0.2,
               main.title = 'B) Landward')
   land_m
-  tmap_save(land_m, paste0('outputs/maps/landward-mismatch_', chosen_model, '.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(land_m, paste0('outputs/maps/landward-mismatch_', chosen_model_name, '.png'), width = 5, height = 1, dpi = 5000)
   
   sea_geo <- preds_df %>% 
     group_by(Seaward_match, Class) %>% 
@@ -518,7 +519,7 @@ for(i in seq_along(names(models))){
     tm_add_legend('symbol', col =  c('palegreen4','lightgoldenrod','black' ,'red'), 
                   labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
   sea_m
-  tmap_save(sea_m, paste0('outputs/maps/seaward-mismatch_ecoregion_', chosen_model, '.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(sea_m, paste0('outputs/maps/seaward-mismatch_ecoregion_', chosen_model_name, '.png'), width = 5, height = 1, dpi = 5000)
   
   land_m <- tm_shape(st_crop(World, st_bbox(land_eco_sf))) +
     tm_fill('grey88') +
@@ -546,6 +547,6 @@ for(i in seq_along(names(models))){
                   labels =  c( 'Match', 'Ambiguous', 'Mis-match','No Hindcast'), border.alpha = 0, size = 0.3)
   
   land_m
-  tmap_save(land_m, paste0('outputs/maps/landward-mismatch_ecoregion_', chosen_model, '.png'), width = 5, height = 1, dpi = 5000)
+  tmap_save(land_m, paste0('outputs/maps/landward-mismatch_ecoregion_', chosen_model_name, '.png'), width = 5, height = 1, dpi = 5000)
   
 }

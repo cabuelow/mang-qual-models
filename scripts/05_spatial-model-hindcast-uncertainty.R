@@ -29,8 +29,9 @@ spatial_dat <- read.csv('data/master-dat.csv') %>% filter(pressure_def == press)
 
 for(i in seq_along(names(models))){
   
-  chosen_model <- names(models[i]) # which model do you want to run?
-  naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model, '.csv'))
+  chosen_model <- models[[i]]
+  chosen_model_name <- names(models[i]) # which model do you want to run?
+  naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'))
   nsamp <- 200 # number of random samples
   kfold <- 5 # number of folds
   tmp <- list()
@@ -151,7 +152,7 @@ for(i in seq_along(names(models))){
       tmp[[j]] <- do.call(rbind, results)
     })
   accuracy <- do.call(rbind, tmp)
-  write.csv(accuracy, paste0('outputs/validation/sampling_distribution_', chosen_model, '.csv'), row.names = F)
+  write.csv(accuracy, paste0('outputs/validation/sampling_distribution_', chosen_model_name, '.csv'), row.names = F)
   
   # get summary stats for each metric
   
@@ -169,6 +170,6 @@ for(i in seq_along(names(models))){
     mutate(error_rate_upp = ifelse(metric == 'Producers_accuracy', (100-perc_0.05)/100, 0),
            error_rate_low = ifelse(metric == 'Users_accuracy', (100-perc_0.05)/100, 0))
   
-  write.csv(accuracy_sum, paste0('outputs/validation/resampled_accuracy_summary_', chosen_model, '.csv'), row.names = F)
+  write.csv(accuracy_sum, paste0('outputs/validation/resampled_accuracy_summary_', chosen_model_name, '.csv'), row.names = F)
   
 }

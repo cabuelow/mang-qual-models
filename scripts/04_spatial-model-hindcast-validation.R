@@ -24,7 +24,8 @@ drivers <- read.csv('data/typologies/SLR_Data.csv')
 
 for(i in seq_along(names(models))){
   
-  chosen_model <- names(models[i]) # which model do you want to run?
+  chosen_model <- models[[i]]
+  chosen_model_name <- names(models[i]) # which model do you want to run?
   
   # simulate a set of matrices for each mangrove network model (i.e., biophysical setting) 
   # and store the outcome for landward/seaward mangroves, i.e., gain/neutrality or loss
@@ -79,7 +80,7 @@ for(i in seq_along(names(models))){
       names(tmp[[k]]) <- bio_dat[k,]$scenario
     }
   )
-  saveRDS(tmp, paste0('outputs/simulation-outcomes/scenario_matrices_', chosen_model, '.RDS'))
+  saveRDS(tmp, paste0('outputs/simulation-outcomes/scenario_matrices_', chosen_model_name, '.RDS'))
   #tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices.RDS'))
   matrices <- lapply(tmp, function(x){x[[2]]})
   matrix_index <- data.frame(index = 1:length(matrices), scenario = unlist(lapply(tmp, function(x){names(x)[1]})))
@@ -153,7 +154,7 @@ for(i in seq_along(names(models))){
                                                      press = rep(d$press, each = nsim),
                                                      LandwardMang = 1,
                                                      SeawardMang = 1))
-  write.csv(naive_outcomes, paste0('outputs/validation/naive_outcomes_', chosen_model, '.csv'), row.names = F)
+  write.csv(naive_outcomes, paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'), row.names = F)
   #naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes'.csv'))
   
   # map the folds
@@ -262,7 +263,7 @@ for(i in seq_along(names(models))){
       list(do.call(rbind, acc), do.call(rbind, preds))
     })
   stopCluster(cl)
-  saveRDS(results, paste0('outputs/validation/accuracy_', chosen_model, '.RDS'))
+  saveRDS(results, paste0('outputs/validation/accuracy_', chosen_model_name, '.RDS'))
   #results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
   accuracy <- do.call(rbind, lapply(results, function(x)x[[1]])) %>% 
     mutate(pressure_def = recode(pressure_def, '1' = 'Very lenient',
@@ -292,7 +293,7 @@ for(i in seq_along(names(models))){
     xlab('Ambiguity probability threshold (%)') +
     theme_classic()
   
-  ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_', chosen_model, '.png'), width = 15, height = 11)
+  ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_', chosen_model_name, '.png'), width = 15, height = 11)
   
   # averaged across kfolds
   accuracy_sum <- accuracy %>% 
@@ -316,7 +317,7 @@ for(i in seq_along(names(models))){
     theme_classic() +
     theme(axis.title = element_text(size = 10))
   
-  ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', chosen_model, '.png'), width = 10, height = 4.5)
+  ggsave(paste0('outputs/validation/accuracy-heatmap_kfold_averaged_', chosen_model_name, '.png'), width = 10, height = 4.5)
   
 }
 
