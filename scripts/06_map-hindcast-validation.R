@@ -32,7 +32,7 @@ for(i in seq_along(names(models))){
   chosen_model_name <- names(models[i]) # which model do you want to run?
   naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'))
   results <- readRDS(paste0('outputs/validation/accuracy_', chosen_model_name, '.RDS'))
-  resamp_accuracy <- read.csv('outputs/validation/resampled_accuracy_summary_', chosen_model_name, '.csv') %>% 
+  resamp_accuracy <- read.csv(paste0('outputs/validation/resampled_accuracy_summary_', chosen_model_name, '.csv')) %>%
     mutate(metric = recode(metric, 'Producers_accuracy' = 'Producer accuracy',
                            'Users_accuracy' = 'User accuracy',
                            'Overall_accuracy' = 'Overall accuracy'))

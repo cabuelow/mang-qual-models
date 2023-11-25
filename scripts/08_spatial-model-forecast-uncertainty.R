@@ -12,7 +12,7 @@ for(i in seq_along(names(models))){
   chosen_model_name <- names(models[i]) # which model do you want to run?
   
   accuracy <- read.csv(paste0('outputs/validation/resampled_accuracy_summary_', chosen_model_name, '.csv'))
-  spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', chosen_model_name, '_SeaLevelRise_fit.csv'))
+  spatial_pred_fit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_SeaLevelRise_', chosen_model_name, '_fit.csv'))
   num_units <- nrow(filter(spatial_pred_fit, !is.na(Landward))) # total number of units for which we could make forecasts for (some unable to forecast due to lack of valid model, i.e., all matrix likelihoods sum to 0)
   
   # summarise number of units in each forecast class globally

@@ -167,8 +167,6 @@ for(i in seq_along(names(models))){
   tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_', chosen_model_name, '_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
   
   # now take biophysical matrices and solve with future SLR and 
-  chosen_model_name <- models$mangrove_model # choose correct network model
-  
   # find future biophysical and pressure scenarios
   slr_lenient <- spatial_dat %>% filter(pressure_def == 1) %>% select(Type, fut_slr) # subset data for 'very lenient' future slr
   
