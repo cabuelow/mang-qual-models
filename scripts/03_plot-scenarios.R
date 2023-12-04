@@ -54,7 +54,7 @@ a <- ggplot(filter(dat2, var == 'Seaward mangrove'),
             aes(tide, pressure, fill = Prob_gain_neutral)) +
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
-                       name = 'Probability of Loss (red) or Gain/Neutrality (blue)',
+                       name = 'Probability of Loss (red) or Gain/Stability (blue)',
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        limit = c(0, 100),
@@ -75,7 +75,7 @@ b <- ggplot(filter(dat2, var == 'Landward mangrove' & model_scenario == 'High Se
             aes(tide, pressure, fill = Prob_gain_neutral)) +
   geom_tile(color = 'black') +
   scale_fill_distiller(palette = 'Spectral', 
-                       name = 'Probability of Loss (red) or Gain/Neutrality (blue)', 
+                       name = 'Probability of Loss (red) or Gain/Stability (blue)', 
                        direction = 1,
                        breaks = c(0, 25, 50, 75, 100),
                        limit = c(0, 100),

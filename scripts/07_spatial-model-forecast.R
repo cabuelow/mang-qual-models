@@ -12,7 +12,6 @@ source('scripts/helpers/spatial-helpers_v2.R')
 set.seed(123) # set random number generator so reproducible
 sf_use_s2(FALSE)
 
-
 # read in spatial data (mangrove typological units)
 typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
 world <- data("World")
@@ -82,7 +81,7 @@ for(i in seq_along(names(models))){
                                .default = 'Ambiguous')) %>% 
     mutate(ambig_threshold = thresh)
   write.csv(spatial_pred, paste0('outputs/predictions/forecast-predictions_', press, '_', thresh,'_', chosen_model_name, '.csv'), row.names = F)
-  #spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions_', press, '_', thresh, '.csv'))
+  #spatial_pred <- read.csv(paste0('outputs/predictions/forecast-predictions_', press, '_', thresh,'_', chosen_model_name, '.csv'))
   
   # summarise predictions
   datsum <- ungroup(spatial_pred) %>% 
@@ -130,7 +129,7 @@ for(i in seq_along(names(models))){
               legend.bg.color = 'white',
               legend.bg.alpha = 0) +
     tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                  labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                  labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   lmap
   tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_', chosen_model_name, '_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
@@ -160,9 +159,9 @@ for(i in seq_along(names(models))){
               frame = T,
               legend.bg.color = 'white',
               legend.bg.alpha = 0) +
-    tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                  labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
-                              '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   smap
   tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_', chosen_model_name, '_all-data_NoSLR.png'), width = 5, height = 1, dpi = 5000)
   
@@ -235,7 +234,7 @@ for(i in seq_along(names(models))){
     }
   )
   saveRDS(tmp, paste0('outputs/simulation-outcomes/scenario_matrices_forecast_', chosen_model_name, '.RDS'))
-  #tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices_forecast.RDS'))
+  #tmp <- readRDS(paste0('outputs/simulation-outcomes/scenario_matrices_forecast_', chosen_model_name, '.RDS'))
   matrices_forecast <- lapply(tmp, function(x){x[[2]]})
   matrix_index_forecast <- data.frame(index = (max(matrix_index$index)+1):(max(matrix_index$index)+length(matrices_forecast)), scenario = unlist(lapply(tmp, function(x){names(x)[1]})))
   
@@ -512,9 +511,9 @@ for(i in seq_along(names(models))){
                 frame = T,
                 legend.bg.color = 'white',
                 legend.bg.alpha = 0) +
-      tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                    labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
-                                '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     lmap
     tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_fit.png'), width = 5, height = 1, dpi = 5000)
     
@@ -540,7 +539,7 @@ for(i in seq_along(names(models))){
                 legend.bg.color = 'white',
                 legend.bg.alpha = 0) +
       tm_add_legend('symbol', col = rev(pal[c(1,5,10)]),
-                    labels =  c('Gain/Neutrality', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
+                    labels =  c('Gain/Stability', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
     lmap
     tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_fit_class.png'), width = 5, height = 1, dpi = 5000)
     
@@ -570,9 +569,9 @@ for(i in seq_along(names(models))){
                 frame = T,
                 legend.bg.color = 'white',
                 legend.bg.alpha = 0) +
-      tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                    labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
-                                '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     smap
     tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_', chosen_model_name,'_fit.png'), width = 5, height = 1, dpi = 5000)
     
@@ -598,7 +597,7 @@ for(i in seq_along(names(models))){
                 legend.bg.color = 'white',
                 legend.bg.alpha = 0) +
       tm_add_legend('symbol', col = rev(pal[c(1,5,10)]),
-                    labels =  c('Gain/Neutrality', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
+                    labels =  c('Gain/Stability', 'Ambiguous', 'Loss'), border.alpha = 0, size = 0.25)
     smap
     tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_fit_class.png'), width = 5, height = 1, dpi = 5000)
     
@@ -629,9 +628,9 @@ for(i in seq_along(names(models))){
                 frame = T,
                 legend.bg.color = 'white',
                 legend.bg.alpha = 0) +
-      tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                    labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
-                                '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     lmap
     tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1],'_', chosen_model_name, '_unfit.png'), width = 5, height = 1, dpi = 5000)
     
@@ -661,9 +660,9 @@ for(i in seq_along(names(models))){
                 frame = T,
                 legend.bg.color = 'white',
                 legend.bg.alpha = 0) +
-      tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                    labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
-                                '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+  tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
+                labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
+                            '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
     smap
     tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', scenarios[[i]][1], '_', chosen_model_name,'_unfit.png'), width = 5, height = 1, dpi = 5000)
   }

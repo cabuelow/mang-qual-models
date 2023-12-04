@@ -49,7 +49,7 @@ for(i in seq_along(names(models))){
     scale_x_discrete(labels = function(x) 
       stringr::str_wrap(x, width = 10))+
     coord_flip() +
-    ggtitle('A) Gain/neutrality & Loss')  +
+    ggtitle('A) Gain/stability & Loss')  +
     theme_classic() +
     theme(legend.position = 'none',
           plot.title = element_text(size = 9),
@@ -65,7 +65,7 @@ for(i in seq_along(names(models))){
     scale_x_discrete(labels = function(x) 
       stringr::str_wrap(x, width = 10))+
     coord_flip() +
-    ggtitle('B) Gain/neutrality')  +
+    ggtitle('B) Gain/stability')  +
     theme_classic() +
     theme(legend.position = 'none',
           plot.title = element_text(size = 9),
@@ -157,7 +157,7 @@ for(i in seq_along(names(models))){
                                .default = 'Ambiguous')) %>% 
     mutate(ambig_threshold = thresh)
   write.csv(final_preds, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model_name, '.csv'), row.names = F)
-  #final_preds <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'.csv'))
+final_preds <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model_name, '.csv'))
   
   final_preds_unfit <- pred_dat %>% 
     left_join(naive_outcomes, by = c('scenario', 'press')) %>% 
@@ -180,7 +180,7 @@ for(i in seq_along(names(models))){
                                .default = 'Ambiguous')) %>% 
     mutate(ambig_threshold = thresh)
   write.csv(final_preds_unfit, paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model_name, '_unfit.csv'), row.names = F)
-  #final_preds_unfit <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'_unfit.csv'))
+final_preds_unfit <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh, '_', chosen_model_name, '_unfit.csv'))
   
   # map final 'all data' hindcasts
   
@@ -219,11 +219,9 @@ for(i in seq_along(names(models))){
               legend.bg.color = 'white',
               legend.bg.alpha = 0) +
     tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                  labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                  labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
-  #tm_add_legend('symbol', col = rev(pal[1:10]), title = 'Probability',
-  #             labels =  c('100-90% Gain/Neutrality', '90-80% Gain/Neutrality','80-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
-  #                        '50-60% Loss', '60-70% Loss', '70-80% Loss', '80-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
+
   lmap
   tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh, '_', chosen_model_name, '_all-data.png'), width = 5, height = 1, dpi = 5000)
   
@@ -254,7 +252,7 @@ for(i in seq_along(names(models))){
               legend.bg.color = 'white',
               legend.bg.alpha = 0) +
     tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                  labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                  labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   smap
   tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh,'_', chosen_model_name, '_all-data.png'), width = 5, height = 1, dpi = 5000)
@@ -294,7 +292,7 @@ for(i in seq_along(names(models))){
               legend.bg.color = 'white',
               legend.bg.alpha = 0) +
     tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                  labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                  labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   lmap
   tmap_save(lmap, paste0('outputs/maps/landward-hindcast_map_', press, '_', thresh,'_', chosen_model_name, '_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)
@@ -326,7 +324,7 @@ for(i in seq_along(names(models))){
               legend.bg.color = 'white',
               legend.bg.alpha = 0) +
     tm_add_legend('symbol', col = rev(pal[1:10]),title = 'Probability',
-                  labels =  c('100-90% Gain/Neutrality', '90-75% Gain/Neutrality','75-70% Gain/Neutrality', '70-60% Gain/Neutrality', '60-50% Gain/Neutrality', 
+                  labels =  c('100-90% Gain/Stability', '90-75% Gain/Stability','75-70% Gain/Stability', '70-60% Gain/Stability', '60-50% Gain/Stability', 
                               '50-60% Loss', '60-70% Loss', '70-75% Loss', '75-90% Loss', '90-100% Loss'), border.alpha = 0, size = 0.25)
   smap
   tmap_save(smap, paste0('outputs/maps/seaward-hindcast_map_', press, '_', thresh, '_', chosen_model_name,'_all-data_unfit.png'), width = 5, height = 1, dpi = 5000)

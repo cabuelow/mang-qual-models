@@ -2,11 +2,25 @@
 
 library(tidyverse)
 library(ggh4x)
+library(sf)
+library(tmap)
+library(RColorBrewer)
+library(QPress)
+source('scripts/helpers/models.R')
+model_names <- names(models) # which model do you want to run?
+sf_use_s2(FALSE)
+press <- 4
+thresh <- 75
 
-dat <- readRDS('outputs/simulation-outcomes/outcomes.rds') # sensitivity to structural model assumptions
-dat_press <- read.csv('outputs/simulation-outcomes/outcomes_mangrove_model_spatial.csv') # sensitivity to pressure definition
+typ_points <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg')
+world <- data("World")
+# sensitivity to model assumptions - non-spatial
+dat <- readRDS('outputs/simulation-outcomes/outcomes.rds') 
+# sensitivity to model assumptions - spatial
+spatial_pred_fit <- lapply(model_names, function(i){read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', 'SeaLevelRise_', i, '_fit.csv'))})
+names(spatial_pred_fit) <- model_names
 
-##### sensitivity to structural model assumptions ######
+##### non-spatial ######
 # calculate proportion of stable model outcomes that have a positive, negative, or neutral landward/seaward mangrove response
 
 dat2 <- dat %>% 
@@ -41,7 +55,7 @@ ggplot(filter(dat2, tide == 'Macrotidal' & model_scenario == 'High Sediment Supp
   geom_point(aes(x = absolute_deviation, y = pressure, col = var, alpha = 0.5)) +
   facet_nested(~model) +
   ylab('') +
-  xlab('Percent change in probability of mangrove gain/neutrality from baseline model') +
+  xlab('Percent change in probability of mangrove gain/stability from baseline model') +
   theme_classic() +
   theme(legend.title = element_blank(),
         legend.position = 'bottom') +
@@ -49,27 +63,89 @@ ggplot(filter(dat2, tide == 'Macrotidal' & model_scenario == 'High Sediment Supp
 
 ggsave('outputs/sensitivity/sensitivity_structural-model-assumptions.png', height = 3, width = 9)
 
-##### sensitivity to pressure definition ######
-# pressure definition = 4 is the baseline
+##### spatial ######
 
-dat_press2 <- dat_press %>% 
-  filter(cast == 'forecast') %>% 
-  mutate(Prob_gain_neutral = Prob_gain + Prob_neutral) %>% 
-  pivot_wider(id_cols = c(var, Type), names_from = 'pressure_def', values_from = 'Prob_gain_neutral', names_prefix = 'press_') %>% 
-  mutate(`1_4` = abs(press_1-press_4),
-         `2_4` = abs(press_2-press_4),
-         `3_4` = abs(press_3-press_4),
-         `5_4` = abs(press_5-press_4)) %>% 
-  pivot_longer(cols = c(`1_4`, `2_4`, `3_4`, `5_4`), names_to = 'sensitivity', values_to = 'change') %>% 
-  mutate(var = recode(var, 'LandwardMang' = 'A) Landward mangrove', 'SeawardMang' = 'B) Seaward mangrove'))
+spatial_dat <- spatial_pred_fit %>% 
+  map(~ select(.x, Type, Landward, Seaward)) %>% 
+  imap(~ rename(.x, "{.y}_Landward" := Landward)) %>% 
+  imap(~ rename(.x, "{.y}_Seaward" := Seaward)) %>% 
+  reduce(left_join) %>% 
+  mutate(model_cyc_pos_Landward = ifelse(mangrove_model_Landward != model_cyc_pos_Landward, 'Change', 'No change'),
+         model_cyc_pos_Seaward = ifelse(mangrove_model_Seaward != model_cyc_pos_Seaward, 'Change', 'No change'),
+         model_rain_Landward = ifelse(mangrove_model_Landward != model_rain_Landward, 'Change', 'No change'),
+         model_rain_Seaward = ifelse(mangrove_model_Seaward != model_rain_Seaward, 'Change', 'No change'),
+         model_drought_Landward = ifelse(mangrove_model_Landward != model_drought_Landward, 'Change', 'No change'),
+         model_drought_Seaward = ifelse(mangrove_model_Seaward != model_drought_Seaward, 'Change', 'No change'),
+         model_cyc_seaward_Landward = ifelse(mangrove_model_Landward != model_cyc_seaward_Landward, 'Change', 'No change'),
+         model_cyc_seaward_Seaward = ifelse(mangrove_model_Seaward != model_cyc_seaward_Seaward, 'Change', 'No change'))
 
-ggplot(dat_press2) +
-  geom_jitter(aes(x = sensitivity, y = change), width = 0.2, alpha = 0.1) +
-  #geom_violin(aes(x = sensitivity, y = change)) +
-  facet_wrap(~var) +
-  ylab('% change from baseline') +
-  xlab('') +
-  theme_classic()
+preds_fit <- typ_points %>% 
+  left_join(spatial_dat) %>%
+  st_crop(xmin = -180, ymin = -40, xmax = 180, ymax = 33)
+world_mang <- st_crop(World, xmin = -180, ymin = -40, xmax = 180, ymax = 33)  
 
-ggsave('outputs/sensitivity/sensitivity_pressure-definition.png', width = 3.5, height = 2.2)
+lmap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray88') +
+  tm_shape(filter(preds_fit, model_cyc_pos_Landward == 'Change')) +
+  tm_symbols('model_cyc_pos_Landward', size = 0.06, border.lwd = 0, col = 'grey10', legend.shape.show = F) +
+  tm_shape(filter(preds_fit, model_cyc_seaward_Landward == 'Change')) +
+  tm_symbols('model_cyc_seaward_Landward', size = 0.04, border.lwd = 0, col = 'cyan4', legend.shape.show = F) +
+  tm_shape(filter(preds_fit, model_drought_Landward == 'Change')) +
+  tm_symbols('model_drought_Landward', size = 0.02, border.lwd = 0, col = 'orange', legend.shape.show = F) +
+  tm_shape(filter(preds_fit, model_rain_Landward == 'Change')) +
+  tm_symbols('model_rain_Landward', size = 0.005, border.lwd = 0, col = 'darkblue', legend.shape.show = F) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.07),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.35,
+            legend.text.size = 0.35,
+            main.title = 'B) Change in landward forecast from baseline model',
+            main.title.size = 0.4,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col = c('grey10', 'cyan4', 'orange', 'darkblue'),
+                labels =  c('A) Storms -> substrate', 'B) Storms --* seaward', 'C) Drought -* Sediment', 'D) Rain -> Sediment'), border.alpha = 0, size = 0.25)
+lmap
+tmap_save(lmap, paste0('outputs/maps/landward-forecast_map_', press, '_', thresh, '_all-data', '_', chosen_model_name, '_sensitivity.png'), width = 5, height = 1, dpi = 5000)
 
+smap <- tm_shape(world_mang) +
+  tm_fill(col = 'gray88') +
+  tm_shape(filter(preds_fit, model_cyc_pos_Seaward == 'Change')) +
+  tm_symbols('model_cyc_pos_Seaward', size = 0.06, border.lwd = 0, col = 'grey10', legend.shape.show = F) +
+  tm_shape(filter(preds_fit, model_cyc_seaward_Seaward == 'Change')) +
+  tm_symbols('model_cyc_seaward_Seaward', size = 0.04, border.lwd = 0, col = 'cyan4', legend.shape.show = F) +
+  tm_shape(filter(preds_fit, model_drought_Seaward == 'Change')) +
+  tm_symbols('model_drought_Seaward', size = 0.02, border.lwd = 0, col = 'orange', legend.shape.show = F) +
+  tm_shape(filter(preds_fit, model_rain_Seaward == 'Change')) +
+  tm_symbols('model_rain_Seaward', size = 0.005, border.lwd = 0, col = 'darkblue', legend.shape.show = F) +
+  tm_layout(legend.outside = F,
+            legend.position = c(0.13, 0.07),
+            title.position = c(0.01,0.45),
+            legend.title.size = 0.35,
+            legend.text.size = 0.35,
+            main.title = 'A) Change in seaward forecast from baseline model',
+            main.title.size = 0.4,
+            frame = T,
+            legend.bg.color = 'white',
+            legend.bg.alpha = 0) +
+  tm_add_legend('symbol', col = c('grey10', 'cyan4', 'orange', 'darkblue'),
+                labels =  c('A) Storms -> substrate', 'B) Storms --* seaward', 'C) Drought -* Sediment', 'D) Rain -> Sediment'), border.alpha = 0, size = 0.25)
+smap
+tmap_save(smap, paste0('outputs/maps/seaward-forecast_map_', press, '_', thresh, '_all-data', '_', chosen_model_name, '_sensitivity.png'), width = 5, height = 1, dpi = 5000)
+
+# summarise percent of units with change in forecasted outcome
+
+summary <- spatial_dat %>% 
+  select(model_cyc_pos_Landward:model_cyc_seaward_Seaward) %>% 
+  mutate(across(starts_with('model'), ~ifelse(. == 'Change', 1, 0))) %>% 
+  mutate(model_cyc_pos = model_cyc_pos_Landward + model_cyc_pos_Seaward,
+         model_rain = model_rain_Landward + model_rain_Seaward,
+         model_drought = model_drought_Landward + model_drought_Seaward,
+         model_cyc_seaward = model_cyc_seaward_Landward + model_cyc_seaward_Seaward) %>% 
+  select(model_cyc_pos:model_cyc_seaward) %>% 
+  mutate(across(starts_with('model'), ~ifelse(. > 0, 1, 0))) %>% 
+  summarise(across(starts_with('model'), ~(sum(., na.rm=T)/n()))*100)
+summary
+
+write.csv(summary, 'outputs/summary-stats/spatial-sensitivity.csv', row.names = F)

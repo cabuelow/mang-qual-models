@@ -155,7 +155,7 @@ for(i in seq_along(names(models))){
                                                      LandwardMang = 1,
                                                      SeawardMang = 1))
   write.csv(naive_outcomes, paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'), row.names = F)
-  #naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes'.csv'))
+  #naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'))
   
   # map the folds
   
@@ -264,7 +264,7 @@ for(i in seq_along(names(models))){
     })
   stopCluster(cl)
   saveRDS(results, paste0('outputs/validation/accuracy_', chosen_model_name, '.RDS'))
-  #results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
+  #results <- readRDS(paste0('outputs/validation/accuracy_', chosen_model_name, '.RDS'))
   accuracy <- do.call(rbind, lapply(results, function(x)x[[1]])) %>% 
     mutate(pressure_def = recode(pressure_def, '1' = 'Very lenient',
                                  '2' = 'Lenient',
@@ -282,7 +282,8 @@ for(i in seq_along(names(models))){
     mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'C) Seaward', mangrove == 'Landward' ~ 'D) Landward')) %>% 
     mutate(mangrove = factor(mangrove, levels = c('C) Seaward', 'D) Landward'))) %>% 
     pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
-    mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
+    mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain/stability & Loss', class),
+           class = ifelse(class == 'Gain_neutrality', 'Gain/stability', class)) %>% 
     distinct() %>% 
     ggplot() +
     aes(x = ambig_threshold, y = pressure_def, fill = accuracy) +
@@ -301,7 +302,8 @@ for(i in seq_along(names(models))){
     mutate(mangrove = case_when(mangrove == 'Seaward' ~ 'A) Seaward', mangrove == 'Landward' ~ 'B) Landward')) %>% 
     mutate(mangrove = factor(mangrove, levels = c('A) Seaward', 'B) Landward'))) %>% 
     pivot_longer(cols = Overall_accuracy:Users_accuracy, names_to = 'metric', values_to = 'accuracy') %>% 
-    mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain_neutrality & Loss', class)) %>% 
+    mutate(class = ifelse(metric == 'Overall_accuracy', 'Gain/stability & Loss', class),
+           class = ifelse(class == 'Gain_neutrality', 'Gain/stability', class)) %>% 
     distinct() %>% 
     group_by(mangrove, pressure_def, ambig_threshold, class, metric) %>% 
     summarise(accuracy = mean(accuracy, na.rm = T)) 
