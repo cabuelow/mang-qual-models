@@ -38,11 +38,11 @@ thresh <- 75 # which ambiguity threshold?
 scenario <- 'SeaLevelRise'
 
 dat <- read.csv('data/master-dat.csv') %>% filter(pressure_def == press) %>% select(Type:prop_estab)
-results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
-accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
-hindcasts <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'.csv'))
-forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_fit.csv'))
-all_scen <- read.csv('outputs/predictions/scenario-forecasts-all.csv')
+#results <- readRDS(paste0('outputs/validation/accuracy.RDS'))
+#accuracy <- do.call(rbind, lapply(results, function(x)x[[1]]))
+hindcasts <- read.csv(paste0('outputs/predictions/final-calibrated-predictions_', press, '_', thresh,'_mangrove_model.csv'))
+forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_mangrove_model_fit.csv'))
+all_scen <- read.csv('outputs/predictions/scenario-forecasts-all_mangrove_model.csv')
 typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(dat) %>% 
   mutate_at(vars(fut_slr:hist_ext_rain, fut_storms), ~ifelse(.==0, 'Absent', 'Present')) %>% 

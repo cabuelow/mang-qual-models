@@ -27,10 +27,10 @@ thresh <- 75 # which ambiguity threshold?
 scenario <- 'SeaLevelRise'
 pal <- brewer.pal(11, 'Spectral') # color palette
 typ <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') 
-forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_fit.csv')) %>% 
+forecasts <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_mangrove_model_fit.csv')) %>% 
   rename('Probability of Seaward Gain/Neutrality' = SeawardMang,
          'Probability of Landward Gain/Neutrality' = LandwardMang)
-all_scen <- read.csv('outputs/predictions/scenario-forecasts-all.csv')
+all_scen <- read.csv('outputs/predictions/scenario-forecasts-all_mangrove_model.csv')
 Baseline_forecast <- st_read('data/typologies/Mangrove_Typology_v3.14_Composite_valid_centroids.gpkg') %>% 
   left_join(forecasts)
 Baseline_forecast_class_seaward <- filter(Baseline_forecast, !is.na(Seaward))
