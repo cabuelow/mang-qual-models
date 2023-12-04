@@ -9,10 +9,6 @@ Link to webpages where you can interactively view all spatial data underpinning 
 -   [Part 1 here](https://mangrove-climate-risk-mapping.netlify.app/)
 -   [Part 2 here](https://mangrove-climate-risk-mapping-2.netlify.app/)
 
-## TODO
-
-- [ ] Clean up all scripts, especially helpers
-
 #### Scripts
 
 1.  01_wrangle-dat.R: wrangles processed data into a master dataframe
