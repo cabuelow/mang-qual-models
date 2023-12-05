@@ -1,6 +1,6 @@
 ### Probabilistic forecasts of the direction of future change in mangrove extent using network models
 
-This repository provides code for reproducing results and figures in Buelow et al. (*in prep*), 'Mangrove persistence under climate change doubles with management and restoration'.
+This repository provides code for reproducing results and figures in Buelow et al. (*in prep*), 'Uncertainties in forecasts of ecosystem persistence under climate change'.
 
 The codebase draws heavily from the R package [{QPress}](https://github.com/SWotherspoon/QPress).
 
