@@ -3,7 +3,10 @@
 .Rdata
 .httr-oauth
 .DS_Store
-data
+data/EEZ_land_union_v3_202003
+data/MEOW
+data/processed-data
+data/typologies
 outputs
 images
 map_files
