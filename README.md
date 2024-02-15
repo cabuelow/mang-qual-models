@@ -9,7 +9,11 @@ Link to webpages where you can interactively view all spatial data underpinning 
 -   [Part 1 here](https://mangrove-climate-risk-mapping.netlify.app/)
 -   [Part 2 here](https://mangrove-climate-risk-mapping-2.netlify.app/)
 
-[System requirements](#system-requirements) | [Installation guide](#installation-guide) | [Demo and instructions for use](#demo-and-instructions-for-use) | [Scripts](#scripts)
+[Graphical analyis workflow](#graphical-analysis-workflow) | [System requirements](#system-requirements) | [Installation guide](#installation-guide) | [Demo and instructions for use](#demo-and-instructions-for-use) | [Scripts](#scripts)
+
+#### Graphical analysis workflow
+
+![](images/workflow.png)
 
 #### System requirements
 
