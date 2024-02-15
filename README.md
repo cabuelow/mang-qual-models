@@ -9,13 +9,13 @@ Link to webpages where you can interactively view all spatial data underpinning 
 -   [Part 1 here](https://mangrove-climate-risk-mapping.netlify.app/)
 -   [Part 2 here](https://mangrove-climate-risk-mapping-2.netlify.app/)
 
-[System requirements](#system-requirements) \| [Installation guide](#installation-guide) \| [Demo and instructions for use](#demo-and-instructions-for-use) \| [Scripts](#scripts)
+[System requirements](#system-requirements) | [Installation guide](#installation-guide) | [Demo and instructions for use](#demo-and-instructions-for-use) | [Scripts](#scripts)
 
-#### System requirements {#system-requirements}
+#### System requirements
 
 The code was written and tested in R version 4.2.2.
 
-#### Installation guide {#installation-guide}
+#### Installation guide
 
 Install the following packages to run the code and reproduce results.
 
@@ -35,7 +35,7 @@ Install the following packages to run the code and reproduce results.
 
 5. The expected runtime on a 'normal' desktop computer with 5 cores available for parallel processing is approximately 1-2 days. 
 
-#### Scripts {#scripts}
+#### Scripts
 
 1.  01_wrangle-dat.R: wrangles processed data into a master dataframe
 
