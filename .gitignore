@@ -12,7 +12,6 @@ data/typologies/Mangrove_Typology_v3.14_Composite_valid.gpkg
 data/typologies/SLR_Data.csv
 data/typologies/typologies_220km2_plus.gpkg
 outputs
-images
 map_files
 map.html
 map2.html
