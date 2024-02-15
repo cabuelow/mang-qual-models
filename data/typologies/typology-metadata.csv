@@ -1,0 +1,27 @@
+Variable,Description,Notes,Notes2
+Class,Typology,,
+ID,Unique ID,,
+Area_1996_km2,Mangrove area in 1996 (see processing notes from tom on next sheet),,
+Area_2020_km2,Mangrove area in 2020 (see processing notes from Tom on next sheet),,
+Net_Change,Net change in mangrove area 1996-2020,,
+Gross_Loss,Gross loss in mangrove area 1996-2020,,
+Erosion,Percent of mangrove loss to erosion,,
+Extreme_Weather,Percent of mangrove loss to extreme weather,,
+Non_Productive,Percent of mangrove loss to non productive conversion,,
+Commodities,Percent of mangrove loss to commodities,,
+Settlement,Percent of mangrove loss to human settlement,,
+Tidal_Amplitude,Tidal amplitude,,
+Historic_SLR_Raw,"Historic SLR - regional mean sea level trends, 1993-2015",,
+Future_SLR_Raw,"Future SLR - ensemble mean of realtive sea level change in meters between 1986-2005 and 2081-2100 were used, from CMIP5, medium high RCP scenario 6",,
+Tidal_Class,Tidal range class,,
+ASLR_Class,Antecedent SLR class,,
+SLR_Class,Future SLR class,,
+SED_Mean,Sediment trapping index,The sediment trapping indexrepresents the percentage of the potential sediment load trapped byanthropogenic barriers along the river section.,Only for typologies with restorable loss
+DOF_Mean,Related to CSI index,Degree of fragmentation,Only for typologies with restorable loss
+DOR_Mean,Related to CSI index,Degree of regulation,Only for typologies with restorable loss
+USE_Mean,Consumptive water use,,Only for typologies with restorable loss
+RDD_Mean,Road density,,Only for typologies with restorable loss
+URB_Mean,Urban areas,,Only for typologies with restorable loss
+,,,
+,,,
+**Note: ASLR and FSLR values were divided by patch tidal amplitude to produce a relative index,,,

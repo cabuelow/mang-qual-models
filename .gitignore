@@ -6,7 +6,11 @@
 data/EEZ_land_union_v3_202003
 data/MEOW
 data/processed-data
-data/typologies
+data/typologies/Hydro_Dat.csv
+data/typologies/archive
+data/typologies/Mangrove_Typology_v3.14_Composite_valid.gpkg
+data/typologies/SLR_Data.csv
+data/typologies/typologies_220km2_plus.gpkg
 outputs
 images
 map_files
