@@ -23,7 +23,7 @@ Install the following packages to run the code and reproduce results.
 
 `devtools::install_github("SWotherspoon/QPress",ref="Constrain")`
 
-#### Demo & Instructions for use
+#### Demo and instructions for use
 
 1. Download or clone the github repo and double click the `mangrove-network-models.Rproj` file to open RStudio.  
 
