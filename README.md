@@ -27,7 +27,7 @@ Install the following packages to run the code and reproduce results.
 
 `devtools::install_github("SWotherspoon/QPress",ref="Constrain")`
 
-#### Demo and instructions for use
+#### Instructions for use
 
 1. Download or clone the github repo and double click the `mangrove-network-models.Rproj` file to open RStudio.  
 
@@ -36,8 +36,6 @@ Install the following packages to run the code and reproduce results.
 3. To run the analysis, start with script `02_model-scenarios.R` and run the rest in sequential order.
 
 4. The cross-validation uses uses 5 cores for parallel processing.
-
-5. The expected runtime on a 'normal' desktop computer with 5 cores available for parallel processing is approximately 1-2 days. 
 
 #### Scripts
 
