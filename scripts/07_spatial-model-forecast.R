@@ -30,7 +30,7 @@ for(i in seq_along(names(models))){
   naive_outcomes <- read.csv(paste0('outputs/validation/naive_outcomes_', chosen_model_name, '.csv'))
   post_prob <- read.csv(paste0('outputs/validation/matrix-posterior-prob_', press, '_', thresh, '_', chosen_model_name, '.csv'))
   
-  # make posterior forecasts using naive hindcasts and posterior probabilities, without future sea level rise
+  # make posterior projections using naive hindcasts and posterior probabilities, without future sea level rise
   
   spatial_pred <- spatial_dat %>% # here renaming future pressures as historical pressures so can join to posterior hindcasts
     filter(pressure_def == press) %>% 
@@ -123,7 +123,7 @@ for(i in seq_along(names(models))){
               title.position = c(0.01,0.45),
               legend.title.size = 0.35,
               legend.text.size = 0.25,
-              main.title = 'B) Landward baseline forecast',
+              main.title = 'B) Landward baseline projection',
               main.title.size = 0.4,
               frame = T,
               legend.bg.color = 'white',
@@ -154,7 +154,7 @@ for(i in seq_along(names(models))){
               title.position = c(0.01,0.45),
               legend.title.size = 0.35,
               legend.text.size = 0.25,
-              main.title = 'A) Seaward baseline forecast',
+              main.title = 'A) Seaward baseline projection',
               main.title.size = 0.4,
               frame = T,
               legend.bg.color = 'white',
@@ -447,10 +447,10 @@ for(i in seq_along(names(models))){
     if(scenario == 'SubVol'){spatial_pred_unfit <- spatial_pred_unfit %>% mutate(Class = sub('\\_.*', '', Type)) %>% mutate(Seaward = ifelse(Class == 'OpenCoast', 'Loss', Seaward))} # in subvol scenario, only allow reduced risk of loss or gain/neutrality in geomorphologies other than open coast
     write.csv(spatial_pred_unfit, paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenario, '_', chosen_model_name,'_unfit.csv'), row.names = F)
     spatial_pred_unfit <- read.csv(paste0('outputs/predictions/forecast-predictions', press, '_', thresh, '_', scenarios[[i]][1],'_', chosen_model_name, '_unfit.csv'))
-    titlea_fit <- c('C) Seaward forecast with increased propagules - fit', 'D) Seaward forecast with improved hydrology - fit','E) Seaward forecast with sediment addition - fit', 'F) Seaward forecast with removal of coastal barriers - fit', 'A) Seaward baseline forecast')
-    titleb_fit <- c('D) Landward forecast with increased propagules - fit', 'D) Landward forecast with improved hydrology - fit', 'F) Landward forecast with sediment addition - fit', 'H) Landward forecast with removal of coastal barriers - fit', 'C) Landward baseline forecast')
-    titlea_unfit <- c('C) Seaward forecast with increased propagules - unfit', 'D) Seaward forecast with improved hydrology - unfit', 'E) Seaward forecast with sediment addition - unfit', 'G) Seaward forecast with removal of coastal barriers - unfit', 'A) Seaward baseline forecast - unfit')
-    titleb_unfit <- c('D) Landward forecast with increased propagules - unfit', 'D) Landward forecast with improved hydrology - unfit', 'F) Landward forecast with sediment addition - unfit', 'H) Landward forecast with removal of coastal barriers - unfit', 'C) Landward baseline forecast - unfit')
+    titlea_fit <- c('C) Seaward projection with increased propagules - fit', 'D) Seaward projection with improved hydrology - fit','E) Seaward projection with sediment addition - fit', 'F) Seaward projection with removal of coastal barriers - fit', 'A) Seaward baseline projection')
+    titleb_fit <- c('D) Landward projection with increased propagules - fit', 'D) Landward projection with improved hydrology - fit', 'F) Landward projection with sediment addition - fit', 'H) Landward projection with removal of coastal barriers - fit', 'C) Landward baseline projection')
+    titlea_unfit <- c('C) Seaward projection with increased propagules - unfit', 'D) Seaward projection with improved hydrology - unfit', 'E) Seaward projection with sediment addition - unfit', 'G) Seaward projection with removal of coastal barriers - unfit', 'A) Seaward baseline projection - unfit')
+    titleb_unfit <- c('D) Landward projection with increased propagules - unfit', 'D) Landward projection with improved hydrology - unfit', 'F) Landward projection with sediment addition - unfit', 'H) Landward projection with removal of coastal barriers - unfit', 'C) Landward baseline projection - unfit')
     
     # summarise predictions
     datsum <- spatial_pred_fit %>% 
@@ -533,7 +533,7 @@ for(i in seq_along(names(models))){
                 title.position = c(0.01,0.45),
                 legend.title.size = 0.35,
                 legend.text.size = 0.25,
-                main.title = 'B) Landward baseline forecast',
+                main.title = 'B) Landward baseline projection',
                 main.title.size = 0.4,
                 frame = T,
                 legend.bg.color = 'white',
@@ -591,7 +591,7 @@ for(i in seq_along(names(models))){
                 title.position = c(0.01,0.45),
                 legend.title.size = 0.35,
                 legend.text.size = 0.25,
-                main.title = 'A) Seaward baseline forecast',
+                main.title = 'A) Seaward baseline projection',
                 main.title.size = 0.4,
                 frame = T,
                 legend.bg.color = 'white',
@@ -787,7 +787,7 @@ for(i in seq_along(names(models))){
               title.position = c(0.01,0.45),
               legend.title.size = 0.35,
               legend.text.size = 0.25,
-              main.title =  "D) Landward scenario-based forecast of net gain/stability or reduced certainty of loss relative to baseline",
+              main.title =  "D) Landward scenario-based projection of net gain/stability or reduced certainty of loss relative to baseline",
               main.title.size = 0.4,
               frame = T,
               legend.bg.color = 'white',
@@ -824,7 +824,7 @@ for(i in seq_along(names(models))){
               legend.width = 1,
               legend.title.size = 0.35,
               legend.text.size = 0.25,
-              main.title = "B) Seaward scenario-based forecast of net gain/stability or reduced certainty of loss relative to baseline",
+              main.title = "B) Seaward scenario-based projection of net gain/stability or reduced certainty of loss relative to baseline",
               main.title.size = 0.4,
               frame = T,
               legend.bg.color = 'white',
